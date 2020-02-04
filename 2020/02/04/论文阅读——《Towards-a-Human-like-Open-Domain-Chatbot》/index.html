@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    论文阅读——《Towards a Human-like Open-Domain Chatbot》 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-论文阅读——《Towards-a-Human-like-Open-Domain-Chatbot》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文阅读——《Towards a Human-like Open-Domain Chatbot》
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/02/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8ATowards-a-Human-like-Open-Domain-Chatbot%E3%80%8B/" class="article-date">
+  <time datetime="2020-02-04T13:17:57.000Z" itemprop="datePublished">2020-02-04</time>
+</a>
+        
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+  </div>
+
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>今天阅读了谷歌最新出的一篇论文，《Towards a Human-like Open-Domain Chatbot》，主要提出了端到端对话机器人的一种评测方法和模型框架。下面是阅读过程中的笔记。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://ai.googleblog.com/2020/01/towards-conversational-agent-that-can.html" target="_blank" rel="noopener">https://ai.googleblog.com/2020/01/towards-conversational-agent-that-can.html</a><br><a href="https://arxiv.org/pdf/2001.09977.pdf" target="_blank" rel="noopener">https://arxiv.org/pdf/2001.09977.pdf</a><br><a href="https://github.com/google-research/google-research/tree/master/meena" target="_blank" rel="noopener">https://github.com/google-research/google-research/tree/master/meena</a></p>
+</blockquote>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><h3 id="开放的chatbot-API总结"><a href="#开放的chatbot-API总结" class="headerlink" title="开放的chatbot API总结"></a>开放的chatbot API总结</h3><ul>
+<li>cleverbot API: <a href="https://www.cleverbot.com/api/" target="_blank" rel="noopener">https://www.cleverbot.com/api/</a><ul>
+<li><a href="https://github.com/plasticuproject/cleverbotfree" target="_blank" rel="noopener">https://github.com/plasticuproject/cleverbotfree</a></li>
+</ul>
+</li>
+<li>xiaobing: <a href="https://www.msxiaobing.com/" target="_blank" rel="noopener">https://www.msxiaobing.com/</a></li>
+<li>mitsuku: <a href="https://www.pandorabots.com/mitsuku/" target="_blank" rel="noopener">https://www.pandorabots.com/mitsuku/</a><ul>
+<li><a href="https://github.com/hanwenzhu/mitsuku-api" target="_blank" rel="noopener">https://github.com/hanwenzhu/mitsuku-api</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="主要贡献"><a href="#主要贡献" class="headerlink" title="主要贡献"></a>主要贡献</h3><ul>
+<li>模型架构：Evolved Transformer<ul>
+<li>模型输入：多轮对话（最多7轮）</li>
+<li>模型输出：回复</li>
+<li>最佳模型：2.6B参数，10.2PPL，8K BPE subword vocabulary, 训练数据40B words</li>
+</ul>
+</li>
+<li>评测指标<ul>
+<li>PPL</li>
+<li>SSA（Sensibleness and Specificity Average）用来评估<ul>
+<li>whether make sense</li>
+<li>whether specific</li>
+</ul>
+</li>
+<li>人工评测使用static（1477个多轮对话）和interactive（想说啥就说啥）两种数据集，发现SSA和PPL在这两个数据集上高度相关</li>
+<li>模型在评测集的表现：<ul>
+<li>0.72的SSA</li>
+<li>经过filtering mechanism 和 tuned decoding后有0.79的SSA，相比于人提供的0.86SSA的回复已经很接近了</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>方法的局限性<ul>
+<li>评测数据集的局限性，不能解决所有领域的问题</li>
+</ul>
+</li>
+</ul>
+<h2 id="对话机器人的评价"><a href="#对话机器人的评价" class="headerlink" title="对话机器人的评价"></a>对话机器人的评价</h2><h3 id="人工进行评测时的参考标准"><a href="#人工进行评测时的参考标准" class="headerlink" title="人工进行评测时的参考标准"></a>人工进行评测时的参考标准</h3><ul>
+<li>Sensibleness<ul>
+<li>common sense</li>
+<li>logical coherence</li>
+<li>consistency</li>
+<li>人工评测时对于可打的标签：confusing, illogical, out of context, factually wrong, make sense</li>
+<li>缺陷：对于安全的回答，如I don’t know，无法区分</li>
+</ul>
+</li>
+<li>Specificity<ul>
+<li>A: I love tennis.   B: That’s nice 应该被标记为not specific，如果 B：Me too, I can’t get enough of Roger Federer!则被标记为specific</li>
+<li>已经被标记为not sensible的直接标记为not specific</li>
+</ul>
+</li>
+<li>SSA<ul>
+<li>可以使用Sensibleness和Specificity标记在所有responses的比例来作为参考标准</li>
+<li>使用SSA将Sensibleness和Specificity的比例进行了结合</li>
+</ul>
+</li>
+</ul>
+<h3 id="可进行对比的几个开源chatbot框架"><a href="#可进行对比的几个开源chatbot框架" class="headerlink" title="可进行对比的几个开源chatbot框架"></a>可进行对比的几个开源chatbot框架</h3><ul>
+<li>基于RNN：<a href="https://github.com/lukalabs/cakechat" target="_blank" rel="noopener">https://github.com/lukalabs/cakechat</a></li>
+<li>基于Transformer: <a href="https://github.com/microsoft/DialoGPT" target="_blank" rel="noopener">https://github.com/microsoft/DialoGPT</a><ul>
+<li>762M参数的模型效果更好一些</li>
+<li>dialogpt没有公开其解码和MMI-reranking的过程，gpt2bot实现了解码：<a href="https://github.com/polakowo/gpt2bot" target="_blank" rel="noopener">https://github.com/polakowo/gpt2bot</a></li>
+<li>附加一个中文的基于DialoGPT开发的闲聊模型<ul>
+<li><a href="https://github.com/yangjianxin1/GPT2-chitchat" target="_blank" rel="noopener">https://github.com/yangjianxin1/GPT2-chitchat</a></li>
+<li><a href="https://blog.csdn.net/kingsonyoung/article/details/103803067" target="_blank" rel="noopener">https://blog.csdn.net/kingsonyoung/article/details/103803067</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="构建静态评测集"><a href="#构建静态评测集" class="headerlink" title="构建静态评测集"></a>构建静态评测集</h3><ul>
+<li>从单轮开始：<a href="http://ai.stanford.edu/~quocle/QAresults.pdf" target="_blank" rel="noopener">http://ai.stanford.edu/~quocle/QAresults.pdf</a></li>
+<li>增加一些个性化问题，如：Do you like cats?<ul>
+<li>A: Do you like movies?; B: Yeah. I like sci-fi mostly; A: Really? Which is your favorite?期待I love Back to the Future这样的回答，对于I don’t like movies这样的回复应标记为not sensible</li>
+</ul>
+</li>
+</ul>
+<h3 id="进行动态评测"><a href="#进行动态评测" class="headerlink" title="进行动态评测"></a>进行动态评测</h3><ul>
+<li>机器人以Hi开始，评测人员自由与bot对话，并对每一个bot的回复进行评测。每一个对话至少14轮，至多28轮。</li>
+</ul>
+<h2 id="Meena-Chatbot"><a href="#Meena-Chatbot" class="headerlink" title="Meena Chatbot"></a>Meena Chatbot</h2><h3 id="训练数据"><a href="#训练数据" class="headerlink" title="训练数据"></a>训练数据</h3><ul>
+<li>来源于public social media</li>
+<li>清洗流程<ul>
+<li>去掉 subword 数目&lt;=2 或 subword 数目 &gt;= 128</li>
+<li>去掉 字母比例&lt;0.7</li>
+<li>去掉 包含URL</li>
+<li>去掉 作者名字bot</li>
+<li>去掉 出现100次以上</li>
+<li>去掉 跟上文n-gram重复比例过高</li>
+<li>去掉 敏感句子</li>
+<li>去掉 括号中内容</li>
+<li>当一个句子被删除时，则上文全部被删除</li>
+</ul>
+</li>
+<li>共清洗出867M的(context, response)对</li>
+<li>使用sentence piece进行BPE分词，得到8K的BPE vocab</li>
+<li>最终语料包含341GB的语料(40B word)</li>
+</ul>
+<h3 id="模型框架"><a href="#模型框架" class="headerlink" title="模型框架"></a>模型框架</h3><ul>
+<li>Evolved Transformer<ul>
+<li>2.6B parameter</li>
+<li>1 ET encoder + 13 ET decoder</li>
+</ul>
+</li>
+<li>最大的模型可达到10.2的PPL</li>
+<li>最大的传统Transformer模型（32层decoder）可达到10.7的PPL</li>
+<li>hidden size: 2560</li>
+<li>attention head: 32</li>
+<li>共享编码、解码、softmax的embedding</li>
+<li>编码、解码最长是128</li>
+</ul>
+<h3 id="训练细节"><a href="#训练细节" class="headerlink" title="训练细节"></a>训练细节</h3><ul>
+<li>使用Adafactor optimizer，初始学习率0.01，在前10k step保持不变，使用inverse square root of the number of steps进行衰减</li>
+<li>使用<a href="https://github.com/tensorflow/" target="_blank" rel="noopener">https://github.com/tensorflow/</a>tensor2tensor代码进行训练</li>
+</ul>
+<h3 id="解码细节"><a href="#解码细节" class="headerlink" title="解码细节"></a>解码细节</h3><ul>
+<li><p>为了避免产生乏味的回复，可以使用多种方法进行解码</p>
+<ul>
+<li>reranking</li>
+<li>基于profiles, topics, and styles</li>
+<li>强化学习</li>
+<li>变分自编吗</li>
+</ul>
+</li>
+<li><p>当PPL足够小时，可以使用sample-and-rank策略进行解码</p>
+<ul>
+<li><p>使用temperature T随机产生N个独立的候选</p>
+<ul>
+<li><p>$p_{i}=\frac{\exp \left(z_{i} / T\right)}{\sum_{j} \exp \left(z_{j} / T\right)}$</p>
+</li>
+<li><p>T=1产生不经过修正的分布</p>
+</li>
+<li><p>T越大，越容易产生不常见的词，如相关的实体名词，但可能产生错误的词</p>
+</li>
+<li><p>T越小，越容易产生常见的词，如冠词或介词，虽然安全但不specific</p>
+</li>
+<li><p>解释1</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">温度是神经网络的超参数，用于在应用softmax之前通过缩放对数来控制预测的随机性。 例如，在TensorFlow的LSTM中，温度代表在计算softmax之前将logit除以多少。</span><br><span class="line"></span><br><span class="line">当温度为1时，我们直接在logits（较早层的未缩放输出）上计算softmax，并使用温度为0.6的模型在logits&#x2F;0.6上计算softmax，从而得出较大的值。 在更大的值上执行softmax可使LSTM 更加自信 （需要较少的输入来激活输出层），但在其样本中也更加保守 （从不太可能的候选样本中进行抽样的可能性较小）。 使用较高的温度会在各个类上产生较软的概率分布，并使RNN更容易被样本“激发”，从而导致更多的多样性和更多的错误 。</span><br><span class="line"></span><br><span class="line">softmax函数通过确保网络输出在每个时间步长都在零到一之间，基于其指数值对候选网络的每次迭代进行归一化。</span><br><span class="line"></span><br><span class="line">因此，温度增加了对低概率候选者的敏感性。</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>解释2</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当T很大时，即趋于正无穷时，所有的激活值对应的激活概率趋近于相同（激活概率差异性较小）；而当T很低时，即趋于0时，不同的激活值对应的激活概率差异也就越大。</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>发现使用beam-search解码会产生重复且无趣的回复，使用sample-and-rank产生的回复会丰富一些</p>
+</li>
+<li>使用N=20，T=0.88</li>
+<li>response score的计算：logP/T，P是response的likelihood，T是token的个数</li>
+<li>解码时增加detect cross turn repetitions<ul>
+<li>当两个turn的n-gram重复超过一定比例时，则从候选中删除</li>
+</ul>
+</li>
+<li>增加一个分类层，用来过滤掉敏感回复</li>
+</ul>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><h3 id="SSA和PPL是相关的"><a href="#SSA和PPL是相关的" class="headerlink" title="SSA和PPL是相关的"></a>SSA和PPL是相关的</h3><ul>
+<li>基本呈线性关系</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/paper_ssa.png?e=1580825793&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:XYKxV0-Vy99TsjbuB7EorIolYVk=&amp;attname=" alt="图片"></p>
+<h3 id="效果的比较"><a href="#效果的比较" class="headerlink" title="效果的比较"></a>效果的比较</h3><ul>
+<li>小冰：呈现出个性化的回复，但有时也会无意义，且经常回复得太平常。小冰另一个特点就是具有同情心，可以在以后的评价指标中考虑这一点。小冰有near-human-level engagingness但not very close to human-level humanness，因此在我们的评测指标上SSA不高。</li>
+<li>mitsuku：56%SSA（72%sensibility 40%specifity）, 网站上的对话并不是它参加图灵测试的版本</li>
+<li>DialoGPT：48%SSA（57%sensibility 49%specifity）</li>
+<li>CleverBot：在interactive评测表现比static上稍微好一些（56% interactive SSA，44% static SSA）。发现cleverbot更擅长将话题引入到它更擅长的领域中，缺少personality</li>
+<li>Meena：base（72% SSA），full（79% SSA）</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/02/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8ATowards-a-Human-like-Open-Domain-Chatbot%E3%80%8B/" data-id="ck67wx37s000ck0wv4hnaa44c"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Chatbot/" rel="tag">Chatbot</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/02/01/%E5%90%84%E7%B1%BB%E8%B5%84%E6%BA%90%E5%AE%9A%E6%9C%9F%E6%B1%87%E6%80%BB/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">各类资源定期汇总</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<!--<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+</body>
+</html>
