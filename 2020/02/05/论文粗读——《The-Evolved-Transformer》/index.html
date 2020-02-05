@@ -147,10 +147,9 @@
 <li><p>机器翻译</p>
 <ul>
 <li>在初始的10K step使用0.01的learning rate</li>
-<li>Transformer<ul>
+<li><p>Transformer</p>
+<ul>
 <li>inverse-square-root decay to 0 at 300K steps：$l r=s t e p^{-0.00303926^{\circ}}-.962392$</li>
-</ul>
-</li>
 </ul>
 </li>
 <li><p>Evolved Transformer</p>
@@ -161,6 +160,8 @@
 <li>every decay was paired with the same constant 0.01 warmup.</li>
 <li>大模型使用高一点的dropout（0.3），小模型使用0.2 dropout</li>
 <li>beam-size=6, lenth-penalty=0.6, max-output=50</li>
+</ul>
+</li>
 <li>语言模型<ul>
 <li>跟机器翻译差不多，去掉了label smooth, intra-attention dropout=0.0</li>
 </ul>
@@ -185,7 +186,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/02/05/%E8%AE%BA%E6%96%87%E7%B2%97%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AThe-Evolved-Transformer%E3%80%8B/" data-id="ck690tagx000474wv4d88g7lb"
+      <a data-url="majsunflower.cn/2020/02/05/%E8%AE%BA%E6%96%87%E7%B2%97%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AThe-Evolved-Transformer%E3%80%8B/" data-id="ck690vd8f00047rwv795be41h"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Transformer/" rel="tag">Transformer</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>

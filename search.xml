@@ -72,10 +72,9 @@
 <li><p>机器翻译</p>
 <ul>
 <li>在初始的10K step使用0.01的learning rate</li>
-<li>Transformer<ul>
+<li><p>Transformer</p>
+<ul>
 <li>inverse-square-root decay to 0 at 300K steps：$l r=s t e p^{-0.00303926^{\circ}}-.962392$</li>
-</ul>
-</li>
 </ul>
 </li>
 <li><p>Evolved Transformer</p>
@@ -86,6 +85,8 @@
 <li>every decay was paired with the same constant 0.01 warmup.</li>
 <li>大模型使用高一点的dropout（0.3），小模型使用0.2 dropout</li>
 <li>beam-size=6, lenth-penalty=0.6, max-output=50</li>
+</ul>
+</li>
 <li>语言模型<ul>
 <li>跟机器翻译差不多，去掉了label smooth, intra-attention dropout=0.0</li>
 </ul>
