@@ -1,7 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>论文粗读——《Generating Sentences by Editing Prototypes》</title>
+    <title>论文阅读：《Solving and Generating Chinese Character Riddles》</title>
+    <url>/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ASolving-and-Generating-Chinese-Character-Riddles%E3%80%8B/</url>
+    <content><![CDATA[<p>之前想给语音助手增加一个猜字谜的功能，这两天不忙就读了一下这篇机器解谜语的论文。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://www.aclweb.org/anthology/D16-1081.pdf" target="_blank" rel="noopener">https://www.aclweb.org/anthology/D16-1081.pdf</a></p>
+</blockquote>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><ul>
+<li>解谜语类似于下面的过程：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc1.png?e=1581436035&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:6825qy_Tws9wJ2ApJ6qaCVgeYqA=&amp;attname=" alt="图片"></p>
+<ul>
+<li>解谜的pipeline<ul>
+<li>解题过程<ul>
+<li>学习谜语中的短语和部首的对齐关系</li>
+<li>学习谜语和rule的关系</li>
+<li>使用上面两个关系，用算法得到候选答案</li>
+<li>使用Ranking-SVM来对candidate进行排序</li>
+</ul>
+</li>
+<li>生成谜语过程<ul>
+<li>使用模版方法</li>
+<li>使用替代的方法</li>
+<li>使用Ranking-SVM来对candidate进行排序</li>
+</ul>
+</li>
+<li>整体过程如下图：</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc2.png?e=1581436085&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:L0wmaUWlEpXDi0j1seHJACbgi_4=&amp;attname=" alt="图片"></p>
+<h2 id="Phrase-Radical-Alignments-and-Rules"><a href="#Phrase-Radical-Alignments-and-Rules" class="headerlink" title="Phrase-Radical Alignments and Rules"></a>Phrase-Radical Alignments and Rules</h2><h3 id="Alignment"><a href="#Alignment" class="headerlink" title="Alignment"></a>Alignment</h3><ul>
+<li>希望将“千里”和“马”进行对齐</li>
+<li>方法一<ul>
+<li>将谜语分词$\left(w_{1}, w_{2}, \ldots, w_{n}\right)$</li>
+<li>将答案分成不同部首$\left(r_{1}, r_{2}, \ldots, r_{m}\right)$</li>
+<li>统计对齐$\left(\left[w_{i}, w_{j}\right], r_{k}\right)(i, j \in[1, n], k \in[1, m])$</li>
+</ul>
+</li>
+<li>方法二<ul>
+<li>谜语中两个连续字符$\left(w_{1}, w_{2}\right)$，如果w1是w2的部首，且w2的其余部分r出现在答案q中，则$\left(\left(w_{1}, w_{2}\right), r\right)$是一个对齐</li>
+</ul>
+</li>
+<li>统计所有的对齐，并过滤掉出现频次小于3的</li>
+<li>特别常见的对齐如下图：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc3.png?e=1581436263&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:rzyqU1zqa0wOTfbVGSrsqMU6LfA=&amp;attname=" alt="图片"></p>
+<h3 id="Rules"><a href="#Rules" class="headerlink" title="Rules"></a>Rules</h3><ul>
+<li>总结了6类规则</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc4.png?e=1581436263&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:X4clMP1c3Qu1jkdP7O2bzEDhmHA=&amp;attname=" alt="图片"></p>
+<ul>
+<li>对于$\left(\left[w_{1}, w_{n}\right], r\right)$，如果r是wi的部首，则$\left(w_{1}, \dots, w_{i-1},(.), w_{i+1}, \dots, w_{n}\right)$就是一个潜在的规则，我们从数据中最终总结193条规则，归纳为上面6类</li>
+<li>1000个汉字有至少1个alignment，27个汉字有至少100个alignment</li>
+</ul>
+<h2 id="Riddle-Solving-and-Generation"><a href="#Riddle-Solving-and-Generation" class="headerlink" title="Riddle Solving and Generation"></a>Riddle Solving and Generation</h2><h3 id="Solving-Chinese-Character-Riddles"><a href="#Solving-Chinese-Character-Riddles" class="headerlink" title="Solving Chinese Character Riddles"></a>Solving Chinese Character Riddles</h3><ul>
+<li>解谜算法的伪代码如下</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc10.png?e=1581436590&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:3G21ibvanvfL5oCrC630ho9S7J0=&amp;attname=" alt="图片"></p>
+<ul>
+<li>以“上岗必戴安全帽”为例，“上岗”通过规则“上(up) (.)”和山对齐，“必” 和 “戴”跟自己对齐，“安全帽”因为analogical shape和“宀”对齐，最终得到结果“密”</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc11.png?e=1581436670&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:jk1KaE2eHG6GUouBkwTpx6Q9z0M=&amp;attname=" alt="图片"></p>
+<ul>
+<li>对答案进行排序，排序时使用的特征如下：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc7.png?e=1581436432&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:YniSFAc-SujL9xbaGG2t43McGxk=&amp;attname=" alt="图片"></p>
+<h3 id="Generating-Chinese-Character-Riddles"><a href="#Generating-Chinese-Character-Riddles" class="headerlink" title="Generating Chinese Character Riddles"></a>Generating Chinese Character Riddles</h3><ul>
+<li>基于模板的方法</li>
+<li>基于替换的方法</li>
+<li>对候选的description进行排序，排序使用的特征如下：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc8.png?e=1581436432&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:NF5wDQk89RuFEHwX_KBvgDdzFsg=&amp;attname=" alt="图片"></p>
+<h3 id="Ranking-Model"><a href="#Ranking-Model" class="headerlink" title="Ranking Model"></a>Ranking Model</h3><ul>
+<li>score的计算：$\text { Score }(c)=\sum_{i=1}^{m} \lambda_{i} * g_{i}(c)$，其中c表示一个候选，gi(c)表示c的第i个特征，m是特征的总数，$\lambda_{i}​$表示特征的权重</li>
+<li>使用Ranking SVM算法求解特征权重参数</li>
+</ul>
+<h2 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h2><ul>
+<li>数据：从网络上爬取的7w+谜语，3k+的笔画，古代诗词和对联等用于训练语言模型</li>
+<li>使用准确率评价解谜的效果，使用人工评测来评价生成谜题</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>机器猜字谜</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>论文粗读:《Generating Sentences by Editing Prototypes》</title>
     <url>/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/</url>
     <content><![CDATA[<p>因为想做一个根据不同年龄段的人生成不同故事内容的demo，所以阅读了这篇文本风格转换的论文。</p>
 <a id="more"></a>
@@ -152,6 +239,9 @@
 <li>consistent edit behavior</li>
 </ul>
 ]]></content>
+      <tags>
+        <tag>文本风格迁移</tag>
+      </tags>
   </entry>
   <entry>
     <title>Separable Convolution</title>
@@ -207,7 +297,7 @@
       </tags>
   </entry>
   <entry>
-    <title>论文粗读——《The Evolved Transformer》</title>
+    <title>论文粗读:《The Evolved Transformer》</title>
     <url>/2020/02/05/%E8%AE%BA%E6%96%87%E7%B2%97%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AThe-Evolved-Transformer%E3%80%8B/</url>
     <content><![CDATA[<p>今天阅读了论文《The Evolved Transformer》，该论文使用了神经架构搜索方法找到了一个更优的transformer结构。下面是阅读过程中的笔记。</p>
 <a id="more"></a>
@@ -320,7 +410,7 @@
       </tags>
   </entry>
   <entry>
-    <title>论文阅读——《Towards a Human-like Open-Domain Chatbot》</title>
+    <title>论文阅读:《Towards a Human-like Open-Domain Chatbot》</title>
     <url>/2020/02/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8ATowards-a-Human-like-Open-Domain-Chatbot%E3%80%8B/</url>
     <content><![CDATA[<p>今天阅读了谷歌最新出的一篇论文，《Towards a Human-like Open-Domain Chatbot》，主要提出了端到端对话机器人的一种评测方法和模型框架。下面是阅读过程中的笔记。</p>
 <a id="more"></a>
@@ -478,7 +568,8 @@
 </li>
 <li>使用N=20，T=0.88</li>
 <li>response score的计算：logP/T，P是response的likelihood，T是token的个数</li>
-<li>解码时增加detect cross turn repetitions<ul>
+<li><p>解码时增加detect cross turn repetitions</p>
+<ul>
 <li>当两个turn的n-gram重复超过一定比例时，则从候选中删除</li>
 </ul>
 </li>

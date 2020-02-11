@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    论文阅读：《Solving and Generating Chinese Character Riddles》 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-论文阅读：《Solving-and-Generating-Chinese-Character-Riddles》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文阅读：《Solving and Generating Chinese Character Riddles》
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ASolving-and-Generating-Chinese-Character-Riddles%E3%80%8B/" class="article-date">
+  <time datetime="2020-02-11T14:43:09.000Z" itemprop="datePublished">2020-02-11</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>之前想给语音助手增加一个猜字谜的功能，这两天不忙就读了一下这篇机器解谜语的论文。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://www.aclweb.org/anthology/D16-1081.pdf" target="_blank" rel="noopener">https://www.aclweb.org/anthology/D16-1081.pdf</a></p>
+</blockquote>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><ul>
+<li>解谜语类似于下面的过程：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc1.png?e=1581436035&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:6825qy_Tws9wJ2ApJ6qaCVgeYqA=&amp;attname=" alt="图片"></p>
+<ul>
+<li>解谜的pipeline<ul>
+<li>解题过程<ul>
+<li>学习谜语中的短语和部首的对齐关系</li>
+<li>学习谜语和rule的关系</li>
+<li>使用上面两个关系，用算法得到候选答案</li>
+<li>使用Ranking-SVM来对candidate进行排序</li>
+</ul>
+</li>
+<li>生成谜语过程<ul>
+<li>使用模版方法</li>
+<li>使用替代的方法</li>
+<li>使用Ranking-SVM来对candidate进行排序</li>
+</ul>
+</li>
+<li>整体过程如下图：</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc2.png?e=1581436085&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:L0wmaUWlEpXDi0j1seHJACbgi_4=&amp;attname=" alt="图片"></p>
+<h2 id="Phrase-Radical-Alignments-and-Rules"><a href="#Phrase-Radical-Alignments-and-Rules" class="headerlink" title="Phrase-Radical Alignments and Rules"></a>Phrase-Radical Alignments and Rules</h2><h3 id="Alignment"><a href="#Alignment" class="headerlink" title="Alignment"></a>Alignment</h3><ul>
+<li>希望将“千里”和“马”进行对齐</li>
+<li>方法一<ul>
+<li>将谜语分词$\left(w_{1}, w_{2}, \ldots, w_{n}\right)$</li>
+<li>将答案分成不同部首$\left(r_{1}, r_{2}, \ldots, r_{m}\right)$</li>
+<li>统计对齐$\left(\left[w_{i}, w_{j}\right], r_{k}\right)(i, j \in[1, n], k \in[1, m])$</li>
+</ul>
+</li>
+<li>方法二<ul>
+<li>谜语中两个连续字符$\left(w_{1}, w_{2}\right)$，如果w1是w2的部首，且w2的其余部分r出现在答案q中，则$\left(\left(w_{1}, w_{2}\right), r\right)$是一个对齐</li>
+</ul>
+</li>
+<li>统计所有的对齐，并过滤掉出现频次小于3的</li>
+<li>特别常见的对齐如下图：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc3.png?e=1581436263&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:rzyqU1zqa0wOTfbVGSrsqMU6LfA=&amp;attname=" alt="图片"></p>
+<h3 id="Rules"><a href="#Rules" class="headerlink" title="Rules"></a>Rules</h3><ul>
+<li>总结了6类规则</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc4.png?e=1581436263&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:X4clMP1c3Qu1jkdP7O2bzEDhmHA=&amp;attname=" alt="图片"></p>
+<ul>
+<li>对于$\left(\left[w_{1}, w_{n}\right], r\right)$，如果r是wi的部首，则$\left(w_{1}, \dots, w_{i-1},(.), w_{i+1}, \dots, w_{n}\right)$就是一个潜在的规则，我们从数据中最终总结193条规则，归纳为上面6类</li>
+<li>1000个汉字有至少1个alignment，27个汉字有至少100个alignment</li>
+</ul>
+<h2 id="Riddle-Solving-and-Generation"><a href="#Riddle-Solving-and-Generation" class="headerlink" title="Riddle Solving and Generation"></a>Riddle Solving and Generation</h2><h3 id="Solving-Chinese-Character-Riddles"><a href="#Solving-Chinese-Character-Riddles" class="headerlink" title="Solving Chinese Character Riddles"></a>Solving Chinese Character Riddles</h3><ul>
+<li>解谜算法的伪代码如下</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc10.png?e=1581436590&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:3G21ibvanvfL5oCrC630ho9S7J0=&amp;attname=" alt="图片"></p>
+<ul>
+<li>以“上岗必戴安全帽”为例，“上岗”通过规则“上(up) (.)”和山对齐，“必” 和 “戴”跟自己对齐，“安全帽”因为analogical shape和“宀”对齐，最终得到结果“密”</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc11.png?e=1581436670&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:jk1KaE2eHG6GUouBkwTpx6Q9z0M=&amp;attname=" alt="图片"></p>
+<ul>
+<li>对答案进行排序，排序时使用的特征如下：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc7.png?e=1581436432&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:YniSFAc-SujL9xbaGG2t43McGxk=&amp;attname=" alt="图片"></p>
+<h3 id="Generating-Chinese-Character-Riddles"><a href="#Generating-Chinese-Character-Riddles" class="headerlink" title="Generating Chinese Character Riddles"></a>Generating Chinese Character Riddles</h3><ul>
+<li>基于模板的方法</li>
+<li>基于替换的方法</li>
+<li>对候选的description进行排序，排序使用的特征如下：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/sgc8.png?e=1581436432&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:NF5wDQk89RuFEHwX_KBvgDdzFsg=&amp;attname=" alt="图片"></p>
+<h3 id="Ranking-Model"><a href="#Ranking-Model" class="headerlink" title="Ranking Model"></a>Ranking Model</h3><ul>
+<li>score的计算：$\text { Score }(c)=\sum_{i=1}^{m} \lambda_{i} * g_{i}(c)$，其中c表示一个候选，gi(c)表示c的第i个特征，m是特征的总数，$\lambda_{i}​$表示特征的权重</li>
+<li>使用Ranking SVM算法求解特征权重参数</li>
+</ul>
+<h2 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h2><ul>
+<li>数据：从网络上爬取的7w+谜语，3k+的笔画，古代诗词和对联等用于训练语言模型</li>
+<li>使用准确率评价解谜的效果，使用人工评测来评价生成谜题</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ASolving-and-Generating-Chinese-Character-Riddles%E3%80%8B/" data-id="ck6i0kyty0009qlx9h3gq7rvd"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E7%8C%9C%E5%AD%97%E8%B0%9C/" rel="tag">机器猜字谜</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">论文粗读:《Generating Sentences by Editing Prototypes》</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<!--<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+</body>
+</html>
