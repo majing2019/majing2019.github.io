@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    论文粗读——《Generating Sentences by Editing Prototypes》 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-论文阅读——《Generating-Sentences-by-Editing-Prototypes》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文粗读——《Generating Sentences by Editing Prototypes》
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/" class="article-date">
+  <time datetime="2020-02-11T05:50:59.000Z" itemprop="datePublished">2020-02-11</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>因为想做一个根据不同年龄段的人生成不同故事内容的demo，所以阅读了这篇文本风格转换的论文。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://arxiv.org/abs/1709.08878" target="_blank" rel="noopener">https://arxiv.org/abs/1709.08878</a><br><a href="https://github.com/kelvinguu/neural-editor" target="_blank" rel="noopener">https://github.com/kelvinguu/neural-editor</a></p>
+</blockquote>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><h3 id="主要贡献"><a href="#主要贡献" class="headerlink" title="主要贡献"></a>主要贡献</h3><ul>
+<li>通过从训练集中挑选一个prototype sentence，产生一个能捕捉到句子相似度等句子级别信息的latent edit vector，并通过这个向量生成句子</li>
+<li>模型的整体框架如下图，这个模型的由来是基于人们的一个经验，通常人们写一个复杂的句子时，都是根据一个简单的句子，逐步修改而来的</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/gsep1.png?e=1581404341&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:QHEr4adI3Rh1S6CxqlnKtAqVOKo=&amp;attname=" alt="图片"></p>
+<ul>
+<li>目标函数：最大化生成模型的log likelihood</li>
+<li>使用locality sensitive hashing寻找相似的句子</li>
+</ul>
+<h2 id="Problem-Statement"><a href="#Problem-Statement" class="headerlink" title="Problem Statement"></a>Problem Statement</h2><h3 id="解决问题分两步"><a href="#解决问题分两步" class="headerlink" title="解决问题分两步"></a>解决问题分两步</h3><ul>
+<li>从语料库里选择一句话<ul>
+<li>prototype distribution: p(x’) （uniform over X）</li>
+<li>以p(x’)的概率从语料库中随机选择一个prototype sentence</li>
+</ul>
+</li>
+<li>把这句话进行修改<ul>
+<li>以edit prior: p(z)的概率sample出一个edit vector: z （实际是对edit type进行编码）</li>
+<li>将z和x’送入到$p_{\text {edit }}\left(x | x^{\prime}, z\right)$的神经网络中，产生新的句子x</li>
+</ul>
+</li>
+</ul>
+<p>整体公式如下：</p>
+<p>$p(x)=\sum_{x^{\prime} \in \mathcal{X}} p\left(x | x^{\prime}\right) p\left(x^{\prime}\right)$</p>
+<p>$p\left(x | x^{\prime}\right)=\mathbb{E}_{z \sim p(z)}\left[p_{\mathrm{edit}}\left(x | x^{\prime}, z\right)\right]$</p>
+<h3 id="模型满足两个条件"><a href="#模型满足两个条件" class="headerlink" title="模型满足两个条件"></a>模型满足两个条件</h3><ul>
+<li>Semantic smoothness：一次edit只能对文本进行小改动；多次edit可以产生大的改动</li>
+<li>Consistent edit behavior：对edit有类型的控制，对不同句子同一类型的edit应该产生相似的效果</li>
+</ul>
+<h2 id="Approach"><a href="#Approach" class="headerlink" title="Approach"></a>Approach</h2><h3 id="对p-x-进行近似"><a href="#对p-x-进行近似" class="headerlink" title="对p(x)进行近似"></a>对p(x)进行近似</h3><ul>
+<li>大多数的prototype x都是不相关的，即p(x|x’)非常小；因此我们只考虑和x有非常高的lexical overlap的prototype x’</li>
+<li>定义一个lexical similarity neighborhor $\mathcal{N}(x) \stackrel{\text { def }}{=}\left\{x^{\prime} \in \mathcal{X}: d_{J}\left(x, x^{\prime}\right)&lt;0.5\right\}$，其中dj是x和x’的Jaccard距离</li>
+<li>利用neighborhood prototypes和Jensen不等式求解</li>
+</ul>
+<p>$\begin{aligned} \log p(x) &amp;=\log \left[\sum_{x^{\prime} \in \mathcal{X}} p\left(x | x^{\prime}\right) p\left(x^{\prime}\right)\right] \ &amp; \geq \log \left[\sum_{x^{\prime} \in \mathcal{N}(x)} p\left(x | x^{\prime}\right) p\left(x^{\prime}\right)\right] \end{aligned}$</p>
+<p>$\begin{array}{l}{=\log \left[|\mathcal{N}(x)|^{-1} \sum_{x^{\prime} \in \mathcal{N}(x)} p\left(x | x^{\prime}\right)\right]+R(x)} \ {\geq|\mathcal{N}(x)|^{-1} \sum_{x^{\prime} \in \mathcal{N}(x)} \log p\left(x | x^{\prime}\right)+R(x)} \ {\underbrace{x^{\prime} \in \mathcal{N}(x)}_{\text {def }_{\mathrm{LEX}}(x)}+R(x)}\end{array}$</p>
+<ul>
+<li>$\begin{array}{l}{p\left(x^{\prime}\right)=1 /|\mathcal{X}|} \ {\mathrm{R}(\mathrm{x})=\log (|\mathcal{N}(x)| /|\mathcal{X}|)}\end{array}$</li>
+<li>$|\mathcal{N}(x)|​$是跟x相关的常数，x的邻居使用locality sensitive hashing (LSH) and minhashing进行预先的计算</li>
+</ul>
+<h3 id="对log-p-x-x’-进行近似"><a href="#对log-p-x-x’-进行近似" class="headerlink" title="对log p(x|x’)进行近似"></a>对log p(x|x’)进行近似</h3><ul>
+<li><p>使用蒙特卡洛对$z \sim p(z)​$进行采样时可能会产生比较高的方差，因为$p_{\text {edit }}\left(x | x^{\prime}, z\right)​$对于大部分从p(z) sample出来的z来说都输出0，只对一部分不常见的值输出较大的值</p>
+</li>
+<li><p>使用inverse neural editor：$q\left(z | x^{\prime}, x\right)$</p>
+<ul>
+<li>对prototype x’和修正后的句子x，生成一个x’到x的转换的edit vector z，这个z在重要的值上会有较大的概率</li>
+</ul>
+</li>
+<li><p>使用evidence lower bound（ELBO）来计算log p(x|x’)</p>
+<p>$\begin{aligned} \log p\left(x | x^{\prime}\right) \geq &amp; \underbrace{\mathbb{E}_{z \sim q\left(z | x^{\prime}, x\right)}\left[\log p_{\text {edit }}\left(x | x^{\prime}, z\right)\right]}_{\mathcal{L}_{\text {gen }}} \ &amp;-\underbrace{\operatorname{KL}\left(q\left(z | x^{\prime}, x\right) | p(z)\right)}_{\mathcal{E}_{\mathrm{KL}}^{L}} \ \stackrel{\text { def }}{=} \operatorname{ELBO}\left(x, x^{\prime}\right) \end{aligned}$</p>
+</li>
+<li><p>q(z|x’,x)可以看成是VAE的encoder，pedit(x|x’,z)可以看成是VAE的decoder</p>
+</li>
+</ul>
+<h3 id="目标函数-sum-x-prime-in-mathcal-N-x-operatorname-ELBO-left-x-x-prime-right"><a href="#目标函数-sum-x-prime-in-mathcal-N-x-operatorname-ELBO-left-x-x-prime-right" class="headerlink" title="目标函数 $\sum_{x^{\prime} \in \mathcal{N}(x)} \operatorname{ELBO}\left(x, x^{\prime}\right)$"></a>目标函数 $\sum_{x^{\prime} \in \mathcal{N}(x)} \operatorname{ELBO}\left(x, x^{\prime}\right)$</h3><ul>
+<li>参数：$\Theta=\left(\Theta_{p}, \Theta_{q}\right)$，包含neural editor的参数和inverse neural editor的参数</li>
+</ul>
+<h2 id="Model-Architecture"><a href="#Model-Architecture" class="headerlink" title="Model Architecture"></a>Model Architecture</h2><h3 id="Neural-editor-p-text-edit-left-x-x-prime-z-right"><a href="#Neural-editor-p-text-edit-left-x-x-prime-z-right" class="headerlink" title="Neural editor $p_{\text {edit }}\left(x | x^{\prime}, z\right)$"></a>Neural editor $p_{\text {edit }}\left(x | x^{\prime}, z\right)$</h3><ul>
+<li>input: prototype x’</li>
+<li>output: revised sentence x</li>
+<li>seq2seq<ul>
+<li>encoder: 3层双向LSTM，使用Glove词向量初始化</li>
+<li>decoder: 3层包含attention的LSTM<ul>
+<li>最上面一层的hidden state用来和encoder输出的hidden state一起算attention</li>
+<li>将attention向量和z向量concate一起，再送入softmax中</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Edit-prior-p-z"><a href="#Edit-prior-p-z" class="headerlink" title="Edit prior $p(z)$"></a>Edit prior $p(z)$</h3><ul>
+<li>edit vector z的sample方法<ul>
+<li>先采样其scalar length：$z_{\text {norm }} \sim  \operatorname{Unif}(0,10)​$</li>
+<li>再采样其direction:  在uniform distribution中采样一个zdir向量</li>
+<li>$z=z_{\text {norm }} \cdot z_{\text {dir }}$</li>
+<li>这样做是为了方便计算KL散度</li>
+</ul>
+</li>
+</ul>
+<h3 id="Inverse-neural-editor-q-left-z-x-prime-x-right"><a href="#Inverse-neural-editor-q-left-z-x-prime-x-right" class="headerlink" title="Inverse neural editor $q\left(z | x^{\prime}, x\right)$"></a>Inverse neural editor $q\left(z | x^{\prime}, x\right)$</h3><ul>
+<li>假设x’和x只差了一个word，那么edit vector z跟word的词向量应该是一样的，那么多个word的插入就相当于多个word的词向量的和，删除同理</li>
+<li>加入到x’的词的集合：$I=x \backslash x^{\prime}​$</li>
+<li>从x’中删除的词的集合：$D=x^{\prime}\backslash  x$</li>
+<li>x’和x的差异：$f\left(x, x^{\prime}\right)=\sum_{w \in I} \Phi(w) \oplus \sum_{w \in D} \Phi(w)$<ul>
+<li>$\Phi(w)$表示w的词向量，它同时也是inverse neural editor q的参数，使用300维的Glove向量初始化</li>
+<li>$\oplus$表示concate操作</li>
+</ul>
+</li>
+<li>认为q是在f的基础上加入噪声获得的（先旋转，在rescale）：</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/gsep6.png?e=1581405927&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:igK4evC1pJqDfidkxKojrNkCnPk=&amp;attname=" alt="图片"></p>
+<ul>
+<li>$\begin{array}{l}{f_{\text {norm }}=|f|} \ {f_{\text {dir }}=f / f_{\text {norm }}}\end{array}$</li>
+<li>$\operatorname{vMF}(v ; \mu, \kappa)​$表示点v的unit空间中的vMF分布，参数包含mean vector$\mu​$和concentration parameter $ \kappa​$</li>
+<li><p>因此可得：$\begin{aligned} q\left(z_{\text {dir }} | x^{\prime}, x\right) &amp;=\operatorname{vMF}\left(z_{\text {dir }} ; f_{\text {dir }}, \kappa\right) \ q\left(z_{\text {norm }} | x^{\prime}, x\right) &amp;=\text { Unif }\left(z_{\text {norn }} ;\left[\tilde{f}_{\text {norn }}, \tilde{f}_{\text {nom }}+\epsilon\right]\right) \end{aligned}$</p>
+</li>
+<li><p>其中 $\tilde{f}_{\text {norm }}=\min \left(f_{\text {norm }}, 10-\epsilon\right)$</p>
+</li>
+<li>最终 $z=z_{\mathrm{dir}} \cdot z_{\mathrm{norm}}$</li>
+</ul>
+<h2 id="Details"><a href="#Details" class="headerlink" title="Details"></a>Details</h2><h3 id="计算目标函数的梯度-nabla-Theta-q-operatorname-ELBO-left-x-x-prime-right-nabla-Theta-q-mathcal-L-mathrm-gen-nabla-Theta-q-mathcal-L-mathrm-KL"><a href="#计算目标函数的梯度-nabla-Theta-q-operatorname-ELBO-left-x-x-prime-right-nabla-Theta-q-mathcal-L-mathrm-gen-nabla-Theta-q-mathcal-L-mathrm-KL" class="headerlink" title="计算目标函数的梯度$\nabla_{\Theta_{q}} \operatorname{ELBO}\left(x, x^{\prime}\right)=\nabla_{\Theta_{q}} \mathcal{L}_{\mathrm{gen}}-\nabla_{\Theta_{q}} \mathcal{L}_{\mathrm{KL}}$"></a>计算目标函数的梯度$\nabla_{\Theta_{q}} \operatorname{ELBO}\left(x, x^{\prime}\right)=\nabla_{\Theta_{q}} \mathcal{L}_{\mathrm{gen}}-\nabla_{\Theta_{q}} \mathcal{L}_{\mathrm{KL}}$</h3><ul>
+<li>使用重参数计算：$\nabla_{\Theta_{q}} \mathcal{L}_{\mathrm{gen}}$<ul>
+<li>将z~q(z|x’,x)重写为$z=h(\alpha)$</li>
+<li>$\begin{aligned} \nabla \Theta_{q} \mathcal{L}_{\mathrm{gen}} &amp;=\nabla \Theta_{q} \mathbb{E}_{z \sim q\left(z | x^{\prime}, x\right)}\left[\log p_{\text {edit }}\left(x | x^{\prime}, z\right)\right] \ &amp;=\mathbb{E}_{\alpha \sim p(\alpha)}\left[\nabla \Theta_{q} \log p_{\text {edit }}\left(x | x^{\prime}, h(\alpha)\right)\right] \end{aligned}$</li>
+</ul>
+</li>
+<li>计算$\nabla_{\Theta_{q}} \mathcal{L}_{\mathrm{KL}}$<ul>
+<li>$\begin{aligned} \mathcal{L}_{\mathrm{KL}} &amp;=\mathrm{KL}\left(q\left(z_{\text {norm }} | x^{\prime}, x\right) | p\left(z_{\text {norm }}\right)\right) \ &amp;+\mathrm{KL}\left(q\left(z_{\text {dir }} | x^{\prime}, x\right) | p\left(z_{\text {dir }}\right)\right) \end{aligned}$</li>
+<li>$\begin{array}{l}{\operatorname{KL}(\operatorname{vMF}(\mu, \kappa) | \operatorname{vMF}(\mu, 0))=\kappa \frac{I_{d / 2}(\kappa)+I_{d / 2-1}(\kappa) \frac{d-2}{2 \kappa}}{I_{d / 2-1}(\kappa)-\frac{d-2}{2 \kappa}}} \ {-\log \left(I_{d / 2-1}(\kappa)\right)-\log (\Gamma(d / 2))} \ {+\log (\kappa)(d / 2-1)-(d-2) \log (2) / 2}\end{array}$</li>
+</ul>
+</li>
+</ul>
+<h2 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h2><h3 id="Datsets"><a href="#Datsets" class="headerlink" title="Datsets"></a>Datsets</h3><ul>
+<li>Yelp</li>
+<li>One BillionWord Language Model Benchmark</li>
+<li>使用Spacy将NER的词替换成其NER category</li>
+<li>将出现频次小于10000的词用UNK替换</li>
+</ul>
+<h3 id="Generative-Modeling"><a href="#Generative-Modeling" class="headerlink" title="Generative Modeling"></a>Generative Modeling</h3><ul>
+<li>对比几个生成模型的效果（KENLM语言模型、自回归语言模型）</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/gsep3.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:LA380X1_lyJgcN5nwy3i0jrZp1E=&amp;attname=" alt="图片"></p>
+<ul>
+<li>使用neural editor可以生成跟prototype很不一样的句子</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/gsep4.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:dCqZWMWMIR1S0hSxwzUkcRj_aWA=&amp;attname=" alt="图片"></p>
+<h3 id="Human-Evaluation"><a href="#Human-Evaluation" class="headerlink" title="Human Evaluation"></a>Human Evaluation</h3><ul>
+<li>降低softmax temperture有助于产生更符合语法的句子，但也会产生short and generic sentence<ul>
+<li>从corpus中sample出prototype sentence可以增加生成句子的多样性，因此即便temperature设置为0，也不会影响句子多样子，这是比传统的NLM强的地方</li>
+</ul>
+</li>
+<li>从grammaticality 和 plausibility两方面进行评测</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/gesp5.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:WZyj_YQ2oY73QF7j2kJovXwDgM8=&amp;attname=" alt="图片"></p>
+<h3 id="Semantics-of-NeuralEditor"><a href="#Semantics-of-NeuralEditor" class="headerlink" title="Semantics of NeuralEditor"></a>Semantics of NeuralEditor</h3><ul>
+<li>跟sentence variational autoencoder (SVAE)模型对比，SVAE将句子映射到semantic空间向量，再从向量还原句子</li>
+<li>semantic smoothness<ul>
+<li>smoothness表示每一个小的edit只能对句子有一点点改变</li>
+<li>我们先从corpus中选择一个prototype sentence，然后不断对它使用neural editor，并让人工对semantic的变化进行打分。</li>
+<li>对比实验有两个，一个是SVAE，一个是从corpus中根据cosine相似度选择出的句子</li>
+</ul>
+</li>
+<li>consistent edit behavior</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/" data-id="ck6hikn79000mp9wvg8y308ka"
+         class="article-share-link">分享</a>
+      
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/02/06/Separable-Convolution/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">Separable Convolution</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<!--<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+</body>
+</html>
