@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    机器翻译检测 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-机器翻译检测" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      机器翻译检测
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/02/13/%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91%E6%A3%80%E6%B5%8B/" class="article-date">
+  <time datetime="2020-02-13T12:21:23.000Z" itemprop="datePublished">2020-02-13</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>因为本周要做一个机器翻译检测的任务，因此搜到了几篇论文，看一下大概有哪些思路。论文基本上只简单扫了一眼，简单介绍一下其中的3篇。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：</p>
+<p>Machine Translation Detection from Monolingual Web-Text</p>
+<p>Automatic Detection of Machine Translated Text and Translation Quality</p>
+<p>Detecting Machine-Translated Paragraphs by Matching Similar Words</p>
+<p>Automatic Detection of Translated Text and its Impact on Machine Translation</p>
+<p>BLEU: a Method for Automatic Evaluation of Machine Translation</p>
+<p>Building a Web-based parallel corpus and filtering out machinetranslated text</p>
+<p>Machine Translation Detection from MonolingualWeb-Text</p>
+<p>Machine Translationness: a Concept for Machine Translation Evaluation and Detection</p>
+<p>MT Detection in Web-Scraped Parallel Corpora</p>
+<p>On the Features of Translationese</p>
+<p>Translationese and Its Dialects</p>
+</blockquote>
+<h2 id="Machine-Translation-Detection-from-Monolingual-Web-Text"><a href="#Machine-Translation-Detection-from-Monolingual-Web-Text" class="headerlink" title="Machine Translation Detection from Monolingual Web-Text"></a>Machine Translation Detection from Monolingual Web-Text</h2><p>首先强调的是，这篇论文检测的是SMT机器翻译。看到论文摘要时我想到，针对不同的机器翻译模型，检测的机制也是不一样的，要有这点意识。这篇论文关注到的是SMT系统中“phrase salad”现象，并使用单语语料就可以达到95.8%的准确率。</p>
+<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><ul>
+<li>SMT翻译中的‘phrase salad’现象，指的是翻译结果的每个短语单独拿出来是对的，但组合到一起是错的</li>
+</ul>
+<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance1.png?e=1581600380&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:_8_hJwFvaRe8w5nnGkLjts6EJyk=&amp;attname=" alt="图片"></p>
+<ul>
+<li>比如上面这个例子，not only后面应该有but also，但这个短语在SMT翻译系统里只有一半被翻译了</li>
+<li>使用了一个分类器对句子是否是‘phrase salad’进行检测，使用到的特征包括两个，一个是语言模型，另外是一些人们常用但对SMT来说难以生成的短语</li>
+</ul>
+<h3 id="Proposed-Method"><a href="#Proposed-Method" class="headerlink" title="Proposed Method"></a>Proposed Method</h3><p>基于SMT翻译的特点，在特征选择时主要考虑3点：句子流畅度、语法正确度、短语完整度。从人工翻译提取到的特征表达了它和人工产生句子的相似性，从机器翻译中提取到的特征表达了它和机器翻译句子的相似性。</p>
+<h3 id="特征选择"><a href="#特征选择" class="headerlink" title="特征选择"></a>特征选择</h3><ul>
+<li>Fluency Feature<ul>
+<li>使用两个语言模型，f(w,H)和f(w,MT)，前者表示人工翻译的语言模型，后者是机器翻译的语言模型</li>
+</ul>
+</li>
+<li>Grammaticality Feature<ul>
+<li>使用POS语言模型，f(pos,H)和f(pos, MT)，前者表示人工翻译的POS序列的语言模型，后者是机器翻译的</li>
+<li>对提取出的function word的POS语言模型，f(fw, H)和f(fw, MT)<ul>
+<li>function word: <ul>
+<li>Prepositions: of, at, in, without, between</li>
+<li>Pro<a href="https://www.baidu.com/s?wd=no&amp;tn=SE_PcZhidaonwhc_ngpagmjz&amp;rsv_dl=gh_pc_zhidao" target="_blank" rel="noopener">no</a>uns: he, they, anybody, it, one</li>
+<li>Determiners: the, a, that, my, more, much, either,neither</li>
+<li>Conjunctions: and, that, when, while, although, or</li>
+<li>Auxiliary verbs: be (is, am, are), have, got, do</li>
+<li>Particles: <a href="https://www.baidu.com/s?wd=no&amp;tn=SE_PcZhidaonwhc_ngpagmjz&amp;rsv_dl=gh_pc_zhidao" target="_blank" rel="noopener">no</a>, <a href="https://www.baidu.com/s?wd=no&amp;tn=SE_PcZhidaonwhc_ngpagmjz&amp;rsv_dl=gh_pc_zhidao" target="_blank" rel="noopener">no</a>t, nor, as</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Gappy-Phrase Feature<ul>
+<li>中间有间隔的短语：如not only * but also</li>
+<li>使用character级别的LM衡量</li>
+<li>Sequential Pattern Mining<ul>
+<li>使用sequential pattern挖掘的方法找到所有Gappy-Phrase</li>
+</ul>
+</li>
+<li>使用的信息增益进行的短语选择，但是没看懂是如何计算特征的</li>
+</ul>
+</li>
+<li>最后使用SVM进行分类</li>
+<li>其他可考虑的feature：<ul>
+<li>Translationese and its dialects论文</li>
+<li>On the features of translationese论文（比较学术）</li>
+<li>average token length</li>
+<li>type-token ratio</li>
+</ul>
+</li>
+</ul>
+<h2 id="Automatic-Detection-of-Machine-Translated-Text-and-Translation-Quality"><a href="#Automatic-Detection-of-Machine-Translated-Text-and-Translation-Quality" class="headerlink" title="Automatic Detection of Machine Translated Text and Translation Quality"></a>Automatic Detection of Machine Translated Text and Translation Quality</h2><p>这篇论文也是使用的单语语料训练的分类器，用来进行机器翻译的检测和翻译质量的评估。这篇文章的重点强调的是，通过分类器检测的方法，只能对质量特别差的翻译系统起作用，如下图：</p>
+<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance3.png?e=1581600518&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:_hAOArYUja_LHRoxkw_boG0zPD0=&amp;attname=" alt="图片"></p>
+<p>可以看出来，翻译系统越好，检测的准确率就越低。</p>
+<h3 id="特征选择-1"><a href="#特征选择-1" class="headerlink" title="特征选择"></a>特征选择</h3><ul>
+<li>本文使用的特征都是二元特征，即是否存在POS ngram和467个function word。</li>
+<li>从4个方面构建特征：word、lemma、pos、mixed</li>
+</ul>
+<h2 id="Detecting-Machine-Translated-Paragraphs-by-Matching-Similar-Words"><a href="#Detecting-Machine-Translated-Paragraphs-by-Matching-Similar-Words" class="headerlink" title="Detecting Machine-Translated Paragraphs by Matching Similar Words"></a>Detecting Machine-Translated Paragraphs by Matching Similar Words</h2><p>这篇文章主要是检查段落级别的机器翻译，方法是通过计算word的match情况，和段落的coherence来检测机器翻译，整体流程如下：</p>
+<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance4.png?e=1581600573&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:ZtKKnKKh-WOzhzBYG-0xxP-kWxA=&amp;attname=" alt="图片"></p>
+<h3 id="计算相似词"><a href="#计算相似词" class="headerlink" title="计算相似词"></a>计算相似词</h3><p>先把段落内所有词打上POS标签，依次计算和其他词的相似度（如果POS相同则保留）。能够看出人工翻译的整体相似度比较低，机器翻译的相似度高一些，如下图：</p>
+<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance5.png?e=1581600624&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:pzxoPqRSUb29EooPxfUV0VRCLOo=&amp;attname=" alt="图片"></p>
+<h3 id="计算Coherence"><a href="#计算Coherence" class="headerlink" title="计算Coherence"></a>计算Coherence</h3><p>基于POS对统计根据的均值和方差。如下图：</p>
+<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance6.png?e=1581600670&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:xR-TrZaBarFwDAuOPiczUbcZkLk=&amp;attname=" alt="图片"></p>
+<h3 id="进行分类"><a href="#进行分类" class="headerlink" title="进行分类"></a>进行分类</h3><p>使用SVM分类。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/02/13/%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91%E6%A3%80%E6%B5%8B/" data-id="ck6kqgb810000ltwvctxfdo79"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/" rel="tag">机器翻译</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ASolving-and-Generating-Chinese-Character-Riddles%E3%80%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">论文阅读：《Solving and Generating Chinese Character Riddles》</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<!--<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+</body>
+</html>
