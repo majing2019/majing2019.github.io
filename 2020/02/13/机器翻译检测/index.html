@@ -98,7 +98,7 @@
 <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><ul>
 <li>SMT翻译中的‘phrase salad’现象，指的是翻译结果的每个短语单独拿出来是对的，但组合到一起是错的</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance1.png?e=1581600380&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:_8_hJwFvaRe8w5nnGkLjts6EJyk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck1.png" alt="图片"></p>
 <ul>
 <li>比如上面这个例子，not only后面应该有but also，但这个短语在SMT翻译系统里只有一半被翻译了</li>
 <li>使用了一个分类器对句子是否是‘phrase salad’进行检测，使用到的特征包括两个，一个是语言模型，另外是一些人们常用但对SMT来说难以生成的短语</li>
@@ -145,24 +145,24 @@
 </li>
 </ul>
 <h2 id="Automatic-Detection-of-Machine-Translated-Text-and-Translation-Quality"><a href="#Automatic-Detection-of-Machine-Translated-Text-and-Translation-Quality" class="headerlink" title="Automatic Detection of Machine Translated Text and Translation Quality"></a>Automatic Detection of Machine Translated Text and Translation Quality</h2><p>这篇论文也是使用的单语语料训练的分类器，用来进行机器翻译的检测和翻译质量的评估。这篇文章的重点强调的是，通过分类器检测的方法，只能对质量特别差的翻译系统起作用，如下图：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance3.png?e=1581600518&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:_hAOArYUja_LHRoxkw_boG0zPD0=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck2.png" alt="图片"></p>
 <p>可以看出来，翻译系统越好，检测的准确率就越低。</p>
 <h3 id="特征选择-1"><a href="#特征选择-1" class="headerlink" title="特征选择"></a>特征选择</h3><ul>
 <li>本文使用的特征都是二元特征，即是否存在POS ngram和467个function word。</li>
 <li>从4个方面构建特征：word、lemma、pos、mixed</li>
 </ul>
 <h2 id="Detecting-Machine-Translated-Paragraphs-by-Matching-Similar-Words"><a href="#Detecting-Machine-Translated-Paragraphs-by-Matching-Similar-Words" class="headerlink" title="Detecting Machine-Translated Paragraphs by Matching Similar Words"></a>Detecting Machine-Translated Paragraphs by Matching Similar Words</h2><p>这篇文章主要是检查段落级别的机器翻译，方法是通过计算word的match情况，和段落的coherence来检测机器翻译，整体流程如下：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance4.png?e=1581600573&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:ZtKKnKKh-WOzhzBYG-0xxP-kWxA=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck3.png" alt="图片"></p>
 <h3 id="计算相似词"><a href="#计算相似词" class="headerlink" title="计算相似词"></a>计算相似词</h3><p>先把段落内所有词打上POS标签，依次计算和其他词的相似度（如果POS相同则保留）。能够看出人工翻译的整体相似度比较低，机器翻译的相似度高一些，如下图：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance5.png?e=1581600624&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:pzxoPqRSUb29EooPxfUV0VRCLOo=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck4.png" alt="图片"></p>
 <h3 id="计算Coherence"><a href="#计算Coherence" class="headerlink" title="计算Coherence"></a>计算Coherence</h3><p>基于POS对统计根据的均值和方差。如下图：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance6.png?e=1581600670&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:xR-TrZaBarFwDAuOPiczUbcZkLk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck5.png" alt="图片"></p>
 <h3 id="进行分类"><a href="#进行分类" class="headerlink" title="进行分类"></a>进行分类</h3><p>使用SVM分类。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/02/13/%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91%E6%A3%80%E6%B5%8B/" data-id="ck73yyz6k0005u7wvg56z5k9d"
+      <a data-url="majsunflower.cn/2020/02/13/%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91%E6%A3%80%E6%B5%8B/" data-id="ck7646wr2000593wvb34r0gsf"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/" rel="tag">机器翻译</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>

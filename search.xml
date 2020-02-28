@@ -73,7 +73,7 @@
 <p>参考：<br><a href="https://databricks.com/blog/2016/07/14/a-tale-of-three-apache-spark-apis-rdds-dataframes-and-datasets.html" target="_blank" rel="noopener">https://databricks.com/blog/2016/07/14/a-tale-of-three-apache-spark-apis-rdds-dataframes-and-datasets.html</a><br><a href="https://spark.apache.org/docs/latest/rdd-programming-guide.html" target="_blank" rel="noopener">https://spark.apache.org/docs/latest/rdd-programming-guide.html</a></p>
 </blockquote>
 <p>不管使用Pyspark还是其他语言，Spark的底层都会通过Catalyst转成执行DAG序列：</p>
-<p><img src="https://uploader.shimo.im/f/LpkTDiX4AI8FD2jm.png!thumbnail" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/spark1.png" alt="图片"></p>
 <p>DAG在底层使用RDD对象进行操作。</p>
 <h1 id="Spark中的机器学习"><a href="#Spark中的机器学习" class="headerlink" title="Spark中的机器学习"></a>Spark中的机器学习</h1><h2 id="特征提取"><a href="#特征提取" class="headerlink" title="特征提取"></a>特征提取</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from pyspark.sql import SparkSession</span><br><span class="line">from pyspark.ml.feature import RegexTokenizer, VectorAssembler, Normalizer, StandardScaler</span><br><span class="line">from pyspark.sql.functions import udf</span><br><span class="line">from pyspark.sql.types import IntegerType</span><br><span class="line"></span><br><span class="line">import re</span><br><span class="line"># create a SparkSession: note this step was left out of the screencast</span><br><span class="line">spark &#x3D; SparkSession.builder \</span><br><span class="line">    .master(&quot;local&quot;) \</span><br><span class="line">    .appName(&quot;Word Count&quot;) \</span><br><span class="line">    .getOrCreate()</span><br><span class="line"></span><br><span class="line"># 如何读取数据集</span><br><span class="line">stack_overflow_data &#x3D; &#39;Train_onetag_small.json&#39;</span><br><span class="line">df &#x3D; spark.read.json(stack_overflow_data)</span><br><span class="line">df.head()</span><br><span class="line"># 把字符串分为单独的单词。Spark有一个[Tokenizer]（https:&#x2F;&#x2F;spark.apache.org&#x2F;docs&#x2F;latest&#x2F;ml-features.html#tokenizer） 类以及RegexTokenizer。 后者在分词时有更大的自由度。</span><br><span class="line"># split the body text into separate words</span><br><span class="line">regexTokenizer &#x3D; RegexTokenizer(inputCol&#x3D;&quot;Body&quot;, outputCol&#x3D;&quot;words&quot;, pattern&#x3D;&quot;\\W&quot;)</span><br><span class="line">df &#x3D; regexTokenizer.transform(df)</span><br><span class="line">df.head()</span><br><span class="line"># count the number of words in each body tag</span><br><span class="line">body_length &#x3D; udf(lambda x: len(x), IntegerType())</span><br><span class="line">df &#x3D; df.withColumn(&quot;BodyLength&quot;, body_length(df.words))</span><br><span class="line"># count the number of paragraphs and links in each body tag</span><br><span class="line">number_of_paragraphs &#x3D; udf(lambda x: len(re.findall(&quot;&lt;&#x2F;p&gt;&quot;, x)), IntegerType())</span><br><span class="line">number_of_links &#x3D; udf(lambda x: len(re.findall(&quot;&lt;&#x2F;a&gt;&quot;, x)), IntegerType())</span><br><span class="line">df &#x3D; df.withColumn(&quot;NumParagraphs&quot;, number_of_paragraphs(df.Body))</span><br><span class="line">df &#x3D; df.withColumn(&quot;NumLinks&quot;, number_of_links(df.Body))</span><br><span class="line">df.head(2)</span><br><span class="line"># 将内容长度，段落数和内容中的链接数合并为一个向量</span><br><span class="line">assembler &#x3D; VectorAssembler(inputCols&#x3D;[&quot;BodyLength&quot;, &quot;NumParagraphs&quot;, &quot;NumLinks&quot;], outputCol&#x3D;&quot;NumFeatures&quot;)</span><br><span class="line">df &#x3D; assembler.transform(df)</span><br><span class="line">df.head()</span><br><span class="line"># 归一化向量</span><br><span class="line">scaler &#x3D; Normalizer(inputCol&#x3D;&quot;NumFeatures&quot;, outputCol&#x3D;&quot;ScaledNumFeatures&quot;)</span><br><span class="line">df &#x3D; scaler.transform(df)</span><br><span class="line">df.head(2)</span><br><span class="line"># 缩放向量</span><br><span class="line">scaler2 &#x3D; StandardScaler(inputCol&#x3D;&quot;NumFeatures&quot;, outputCol&#x3D;&quot;ScaledNumFeatures2&quot;, withStd&#x3D;True)</span><br><span class="line">scalerModel &#x3D; scaler2.fit(df)</span><br><span class="line">df &#x3D; scalerModel.transform(df)</span><br><span class="line">df.head(2)</span><br></pre></td></tr></table></figure>
 <h2 id="文本特征"><a href="#文本特征" class="headerlink" title="文本特征"></a>文本特征</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from pyspark.sql import SparkSession</span><br><span class="line">from pyspark.ml.feature import RegexTokenizer, CountVectorizer, \</span><br><span class="line">    IDF, StringIndexer</span><br><span class="line">from pyspark.sql.functions import udf</span><br><span class="line">from pyspark.sql.types import IntegerType</span><br><span class="line"></span><br><span class="line">import re</span><br><span class="line"># create a SparkSession: note this step was left out of the screencast</span><br><span class="line">spark &#x3D; SparkSession.builder \</span><br><span class="line">    .master(&quot;local&quot;) \</span><br><span class="line">    .appName(&quot;Word Count&quot;) \</span><br><span class="line">    .getOrCreate()</span><br><span class="line"></span><br><span class="line"># 如何读取数据集</span><br><span class="line">stack_overflow_data &#x3D; &#39;Train_onetag_small.json&#39;</span><br><span class="line">df &#x3D; spark.read.json(stack_overflow_data)</span><br><span class="line">df.head()</span><br><span class="line"></span><br><span class="line"># 分词将字符串拆分为单独的单词。Spark 有一个[Tokenizer] （https:&#x2F;&#x2F;spark.apache.org&#x2F;docs&#x2F;latest&#x2F;ml-features.html#tokenizer） 类和RegexTokenizer。后者在分词时有更大的自由度 。</span><br><span class="line"># split the body text into separate words</span><br><span class="line">regexTokenizer &#x3D; RegexTokenizer(inputCol&#x3D;&quot;Body&quot;, outputCol&#x3D;&quot;words&quot;, pattern&#x3D;&quot;\\W&quot;)</span><br><span class="line">df &#x3D; regexTokenizer.transform(df)</span><br><span class="line">df.head()</span><br><span class="line"></span><br><span class="line"># CountVectorizer</span><br><span class="line"># find the term frequencies of the words</span><br><span class="line">cv &#x3D; CountVectorizer(inputCol&#x3D;&quot;words&quot;, outputCol&#x3D;&quot;TF&quot;, vocabSize&#x3D;1000)</span><br><span class="line">cvmodel &#x3D; cv.fit(df)</span><br><span class="line">df &#x3D; cvmodel.transform(df)</span><br><span class="line">df.take(1)</span><br><span class="line"># show the vocabulary in order of </span><br><span class="line">cvmodel.vocabulary</span><br><span class="line"># show the last 10 terms in the vocabulary</span><br><span class="line">cvmodel.vocabulary[-10:]</span><br><span class="line"></span><br><span class="line"># 逆文本频率指数（Inter-document Frequency ）</span><br><span class="line">idf &#x3D; IDF(inputCol&#x3D;&quot;TF&quot;, outputCol&#x3D;&quot;TFIDF&quot;)</span><br><span class="line">idfModel &#x3D; idf.fit(df)</span><br><span class="line">df &#x3D; idfModel.transform(df)</span><br><span class="line">df.head()</span><br><span class="line"></span><br><span class="line"># StringIndexer</span><br><span class="line">indexer &#x3D; StringIndexer(inputCol&#x3D;&quot;oneTag&quot;, outputCol&#x3D;&quot;label&quot;)</span><br><span class="line">df &#x3D; indexer.fit(df).transform(df)</span><br><span class="line">df.head()</span><br></pre></td></tr></table></figure>
@@ -95,7 +95,7 @@
 <h4 id="我们不能全是船长，"><a href="#我们不能全是船长，" class="headerlink" title="我们不能全是船长，"></a>我们不能全是船长，</h4><h4 id="必须有人也是水手。"><a href="#必须有人也是水手。" class="headerlink" title="必须有人也是水手。"></a>必须有人也是水手。</h4><p><br/></p>
 <h4 id="这里有许多事让我们去做，"><a href="#这里有许多事让我们去做，" class="headerlink" title="这里有许多事让我们去做，"></a>这里有许多事让我们去做，</h4><h4 id="有大事，有小事，"><a href="#有大事，有小事，" class="headerlink" title="有大事，有小事，"></a>有大事，有小事，</h4><h4 id="但最重要的是我们身旁的事。"><a href="#但最重要的是我们身旁的事。" class="headerlink" title="但最重要的是我们身旁的事。"></a>但最重要的是我们身旁的事。</h4><p><br/></p>
 <h4 id="如果你不能成为大道，"><a href="#如果你不能成为大道，" class="headerlink" title="如果你不能成为大道，"></a>如果你不能成为大道，</h4><h4 id="那就当一条小路，"><a href="#那就当一条小路，" class="headerlink" title="那就当一条小路，"></a>那就当一条小路，</h4><h4 id="如果你不能成为太阳，"><a href="#如果你不能成为太阳，" class="headerlink" title="如果你不能成为太阳，"></a>如果你不能成为太阳，</h4><h4 id="那就当一颗星星。"><a href="#那就当一颗星星。" class="headerlink" title="那就当一颗星星。"></a>那就当一颗星星。</h4><p><br/></p>
-<h4 id="决定成败的不是你的身材"><a href="#决定成败的不是你的身材" class="headerlink" title="决定成败的不是你的身材"></a>决定成败的不是你的身材</h4><h4 id="而是做一个最好的你。"><a href="#而是做一个最好的你。" class="headerlink" title="而是做一个最好的你。"></a>而是做一个最好的你。</h4><p><img src="http://q503tsu73.bkt.clouddn.com/fanchuan.png?e=1581835010&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:ngqveVdUaMOUugsuflP3j5kojsE=&amp;attname=" alt="图片"></p>
+<h4 id="决定成败的不是你的身材"><a href="#决定成败的不是你的身材" class="headerlink" title="决定成败的不是你的身材"></a>决定成败的不是你的身材</h4><h4 id="而是做一个最好的你。"><a href="#而是做一个最好的你。" class="headerlink" title="而是做一个最好的你。"></a>而是做一个最好的你。</h4><p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/suigan1.png" alt="图片"></p>
 ]]></content>
       <tags>
         <tag>小诗</tag>
@@ -124,7 +124,7 @@
 <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><ul>
 <li>SMT翻译中的‘phrase salad’现象，指的是翻译结果的每个短语单独拿出来是对的，但组合到一起是错的</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance1.png?e=1581600380&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:_8_hJwFvaRe8w5nnGkLjts6EJyk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck1.png" alt="图片"></p>
 <ul>
 <li>比如上面这个例子，not only后面应该有but also，但这个短语在SMT翻译系统里只有一半被翻译了</li>
 <li>使用了一个分类器对句子是否是‘phrase salad’进行检测，使用到的特征包括两个，一个是语言模型，另外是一些人们常用但对SMT来说难以生成的短语</li>
@@ -171,18 +171,18 @@
 </li>
 </ul>
 <h2 id="Automatic-Detection-of-Machine-Translated-Text-and-Translation-Quality"><a href="#Automatic-Detection-of-Machine-Translated-Text-and-Translation-Quality" class="headerlink" title="Automatic Detection of Machine Translated Text and Translation Quality"></a>Automatic Detection of Machine Translated Text and Translation Quality</h2><p>这篇论文也是使用的单语语料训练的分类器，用来进行机器翻译的检测和翻译质量的评估。这篇文章的重点强调的是，通过分类器检测的方法，只能对质量特别差的翻译系统起作用，如下图：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance3.png?e=1581600518&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:_hAOArYUja_LHRoxkw_boG0zPD0=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck2.png" alt="图片"></p>
 <p>可以看出来，翻译系统越好，检测的准确率就越低。</p>
 <h3 id="特征选择-1"><a href="#特征选择-1" class="headerlink" title="特征选择"></a>特征选择</h3><ul>
 <li>本文使用的特征都是二元特征，即是否存在POS ngram和467个function word。</li>
 <li>从4个方面构建特征：word、lemma、pos、mixed</li>
 </ul>
 <h2 id="Detecting-Machine-Translated-Paragraphs-by-Matching-Similar-Words"><a href="#Detecting-Machine-Translated-Paragraphs-by-Matching-Similar-Words" class="headerlink" title="Detecting Machine-Translated Paragraphs by Matching Similar Words"></a>Detecting Machine-Translated Paragraphs by Matching Similar Words</h2><p>这篇文章主要是检查段落级别的机器翻译，方法是通过计算word的match情况，和段落的coherence来检测机器翻译，整体流程如下：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance4.png?e=1581600573&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:ZtKKnKKh-WOzhzBYG-0xxP-kWxA=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck3.png" alt="图片"></p>
 <h3 id="计算相似词"><a href="#计算相似词" class="headerlink" title="计算相似词"></a>计算相似词</h3><p>先把段落内所有词打上POS标签，依次计算和其他词的相似度（如果POS相同则保留）。能够看出人工翻译的整体相似度比较低，机器翻译的相似度高一些，如下图：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance5.png?e=1581600624&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:pzxoPqRSUb29EooPxfUV0VRCLOo=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck4.png" alt="图片"></p>
 <h3 id="计算Coherence"><a href="#计算Coherence" class="headerlink" title="计算Coherence"></a>计算Coherence</h3><p>基于POS对统计根据的均值和方差。如下图：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/jiqijiance6.png?e=1581600670&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:xR-TrZaBarFwDAuOPiczUbcZkLk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mtcheck5.png" alt="图片"></p>
 <h3 id="进行分类"><a href="#进行分类" class="headerlink" title="进行分类"></a>进行分类</h3><p>使用SVM分类。</p>
 ]]></content>
       <tags>
@@ -201,7 +201,7 @@
 <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><ul>
 <li>解谜语类似于下面的过程：</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sgc1.png?e=1581436035&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:6825qy_Tws9wJ2ApJ6qaCVgeYqA=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/solgene1.png" alt="图片"></p>
 <ul>
 <li>解谜的pipeline<ul>
 <li>解题过程<ul>
@@ -221,7 +221,7 @@
 </ul>
 </li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sgc2.png?e=1581436085&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:L0wmaUWlEpXDi0j1seHJACbgi_4=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/solgene2.png" alt="图片"></p>
 <h2 id="Phrase-Radical-Alignments-and-Rules"><a href="#Phrase-Radical-Alignments-and-Rules" class="headerlink" title="Phrase-Radical Alignments and Rules"></a>Phrase-Radical Alignments and Rules</h2><h3 id="Alignment"><a href="#Alignment" class="headerlink" title="Alignment"></a>Alignment</h3><ul>
 <li>希望将“千里”和“马”进行对齐</li>
 <li>方法一<ul>
@@ -237,11 +237,11 @@
 <li>统计所有的对齐，并过滤掉出现频次小于3的</li>
 <li>特别常见的对齐如下图：</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sgc3.png?e=1581436263&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:rzyqU1zqa0wOTfbVGSrsqMU6LfA=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/solgne3.png" alt="图片"></p>
 <h3 id="Rules"><a href="#Rules" class="headerlink" title="Rules"></a>Rules</h3><ul>
 <li>总结了6类规则</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sgc4.png?e=1581436263&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:X4clMP1c3Qu1jkdP7O2bzEDhmHA=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/solgne4.png" alt="图片"></p>
 <ul>
 <li>对于$\left(\left[w_{1}, w_{n}\right], r\right)$，如果r是wi的部首，则$\left(w_{1}, \dots, w_{i-1},(.), w_{i+1}, \dots, w_{n}\right)$就是一个潜在的规则，我们从数据中最终总结193条规则，归纳为上面6类</li>
 <li>1000个汉字有至少1个alignment，27个汉字有至少100个alignment</li>
@@ -249,21 +249,21 @@
 <h2 id="Riddle-Solving-and-Generation"><a href="#Riddle-Solving-and-Generation" class="headerlink" title="Riddle Solving and Generation"></a>Riddle Solving and Generation</h2><h3 id="Solving-Chinese-Character-Riddles"><a href="#Solving-Chinese-Character-Riddles" class="headerlink" title="Solving Chinese Character Riddles"></a>Solving Chinese Character Riddles</h3><ul>
 <li>解谜算法的伪代码如下</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sgc10.png?e=1581436590&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:3G21ibvanvfL5oCrC630ho9S7J0=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/solgne5.png" alt="图片"></p>
 <ul>
 <li>以“上岗必戴安全帽”为例，“上岗”通过规则“上(up) (.)”和山对齐，“必” 和 “戴”跟自己对齐，“安全帽”因为analogical shape和“宀”对齐，最终得到结果“密”</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sgc11.png?e=1581436670&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:jk1KaE2eHG6GUouBkwTpx6Q9z0M=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/solgene6.png" alt="图片"></p>
 <ul>
 <li>对答案进行排序，排序时使用的特征如下：</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sgc7.png?e=1581436432&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:YniSFAc-SujL9xbaGG2t43McGxk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/solgene7.png" alt="图片"></p>
 <h3 id="Generating-Chinese-Character-Riddles"><a href="#Generating-Chinese-Character-Riddles" class="headerlink" title="Generating Chinese Character Riddles"></a>Generating Chinese Character Riddles</h3><ul>
 <li>基于模板的方法</li>
 <li>基于替换的方法</li>
 <li>对候选的description进行排序，排序使用的特征如下：</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sgc8.png?e=1581436432&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:NF5wDQk89RuFEHwX_KBvgDdzFsg=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/solgene8.png" alt="图片"></p>
 <h3 id="Ranking-Model"><a href="#Ranking-Model" class="headerlink" title="Ranking Model"></a>Ranking Model</h3><ul>
 <li>score的计算：$\text { Score }(c)=\sum_{i=1}^{m} \lambda_{i} * g_{i}(c)$，其中c表示一个候选，gi(c)表示c的第i个特征，m是特征的总数，$\lambda_{i}​$表示特征的权重</li>
 <li>使用Ranking SVM算法求解特征权重参数</li>
@@ -290,7 +290,7 @@
 <li>通过从训练集中挑选一个prototype sentence，产生一个能捕捉到句子相似度等句子级别信息的latent edit vector，并通过这个向量生成句子</li>
 <li>模型的整体框架如下图，这个模型的由来是基于人们的一个经验，通常人们写一个复杂的句子时，都是根据一个简单的句子，逐步修改而来的</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gsep1.png?e=1581404341&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:QHEr4adI3Rh1S6CxqlnKtAqVOKo=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep1.png" alt="图片"></p>
 <ul>
 <li>目标函数：最大化生成模型的log likelihood</li>
 <li>使用locality sensitive hashing寻找相似的句子</li>
@@ -375,7 +375,7 @@
 </li>
 <li>认为q是在f的基础上加入噪声获得的（先旋转，在rescale）：</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gsep6.png?e=1581405927&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:igK4evC1pJqDfidkxKojrNkCnPk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep2.png" alt="图片"></p>
 <ul>
 <li>$\begin{array}{l}{f_{\text {norm }}=|f|} \ {f_{\text {dir }}=f / f_{\text {norm }}}\end{array}$</li>
 <li>$\operatorname{vMF}(v ; \mu, \kappa)​$表示点v的unit空间中的vMF分布，参数包含mean vector$\mu​$和concentration parameter $ \kappa​$</li>
@@ -406,11 +406,11 @@
 <h3 id="Generative-Modeling"><a href="#Generative-Modeling" class="headerlink" title="Generative Modeling"></a>Generative Modeling</h3><ul>
 <li>对比几个生成模型的效果（KENLM语言模型、自回归语言模型）</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gsep3.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:LA380X1_lyJgcN5nwy3i0jrZp1E=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep3.png" alt="图片"></p>
 <ul>
 <li>使用neural editor可以生成跟prototype很不一样的句子</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gsep4.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:dCqZWMWMIR1S0hSxwzUkcRj_aWA=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep4.png" alt="图片"></p>
 <h3 id="Human-Evaluation"><a href="#Human-Evaluation" class="headerlink" title="Human Evaluation"></a>Human Evaluation</h3><ul>
 <li>降低softmax temperture有助于产生更符合语法的句子，但也会产生short and generic sentence<ul>
 <li>从corpus中sample出prototype sentence可以增加生成句子的多样性，因此即便temperature设置为0，也不会影响句子多样子，这是比传统的NLM强的地方</li>
@@ -418,7 +418,7 @@
 </li>
 <li>从grammaticality 和 plausibility两方面进行评测</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gesp5.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:WZyj_YQ2oY73QF7j2kJovXwDgM8=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep5.png" alt="图片"></p>
 <h3 id="Semantics-of-NeuralEditor"><a href="#Semantics-of-NeuralEditor" class="headerlink" title="Semantics of NeuralEditor"></a>Semantics of NeuralEditor</h3><ul>
 <li>跟sentence variational autoencoder (SVAE)模型对比，SVAE将句子映射到semantic空间向量，再从向量还原句子</li>
 <li>semantic smoothness<ul>
@@ -448,33 +448,33 @@
 <p>参考：<br><a href="https://towardsdatascience.com/what-is-a-neural-network-6010edabde2b" target="_blank" rel="noopener">https://towardsdatascience.com/what-is-a-neural-network-6010edabde2b</a></p>
 </blockquote>
 <p>卷积网络中最重要的是卷积核，通过卷积核在图像每个区域的运算，得到图像不同的特征，如下图（可以在<a href="http://setosa.io/ev/image-kernels/" target="_blank" rel="noopener">http://setosa.io/ev/image-kernels/</a>中更好得体验）：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc1.png?e=1580955169&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:y2r-foEXvLreIRvdTfPoxbFPLMI=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn1.png" alt="图片"></p>
 <p>上面这张图使用outliine卷积核，实际中可以使用sharp等不同功能的卷积核以达到不同效果。</p>
 <p>对于神经网络的每一层而言，可以使用多个卷积和得到不同的特征图，并将这些特征图一起输入到下一层网络。最终这些特征供给最后一层的分类器进行匹配，得到分类结果。下面的动画展示了这个过程：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/cnn1.gif?e=1580955292&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:fsQbcGd9VpumSiAnt9aR8Y4HVbg=&amp;attname=" alt="图片"></p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/cnn2.gif?e=1580955575&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:4Rtb7WOCo1E4quaE2SaMqNfDGVE=&amp;attname=" alt="图片"></p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/cnn3.gif?e=1580955765&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:qRuKKXxDa7pb0JoiO7F21H6itbU=&amp;attname=" alt="图片"></p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/cnn4.gif?e=1580956282&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:dKMmJXyxzhhTLIdF894TsINrO2s=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn1.gif" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn2.gif" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn3.gif" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn4.gif" alt="图片"></p>
 <p>Separable Convolution可以分成spatial separable convolution和depthwise separable convolution。</p>
 <p>对于12x12x3的图像，5x5x3的卷积核，能产生8x8x1的输出：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc3.png?e=1580956348&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:4jAs9Yfkbmd8FuQzbX0v4Z6TXhs=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn2.png" alt="图片"></p>
 <p>假设我们想要8x8x256的输出，则需要使用256个卷积核来创造256个8x8x1的图像，把他们叠加在一起产生8x8x256的输出：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc4.png?e=1580956393&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:KM1HZWVpRIc8VwD9YFMrPDBktFk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn3.png" alt="图片"></p>
 <p>即12x12x3 — (5x5x3x256) — &gt;12x12x256</p>
 <h2 id="Spatial-Separable-Convolutions"><a href="#Spatial-Separable-Convolutions" class="headerlink" title="Spatial Separable Convolutions"></a>Spatial Separable Convolutions</h2><p>Spatial separable convolution将卷积分成两部分，最常见的是把3x3的kernel分解成3x1和1x3的kernel，如：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc5.png?e=1580956800&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:bdOSf4gz5XRdRVT3oUn7EWnvpZ0=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn4.png" alt="图片"></p>
 <p>通过这种方式，原本一次卷积要算9次乘法，现在只需要6次。</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc6.png?e=1580956475&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:UHt9gX6zrKk2Y8O_j6f6Bh6916o=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn5.png" alt="图片"></p>
 <p>还有一个Sobel kernel（用来检测边）也是用的这种方法：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc7.png?e=1580956800&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:TFzY3Ed_11LbgKJL34bhIqcxIyg=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn6.png" alt="图片"></p>
 <p>但spatial separable convolution存在的问题是，不是所有kernel都能转换成2个小的kernel。</p>
 <h2 id="Depthwise-Separable-Convolutions"><a href="#Depthwise-Separable-Convolutions" class="headerlink" title="Depthwise Separable Convolutions"></a>Depthwise Separable Convolutions</h2><p>由于卷积并不使用矩阵相乘，为了减少计算量，可以将卷积的过程分成两部分：a depthwise convolution and a pointwise convolution. </p>
 <h3 id="depthwise-convolution"><a href="#depthwise-convolution" class="headerlink" title="depthwise convolution"></a>depthwise convolution</h3><p>首先，我们使用3个5x5x1的卷积核产生8x8x3的图像：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc2.png?e=1580956557&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:09oVR6LIhWN293RMDFzOV66LG5A=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn7.png" alt="图片"></p>
 <h3 id="pointwise-convolution"><a href="#pointwise-convolution" class="headerlink" title="pointwise convolution"></a>pointwise convolution</h3><p>其次，使用1x1x3 的卷积核对每个像素计算，得到8x8x1 的图像：</p>
 <p><img src="http://q503tsu73.bkt.clouddn.com/sc8.png?e=1580956603&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:BxS4Xqtt2YsqJ5GJVFVlnK9D3xw=&amp;attname=" alt="图片"></p>
 <p>使用256个1x1x3 的卷积核，则恶意产生8x8x256的图像：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc9.png?e=1580956633&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:vVbqfesu_9oG3fHhINDk9pA7__U=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn9.png" alt="图片"></p>
 <p>可以看到，整个过程由原来的12x12x3 — (5x5x3x256) →12x12x256，变成12x12x3 — (5x5x1x1) — &gt; (1x1x3x256) — &gt;12x12x256</p>
 <h2 id="意义"><a href="#意义" class="headerlink" title="意义"></a>意义</h2><p>主要就是减少了计算量，原先是256个5x5x3的卷积核移动8x8次，即需要256x3x5x5x8x8=1,228,800次乘法计算。使用depthwise convolution，有3个5x5x1的卷积核移动8x8次，需要3x5x5x8x8 = 4,800次乘法计算。使用pointwise convolution，有256个1x1x3的卷积核移动8x8次，需要256x1x1x3x8x8=49,152次乘法计算，加起来共有53,952次计算。</p>
 <h2 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h2><ul>
@@ -518,7 +518,7 @@
 </ul>
 </li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/et-transformer.png?e=1580892803&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:ln2axf1iGaz9DI2q6j1kLn1lAx8=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/et1.png" alt="图片"></p>
 <ul>
 <li>搜索空间branch<ul>
 <li>Input：分支可以从输入池中选择一个隐藏状态作为当前block的输入。单元中的第i个block可以从[0, i]个隐藏状态中进行选择，其中第j个隐藏状态表示该cell中第j个block的输出，第0个候选项为单元的输入。</li>
@@ -589,7 +589,7 @@
 <h2 id="Result"><a href="#Result" class="headerlink" title="Result"></a>Result</h2><ul>
 <li>最终搜索出来的模型结构</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/et-transformer2.png?e=1580893009&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:aAFv3BbiOEmd1YLT9aabOYCYURE=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/et2.png" alt="图片"></p>
 <ul>
 <li>embedding_size=768, 6 encoder, 6 decoder</li>
 <li>attention_head=16</li>
@@ -770,7 +770,7 @@
 <h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><h3 id="SSA和PPL是相关的"><a href="#SSA和PPL是相关的" class="headerlink" title="SSA和PPL是相关的"></a>SSA和PPL是相关的</h3><ul>
 <li>基本呈线性关系</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/paper_ssa.png?e=1580825793&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:XYKxV0-Vy99TsjbuB7EorIolYVk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/tod1.png" alt="图片"></p>
 <h3 id="效果的比较"><a href="#效果的比较" class="headerlink" title="效果的比较"></a>效果的比较</h3><ul>
 <li>小冰：呈现出个性化的回复，但有时也会无意义，且经常回复得太平常。小冰另一个特点就是具有同情心，可以在以后的评价指标中考虑这一点。小冰有near-human-level engagingness但not very close to human-level humanness，因此在我们的评测指标上SSA不高。</li>
 <li>mitsuku：56%SSA（72%sensibility 40%specifity）, 网站上的对话并不是它参加图灵测试的版本</li>
@@ -926,8 +926,9 @@
 <p>参考：<br><a href="https://zhuanlan.zhihu.com/p/26625249" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/26625249</a><br><a href="https://blog.csdn.net/qq_36305327/article/details/71578290" target="_blank" rel="noopener">https://blog.csdn.net/qq_36305327/article/details/71578290</a></p>
 </blockquote>
 <ul>
-<li>到<a href="https://www.qiniu.com/" target="_blank" rel="noopener">https://www.qiniu.com/</a>上添加对象存储<a href="https://portal.qiniu.com/kodo/bucket/" target="_blank" rel="noopener">https://portal.qiniu.com/kodo/bucket/</a></li>
-<li>在markdown中可直接引用图片<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">![sunflower](http:&#x2F;&#x2F;q503tsu73.bkt.clouddn.com&#x2F;IMG_3012.JPG?e&#x3D;1580527998&amp;token&#x3D;05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:6FFnse-_gOPpSeTWpN-i9hJ1pwQ&#x3D;&amp;attname&#x3D;)</span><br></pre></td></tr></table></figure>
+<li><p>到<a href="https://www.qiniu.com/" target="_blank" rel="noopener">https://www.qiniu.com/</a>上添加对象存储<a href="https://portal.qiniu.com/kodo/bucket/" target="_blank" rel="noopener">https://portal.qiniu.com/kodo/bucket/</a></p>
+</li>
+<li><p>在markdown中可直接引用图片</p>
 </li>
 </ul>
 <h2 id="添加关于"><a href="#添加关于" class="headerlink" title="添加关于"></a>添加关于</h2><ul>

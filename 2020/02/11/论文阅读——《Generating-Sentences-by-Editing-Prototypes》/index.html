@@ -87,7 +87,7 @@
 <li>通过从训练集中挑选一个prototype sentence，产生一个能捕捉到句子相似度等句子级别信息的latent edit vector，并通过这个向量生成句子</li>
 <li>模型的整体框架如下图，这个模型的由来是基于人们的一个经验，通常人们写一个复杂的句子时，都是根据一个简单的句子，逐步修改而来的</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gsep1.png?e=1581404341&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:QHEr4adI3Rh1S6CxqlnKtAqVOKo=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep1.png" alt="图片"></p>
 <ul>
 <li>目标函数：最大化生成模型的log likelihood</li>
 <li>使用locality sensitive hashing寻找相似的句子</li>
@@ -172,7 +172,7 @@
 </li>
 <li>认为q是在f的基础上加入噪声获得的（先旋转，在rescale）：</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gsep6.png?e=1581405927&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:igK4evC1pJqDfidkxKojrNkCnPk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep2.png" alt="图片"></p>
 <ul>
 <li>$\begin{array}{l}{f_{\text {norm }}=|f|} \ {f_{\text {dir }}=f / f_{\text {norm }}}\end{array}$</li>
 <li>$\operatorname{vMF}(v ; \mu, \kappa)​$表示点v的unit空间中的vMF分布，参数包含mean vector$\mu​$和concentration parameter $ \kappa​$</li>
@@ -203,11 +203,11 @@
 <h3 id="Generative-Modeling"><a href="#Generative-Modeling" class="headerlink" title="Generative Modeling"></a>Generative Modeling</h3><ul>
 <li>对比几个生成模型的效果（KENLM语言模型、自回归语言模型）</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gsep3.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:LA380X1_lyJgcN5nwy3i0jrZp1E=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep3.png" alt="图片"></p>
 <ul>
 <li>使用neural editor可以生成跟prototype很不一样的句子</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gsep4.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:dCqZWMWMIR1S0hSxwzUkcRj_aWA=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep4.png" alt="图片"></p>
 <h3 id="Human-Evaluation"><a href="#Human-Evaluation" class="headerlink" title="Human Evaluation"></a>Human Evaluation</h3><ul>
 <li>降低softmax temperture有助于产生更符合语法的句子，但也会产生short and generic sentence<ul>
 <li>从corpus中sample出prototype sentence可以增加生成句子的多样性，因此即便temperature设置为0，也不会影响句子多样子，这是比传统的NLM强的地方</li>
@@ -215,7 +215,7 @@
 </li>
 <li>从grammaticality 和 plausibility两方面进行评测</li>
 </ul>
-<p><img src="http://q503tsu73.bkt.clouddn.com/gesp5.png?e=1581405487&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:WZyj_YQ2oY73QF7j2kJovXwDgM8=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/gsep5.png" alt="图片"></p>
 <h3 id="Semantics-of-NeuralEditor"><a href="#Semantics-of-NeuralEditor" class="headerlink" title="Semantics of NeuralEditor"></a>Semantics of NeuralEditor</h3><ul>
 <li>跟sentence variational autoencoder (SVAE)模型对比，SVAE将句子映射到semantic空间向量，再从向量还原句子</li>
 <li>semantic smoothness<ul>
@@ -230,7 +230,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/" data-id="ck73yyz7a000zu7wvbt61gx5r"
+      <a data-url="majsunflower.cn/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/" data-id="ck7646wrr001093wv1o948556"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%96%87%E6%9C%AC%E9%A3%8E%E6%A0%BC%E8%BF%81%E7%A7%BB/" rel="tag">文本风格迁移</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>

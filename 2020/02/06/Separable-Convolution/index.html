@@ -88,33 +88,33 @@
 <p>参考：<br><a href="https://towardsdatascience.com/what-is-a-neural-network-6010edabde2b" target="_blank" rel="noopener">https://towardsdatascience.com/what-is-a-neural-network-6010edabde2b</a></p>
 </blockquote>
 <p>卷积网络中最重要的是卷积核，通过卷积核在图像每个区域的运算，得到图像不同的特征，如下图（可以在<a href="http://setosa.io/ev/image-kernels/" target="_blank" rel="noopener">http://setosa.io/ev/image-kernels/</a>中更好得体验）：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc1.png?e=1580955169&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:y2r-foEXvLreIRvdTfPoxbFPLMI=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn1.png" alt="图片"></p>
 <p>上面这张图使用outliine卷积核，实际中可以使用sharp等不同功能的卷积核以达到不同效果。</p>
 <p>对于神经网络的每一层而言，可以使用多个卷积和得到不同的特征图，并将这些特征图一起输入到下一层网络。最终这些特征供给最后一层的分类器进行匹配，得到分类结果。下面的动画展示了这个过程：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/cnn1.gif?e=1580955292&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:fsQbcGd9VpumSiAnt9aR8Y4HVbg=&amp;attname=" alt="图片"></p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/cnn2.gif?e=1580955575&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:4Rtb7WOCo1E4quaE2SaMqNfDGVE=&amp;attname=" alt="图片"></p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/cnn3.gif?e=1580955765&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:qRuKKXxDa7pb0JoiO7F21H6itbU=&amp;attname=" alt="图片"></p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/cnn4.gif?e=1580956282&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:dKMmJXyxzhhTLIdF894TsINrO2s=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn1.gif" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn2.gif" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn3.gif" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn4.gif" alt="图片"></p>
 <p>Separable Convolution可以分成spatial separable convolution和depthwise separable convolution。</p>
 <p>对于12x12x3的图像，5x5x3的卷积核，能产生8x8x1的输出：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc3.png?e=1580956348&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:4jAs9Yfkbmd8FuQzbX0v4Z6TXhs=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn2.png" alt="图片"></p>
 <p>假设我们想要8x8x256的输出，则需要使用256个卷积核来创造256个8x8x1的图像，把他们叠加在一起产生8x8x256的输出：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc4.png?e=1580956393&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:KM1HZWVpRIc8VwD9YFMrPDBktFk=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn3.png" alt="图片"></p>
 <p>即12x12x3 — (5x5x3x256) — &gt;12x12x256</p>
 <h2 id="Spatial-Separable-Convolutions"><a href="#Spatial-Separable-Convolutions" class="headerlink" title="Spatial Separable Convolutions"></a>Spatial Separable Convolutions</h2><p>Spatial separable convolution将卷积分成两部分，最常见的是把3x3的kernel分解成3x1和1x3的kernel，如：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc5.png?e=1580956800&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:bdOSf4gz5XRdRVT3oUn7EWnvpZ0=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn4.png" alt="图片"></p>
 <p>通过这种方式，原本一次卷积要算9次乘法，现在只需要6次。</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc6.png?e=1580956475&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:UHt9gX6zrKk2Y8O_j6f6Bh6916o=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn5.png" alt="图片"></p>
 <p>还有一个Sobel kernel（用来检测边）也是用的这种方法：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc7.png?e=1580956800&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:TFzY3Ed_11LbgKJL34bhIqcxIyg=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn6.png" alt="图片"></p>
 <p>但spatial separable convolution存在的问题是，不是所有kernel都能转换成2个小的kernel。</p>
 <h2 id="Depthwise-Separable-Convolutions"><a href="#Depthwise-Separable-Convolutions" class="headerlink" title="Depthwise Separable Convolutions"></a>Depthwise Separable Convolutions</h2><p>由于卷积并不使用矩阵相乘，为了减少计算量，可以将卷积的过程分成两部分：a depthwise convolution and a pointwise convolution. </p>
 <h3 id="depthwise-convolution"><a href="#depthwise-convolution" class="headerlink" title="depthwise convolution"></a>depthwise convolution</h3><p>首先，我们使用3个5x5x1的卷积核产生8x8x3的图像：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc2.png?e=1580956557&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:09oVR6LIhWN293RMDFzOV66LG5A=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn7.png" alt="图片"></p>
 <h3 id="pointwise-convolution"><a href="#pointwise-convolution" class="headerlink" title="pointwise convolution"></a>pointwise convolution</h3><p>其次，使用1x1x3 的卷积核对每个像素计算，得到8x8x1 的图像：</p>
 <p><img src="http://q503tsu73.bkt.clouddn.com/sc8.png?e=1580956603&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:BxS4Xqtt2YsqJ5GJVFVlnK9D3xw=&amp;attname=" alt="图片"></p>
 <p>使用256个1x1x3 的卷积核，则恶意产生8x8x256的图像：</p>
-<p><img src="http://q503tsu73.bkt.clouddn.com/sc9.png?e=1580956633&amp;token=05Ii263bPN3Z-CT3JPRaRfWi5sXIj8pwX6V1bN2j:vVbqfesu_9oG3fHhINDk9pA7__U=&amp;attname=" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/cnn9.png" alt="图片"></p>
 <p>可以看到，整个过程由原来的12x12x3 — (5x5x3x256) →12x12x256，变成12x12x3 — (5x5x1x1) — &gt; (1x1x3x256) — &gt;12x12x256</p>
 <h2 id="意义"><a href="#意义" class="headerlink" title="意义"></a>意义</h2><p>主要就是减少了计算量，原先是256个5x5x3的卷积核移动8x8次，即需要256x3x5x5x8x8=1,228,800次乘法计算。使用depthwise convolution，有3个5x5x1的卷积核移动8x8次，需要3x5x5x8x8 = 4,800次乘法计算。使用pointwise convolution，有256个1x1x3的卷积核移动8x8次，需要256x1x1x3x8x8=49,152次乘法计算，加起来共有53,952次计算。</p>
 <h2 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h2><ul>
@@ -126,7 +126,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/02/06/Separable-Convolution/" data-id="ck73yyz690000u7wv987pcc0h"
+      <a data-url="majsunflower.cn/2020/02/06/Separable-Convolution/" data-id="ck7646wqm000093wvcjjp0d43"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Convolution/" rel="tag">Convolution</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%BD%91%E7%BB%9C/" rel="tag">卷积网络</a></li></ul>
