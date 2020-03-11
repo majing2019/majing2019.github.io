@@ -145,7 +145,6 @@
 <p>在使用深度学习模型进行分类任务时，我们通常会遇到以下问题：overfit和over confidence。Overfit问题得到了很好的研究，可以通过earlystop、dropout、正则化等方法来解决。另一方面，我们over confidence的工具较少。标签平滑是一种正则化技术，解决了这两个问题。</p>
 <p>Label Smooth将y_hot和均匀分布的混合来代替一个hot编码的标签向量y_hot:</p>
 <p>$y_{-} l s=(1-\alpha) * y_{-} h o t+\alpha / K$</p>
-<p><img src="https://uploader.shimo.im/f/supzndkoLDcnlPym.png!thumbnail" alt="图片"></p>
 <p>K是标签类的数目，α是一个决定平滑的超参数。如果α= 0，我们获得最初的一个原始的y_hot编码。如果α= 1，我们得到均匀分布。</p>
 <p>当损失函数为交叉熵时，使用标签平滑，模型将softmax函数应用于倒数第二层的logit向量z，计算其输出概率p。在这种情况下，交叉熵损失函数相对于logit的梯度为：</p>
 <p>$\nabla C E=p-y=\operatorname{softmax}(z)-y$</p>
@@ -162,7 +161,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/03/10/%E5%A4%A7%E8%AF%9D%E4%BA%A4%E5%8F%89%E7%86%B5%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0/" data-id="ck7m26tco0010svwv7m990aj4"
+      <a data-url="majsunflower.cn/2020/03/10/%E5%A4%A7%E8%AF%9D%E4%BA%A4%E5%8F%89%E7%86%B5%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0/" data-id="ck7n4mskr0010ujwvcfe1fs8t"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag">深度学习</a></li></ul>
@@ -174,6 +173,15 @@
   
     
   <nav class="article-nav">
+    
+      <a href="/2020/03/11/%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A8%A1%E7%B3%8A%E5%8C%B9%E9%85%8D%E7%9A%84%E6%96%B9%E6%B3%95%E9%83%BD%E6%9C%89%E5%93%AA%E4%BA%9B/" class="article-nav-link">
+        <strong class="article-nav-caption">前一篇</strong>
+        <div class="article-nav-title">
+          
+            字符串模糊匹配的方法都有哪些
+          
+        </div>
+      </a>
     
     
       <a href="/2020/03/10/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AReformer-The-Efficient-Transformer%E3%80%8B/" class="article-nav-link">
@@ -335,23 +343,6 @@
 
 <script src="/js/ocean.js"></script>
 
-
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<!--<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 
 </body>
 </html>
