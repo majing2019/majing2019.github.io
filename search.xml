@@ -102,13 +102,14 @@
 <p>参考：<br><a href="https://ldzhangyx.github.io/2018/11/16/focal-loss/" target="_blank" rel="noopener">https://ldzhangyx.github.io/2018/11/16/focal-loss/</a></p>
 </blockquote>
 <p>Focal Loss的出现是为了解决训练集正负样本极度不平衡的情况，通过reshape标准交叉熵损失解决类别不均衡（Class Imbalance）,这样它就能降低容易分类的样例的比重（Well-classified Examples）。这个方法专注训练在Hard Examples的稀疏集合上，能够防止大量的Easy Negatives在训练中压倒训练器。其公式为：</p>
-<p>$F L\left(p_{t}\right)=-\left(1-p_{t}\right)^{\gamma} \log \left(p_{t}\right)$</p>
+<p>$F L\left(p_{t}\right)=-\left(1-p_{t}\right)^{\gamma} \log \left(p_{t}\right)​$</p>
 <p>其中参数为0的时候，Focal Loss退化为交叉熵CE。当这个参数不同时，对loss的影响如下：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E5%A4%A7%E8%AF%9D%E4%BA%A4%E5%8F%89%E7%86%B5/0.png" alt="图片"></p>
 <p>p_t越大，FL越小，其对总体loss所做的贡献就越小；反过来说，p_t越小（小于0.5的情况也就是被误分类），越能反映在总体loss上。</p>
 <p>Focal Loss的tensorflow api：<a href="https://www.tensorflow.org/addons/api_docs/python/tfa/losses/SigmoidFocalCrossEntropy" target="_blank" rel="noopener">https://www.tensorflow.org/addons/api_docs/python/tfa/losses/SigmoidFocalCrossEntropy</a></p>
 <h2 id="label-smooth"><a href="#label-smooth" class="headerlink" title="label smooth"></a>label smooth</h2><blockquote>
 <p>参考：<br><a href="https://towardsdatascience.com/what-is-label-smoothing-108debd7ef06" target="_blank" rel="noopener">https://towardsdatascience.com/what-is-label-smoothing-108debd7ef06</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/76587755" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/76587755</a></p>
 </blockquote>
 <p>在使用深度学习模型进行分类任务时，我们通常会遇到以下问题：overfit和over confidence。Overfit问题得到了很好的研究，可以通过earlystop、dropout、正则化等方法来解决。另一方面，我们over confidence的工具较少。标签平滑是一种正则化技术，解决了这两个问题。</p>
 <p>Label Smooth将y_hot和均匀分布的混合来代替一个hot编码的标签向量y_hot:</p>
@@ -124,7 +125,12 @@
 <p>一个标准的ont-hot希望有更大的logit gaps输入到里面。直观地说，较大的logit gap加上有界的梯度会使模型的自适应性降低，并且对其预测过于自信。相反，平滑的标签鼓励小的logit差距，可以得到更好的模型校准，并防止过度自信的预测。</p>
 <p>下面我们使用一个例子说明：假设我们有K = 3类，我们的标签属于第一类。令[a, b, c]为logit向量。如果我们不使用标签平滑，那么标签向量就是一个one-hot向量[1,0,0]。我们的模型将a≫b和a≫c。例如,应用softmax分对数向量(10,0,0)给(0.9999,0,0)的4位小数。</p>
 <p>如果我们使用标签的平滑与α= 0.1,平滑标签向量≈(0.9333,0.0333,0.0333)。logit向量[3.3322,0,0]在softmax之后将经过平滑处理的标签向量近似为小数点后4位，并且它的差距更小。这就是为什么我们称平滑标签为一种正则化技术，因为它可以防止最大的logit变得比其他的更大。</p>
-<p>更形象地说，对于label_smoothing=0.2，则意味着标签0的概率是0.1，标签1的概率是0.9</p>
+<p>更形象地说，对于label_smoothing=0.2，则意味着标签0的概率是0.1，标签1的概率是0.9。</p>
+<p>另一种解释（来自<a href="https://zhuanlan.zhihu.com/p/76587755" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/76587755</a>）：</p>
+<p>​    在常见的多分类问题中，先经过softmax处理后进行交叉熵计算，原理很简单可以将计算loss理解为，为了使得网络对测试集预测的概率分布和其真实分布接近，常用的做法是使用one-hot对真实标签进行编码，作者认为这种将标签强制one-hot的方式使网络过于自信会导致过拟合，因此软化这种编码方式：$q^{\prime}(k | x)=(1-\epsilon) \delta_{k, y}+\epsilon u(k)​$</p>
+<p>​    等号左侧：是一种新的预测的分布；等号右侧：前半部分是对原分布乘一个权重，$\epsilon$是一个超参，需要自己设定，取值在0到1范围内。后半部分u是一个均匀分布，k表示模型的类别数。</p>
+<p>​    由以上公式可以看出，这种方式使label有$\epsilon$概率来自于均匀分布， $1-\epsilon$概率来自于原分布。这就相当于在原label上增加噪声，让模型的预测值不要过度集中于概率较高的类别，把一些概率放在概率较低的类别。因此，交叉熵可以替换为：$H\left(q^{\prime}, p\right)=-\sum_{k=1}^{K} \log p(k) q^{\prime}(k)=(1-\epsilon) H(q, p)+\epsilon H(u, p)$</p>
+<p>​    可以理解为：loss为对<strong>“预测的分布与真实分布”</strong>及<strong>“预测分布与先验分布（均匀分布）”</strong>的惩罚。个人理解：label smooth的思路“做软化、防止过拟合、增加扰动”是好的，个人认为用均匀分布做先验分布有待商榷。</p>
 ]]></content>
       <tags>
         <tag>深度学习</tag>
