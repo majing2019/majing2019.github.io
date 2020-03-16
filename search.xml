@@ -191,7 +191,8 @@
 <li>(batch_size, q_seq_len, d_model)</li>
 </ul>
 </li>
-<li>FFN输出：<ul>
+<li><p>FFN输出：</p>
+<ul>
 <li>(batch_size, q_seq_len, d_ff)</li>
 </ul>
 </li>
