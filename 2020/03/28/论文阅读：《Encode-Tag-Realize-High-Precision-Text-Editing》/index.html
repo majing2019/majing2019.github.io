@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    论文阅读：《Encode, Tag, Realize_ High-Precision Text Editing》 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-论文阅读：《Encode-Tag-Realize-High-Precision-Text-Editing》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文阅读：《Encode, Tag, Realize_ High-Precision Text Editing》
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/03/28/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AEncode-Tag-Realize-High-Precision-Text-Editing%E3%80%8B/" class="article-date">
+  <time datetime="2020-03-28T05:29:32.000Z" itemprop="datePublished">2020-03-28</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>最近想看一下语法检查的东西，关注到了这一篇谷歌去年出的论文。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://arxiv.org/abs/1909.01187" target="_blank" rel="noopener">https://arxiv.org/abs/1909.01187</a><br><a href="https://zhuanlan.zhihu.com/p/82196470" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/82196470</a></p>
+</blockquote>
+<h1 id="论文简介"><a href="#论文简介" class="headerlink" title="论文简介"></a>论文简介</h1><p>论文提出了一种用于sequence tagging的模型LASERTAGGER，它的基本思想是将文本生成任务转化为3种token操作的组合：keep、delete和add。它使用了bert作为编码器，transformer作为解码器，并将该模型用于 sentence fusion、sentence splitting、abstractive</p>
+<p>summarization和grammar correction任务中。LASERTAGGER在训练数据量少的情况下依然能达到不错的效果，且速度提升了很多倍。</p>
+<p>研究人员是怎么想到的这个方法的呢？其实在很多text generation任务中，output和input有很大重合， 在Incorporating copying mechanism in sequence-to-sequence learning这篇论文中使用了copy机制用于在解码时选择copy一个source端词汇，抑或是生成一个新的词。但是这样的模型依旧需要庞大的训练集以保证解码端的vocabulary size是足够的。</p>
+<p>通过研究发现，使用一个相对较小的output tags的集合来表示文本的deletion、rephrasing</p>
+<p>和reordering，对于生成训练语料中的大部分文本是足够的。这样就会使模型可以使用比较小的vocabulary来训练，并且由于输出长度只跟输入长度有关，就可以使用更少的语料达到精确的结果。</p>
+<p>模型的主要流程如下图所式：先使用encode模块构建输入的表示，tag模块产生edit tags，realize模块通过规则将tags转换成输出tokens。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/1.png" alt="图片"></p>
+<p>本文提出两种LASERTAGGER架构，一种只使用BERT，另一种使用了BERT encoder+transformer deocder。实验表明LASERTAGGER有更快的推理速度，需要更少的训练语料，相比于seq2seq更可控（因为词表小了），更不易产生hallucination问题（生成的输出不受输入文本支持）。</p>
+<h1 id="相关工作"><a href="#相关工作" class="headerlink" title="相关工作"></a>相关工作</h1><h2 id="Text-Simplification"><a href="#Text-Simplification" class="headerlink" title="Text Simplification"></a>Text Simplification</h2><p>这个任务很适用edit operations modeling的方法解决。Dong等人提出了一个文本编辑模型，类似于本文，主要差异是：</p>
+<ul>
+<li>使用了interpreter module语言模型，来实现本文Realize部分的功能</li>
+<li>使用了full vocabulary来生成added tokens，而本文使用了optimized set of frequently added phrases集合</li>
+</ul>
+<p>虽然Dong的模型生成更多样化的输出，但它可能会在推理时间、精度和数据效率上产生负面影响。另外一个跟本文相似的论文为Gu等人提出的Levenshtein Transformer模型，通过sequence of deletion and insertion actions来生成文本。</p>
+<h2 id="Single-document-summarization"><a href="#Single-document-summarization" class="headerlink" title="Single-document summarization"></a>Single-document summarization</h2><p>这个任务可以使用在token-level和sentence-level上的deletion-based方法解决。也有论文使用了seq2seq做抽象摘要，但其缺陷是产生的操作不仅仅是删除。因此，Jing和McKeown(2000)的工作使用还原、组合、句法转换、词汇释义、泛化和重新排序操作解决。也有论文使用copy机制来使模型更容易复制source端词汇。</p>
+<h2 id="Grammatical-Error-Correction"><a href="#Grammatical-Error-Correction" class="headerlink" title="Grammatical Error Correction"></a>Grammatical Error Correction</h2><p>此类任务需要利用task-specific knowledge，比如无监督得对某类错误类型构造分类器。这种error detection任务也可以使用sequence label方法，或者seq2seq方法（需要大量数据）。</p>
+<h1 id="序列标注任务"><a href="#序列标注任务" class="headerlink" title="序列标注任务"></a>序列标注任务</h1><p>本文使用的方法是将text edit转换为序列标注的问题，主要包含3个部分：定义tagging operation；将训练数据的plain-text target转换为tagging格式；将tag转变为输出文本。</p>
+<h2 id="定义Tagging-Operations"><a href="#定义Tagging-Operations" class="headerlink" title="定义Tagging Operations"></a>定义Tagging Operations</h2><h3 id="基本定义"><a href="#基本定义" class="headerlink" title="基本定义"></a>基本定义</h3><p>一个Tag包含两个部分：base tag（KEEP/DELETE） + added phrase（表示在token前需要增加phrase，可以为空）。Added phrase事先在词表V中定义，确保通过在input中加入后可以转换成output。这种tag+phrase的组合定义为B^P，数量大约有2^V个。</p>
+<p>不同任务可以有task-specific的tag，比如在sentence fusion任务中可以把SWAP标记添加</p>
+<p>到第一句话的最后部分（如下图）；还比如为了用代词替换命名实体，可以用PRONOMINALIZE标签，在realize阶段通过查找知识库中命名实体的gender信息来用she、he、they替换（这比用she^DELETE, he^DELETE, they^DELETE要好）</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/2.png" alt="图片"></p>
+<h3 id="优化Phrase-Vocabulary"><a href="#优化Phrase-Vocabulary" class="headerlink" title="优化Phrase Vocabulary"></a>优化Phrase Vocabulary</h3><p>从词表V中选择出一个子集P，使其覆盖到所有候选added phrase且P最大为l，这个问题类似于minimum k-union问题（参考<a href="https://xbuba.com/questions/12424155" target="_blank" rel="noopener">https://xbuba.com/questions/12424155</a>）。可以证明这个问题是NP-hard问题。具体实现时本文时这样做的：先使用最长公共字串将source text和target text对齐，将没对齐的n-grams加入到P中，再从P中选择最频繁出现的l个phrase作为phrase vocabulary。（本文也尝试过使用贪心策略，每次从P中选择对覆盖率增加最多的token，但发现一个问题，如’(‘和’)’这样的token通常成对出现，但增加’(‘和’)’都对覆盖率影响很小，但如果成对增加’()’则会覆盖到很多）</p>
+<h2 id="Train-targets转Tags"><a href="#Train-targets转Tags" class="headerlink" title="Train targets转Tags"></a>Train targets转Tags</h2><p>具体算法如下：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/3.png" alt="图片"></p>
+<p>本文特别强调了，即便在转换时遇到了想要增加的phrase不在V中，也不会影响整个模型的质量。比如虽然’;’不在V中，也会用’,’替代。</p>
+<h2 id="Tags转输出文本"><a href="#Tags转输出文本" class="headerlink" title="Tags转输出文本"></a>Tags转输出文本</h2><p>对于不同任务，可以使用不同realization。比如上面提到的关于entity mention的替换方法，可以让我们对于代词的替换更confidence。另外一个优点是specific loss patterns can be addressed by adding specialized realization rules。比如说对于模式entity mention’s，使用his^DELETE，则对于这种模式模型更会DELETE掉entity mention后面的’s。</p>
+<h1 id="模型整体框架"><a href="#模型整体框架" class="headerlink" title="模型整体框架"></a>模型整体框架</h1><p>模型使用encoder+decoder架构，encoder采用了bert-base架构，用pretrained case-sensitive BERT-base model初始化。原始的bert在encoder logits上做argmax作为解码输出，忽略了解码端前后的dependency。为了更好地建模output tags之间的依赖关系，在bert encoder上面增加一层transformer decoder。在计算decoder和encoder的联系时有两种方式，一种是计算全部的attention activation，另一种是只计算当前step的encoder activation。本文发现使用后一种方法效果更好，速度也更快。整体框架图如下：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/4.png" alt="图片"></p>
+<h1 id="实验部分"><a href="#实验部分" class="headerlink" title="实验部分"></a>实验部分</h1><h2 id="Sentence-Fusion"><a href="#Sentence-Fusion" class="headerlink" title="Sentence Fusion"></a>Sentence Fusion</h2><p>实验首先分析了不同的vocabulary size对结果的影响，发现vocabulary size上升到一定值后，提升就很小了。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/5.png" alt="图片"></p>
+<p>同时也对不同的baseline进行了比较，为了公平，本文也重新训练了一个用BERT结构的seq2seq模型，来说明本文方法的效果。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/6.png" alt="图片"></p>
+<p>同时本文也发现，当训练数据量减少到450或4500时，本文方法仍能表现良好。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/7.png" alt="图片"></p>
+<h2 id="Abstractive-Summarization"><a href="#Abstractive-Summarization" class="headerlink" title="Abstractive Summarization"></a>Abstractive Summarization</h2><p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/8.png" alt="图片"></p>
+<h2 id="Grammatical-Error-Correction-1"><a href="#Grammatical-Error-Correction-1" class="headerlink" title="Grammatical Error Correction"></a>Grammatical Error Correction</h2><p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/9.png" alt="图片"></p>
+<h2 id="推理时间比较"><a href="#推理时间比较" class="headerlink" title="推理时间比较"></a>推理时间比较</h2><p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/10.png" alt="图片"></p>
+<h2 id="质量评测"><a href="#质量评测" class="headerlink" title="质量评测"></a>质量评测</h2><p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/11.png" alt="图片"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/03/28/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AEncode-Tag-Realize-High-Precision-Text-Editing%E3%80%8B/" data-id="ck8b7fnqo0008sfwvfvchhvbj"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/LaserTagger/" rel="tag">LaserTagger</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/03/11/%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A8%A1%E7%B3%8A%E5%8C%B9%E9%85%8D%E7%9A%84%E6%96%B9%E6%B3%95%E9%83%BD%E6%9C%89%E5%93%AA%E4%BA%9B/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">字符串模糊匹配的方法都有哪些</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
