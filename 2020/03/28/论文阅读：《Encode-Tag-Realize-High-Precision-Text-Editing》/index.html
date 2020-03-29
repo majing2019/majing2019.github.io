@@ -83,11 +83,9 @@
 <blockquote>
 <p>参考：<br><a href="https://arxiv.org/abs/1909.01187" target="_blank" rel="noopener">https://arxiv.org/abs/1909.01187</a><br><a href="https://zhuanlan.zhihu.com/p/82196470" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/82196470</a></p>
 </blockquote>
-<h1 id="论文简介"><a href="#论文简介" class="headerlink" title="论文简介"></a>论文简介</h1><p>论文提出了一种用于sequence tagging的模型LASERTAGGER，它的基本思想是将文本生成任务转化为3种token操作的组合：keep、delete和add。它使用了bert作为编码器，transformer作为解码器，并将该模型用于 sentence fusion、sentence splitting、abstractive</p>
-<p>summarization和grammar correction任务中。LASERTAGGER在训练数据量少的情况下依然能达到不错的效果，且速度提升了很多倍。</p>
+<h1 id="论文简介"><a href="#论文简介" class="headerlink" title="论文简介"></a>论文简介</h1><p>论文提出了一种用于sequence tagging的模型LASERTAGGER，它的基本思想是将文本生成任务转化为3种token操作的组合：keep、delete和add。它使用了bert作为编码器，transformer作为解码器，并将该模型用于 sentence fusion、sentence splitting、abstractive summarization和grammar correction任务中。LASERTAGGER在训练数据量少的情况下依然能达到不错的效果，且速度提升了很多倍。</p>
 <p>研究人员是怎么想到的这个方法的呢？其实在很多text generation任务中，output和input有很大重合， 在Incorporating copying mechanism in sequence-to-sequence learning这篇论文中使用了copy机制用于在解码时选择copy一个source端词汇，抑或是生成一个新的词。但是这样的模型依旧需要庞大的训练集以保证解码端的vocabulary size是足够的。</p>
-<p>通过研究发现，使用一个相对较小的output tags的集合来表示文本的deletion、rephrasing</p>
-<p>和reordering，对于生成训练语料中的大部分文本是足够的。这样就会使模型可以使用比较小的vocabulary来训练，并且由于输出长度只跟输入长度有关，就可以使用更少的语料达到精确的结果。</p>
+<p>通过研究发现，使用一个相对较小的output tags的集合来表示文本的deletion、rephrasing和reordering，对于生成训练语料中的大部分文本是足够的。这样就会使模型可以使用比较小的vocabulary来训练，并且由于输出长度只跟输入长度有关，就可以使用更少的语料达到精确的结果。</p>
 <p>模型的主要流程如下图所式：先使用encode模块构建输入的表示，tag模块产生edit tags，realize模块通过规则将tags转换成输出tokens。</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/1.png" alt="图片"></p>
 <p>本文提出两种LASERTAGGER架构，一种只使用BERT，另一种使用了BERT encoder+transformer deocder。实验表明LASERTAGGER有更快的推理速度，需要更少的训练语料，相比于seq2seq更可控（因为词表小了），更不易产生hallucination问题（生成的输出不受输入文本支持）。</p>
@@ -101,8 +99,7 @@
 <h2 id="Grammatical-Error-Correction"><a href="#Grammatical-Error-Correction" class="headerlink" title="Grammatical Error Correction"></a>Grammatical Error Correction</h2><p>此类任务需要利用task-specific knowledge，比如无监督得对某类错误类型构造分类器。这种error detection任务也可以使用sequence label方法，或者seq2seq方法（需要大量数据）。</p>
 <h1 id="序列标注任务"><a href="#序列标注任务" class="headerlink" title="序列标注任务"></a>序列标注任务</h1><p>本文使用的方法是将text edit转换为序列标注的问题，主要包含3个部分：定义tagging operation；将训练数据的plain-text target转换为tagging格式；将tag转变为输出文本。</p>
 <h2 id="定义Tagging-Operations"><a href="#定义Tagging-Operations" class="headerlink" title="定义Tagging Operations"></a>定义Tagging Operations</h2><h3 id="基本定义"><a href="#基本定义" class="headerlink" title="基本定义"></a>基本定义</h3><p>一个Tag包含两个部分：base tag（KEEP/DELETE） + added phrase（表示在token前需要增加phrase，可以为空）。Added phrase事先在词表V中定义，确保通过在input中加入后可以转换成output。这种tag+phrase的组合定义为B^P，数量大约有2^V个。</p>
-<p>不同任务可以有task-specific的tag，比如在sentence fusion任务中可以把SWAP标记添加</p>
-<p>到第一句话的最后部分（如下图）；还比如为了用代词替换命名实体，可以用PRONOMINALIZE标签，在realize阶段通过查找知识库中命名实体的gender信息来用she、he、they替换（这比用she^DELETE, he^DELETE, they^DELETE要好）</p>
+<p>不同任务可以有task-specific的tag，比如在sentence fusion任务中可以把SWAP标记添加到第一句话的最后部分（如下图）；还比如为了用代词替换命名实体，可以用PRONOMINALIZE标签，在realize阶段通过查找知识库中命名实体的gender信息来用she、he、they替换（这比用she^DELETE, he^DELETE, they^DELETE要好）</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/lasertagger/2.png" alt="图片"></p>
 <h3 id="优化Phrase-Vocabulary"><a href="#优化Phrase-Vocabulary" class="headerlink" title="优化Phrase Vocabulary"></a>优化Phrase Vocabulary</h3><p>从词表V中选择出一个子集P，使其覆盖到所有候选added phrase且P最大为l，这个问题类似于minimum k-union问题（参考<a href="https://xbuba.com/questions/12424155" target="_blank" rel="noopener">https://xbuba.com/questions/12424155</a>）。可以证明这个问题是NP-hard问题。具体实现时本文时这样做的：先使用最长公共字串将source text和target text对齐，将没对齐的n-grams加入到P中，再从P中选择最频繁出现的l个phrase作为phrase vocabulary。（本文也尝试过使用贪心策略，每次从P中选择对覆盖率增加最多的token，但发现一个问题，如’(‘和’)’这样的token通常成对出现，但增加’(‘和’)’都对覆盖率影响很小，但如果成对增加’()’则会覆盖到很多）</p>
 <h2 id="Train-targets转Tags"><a href="#Train-targets转Tags" class="headerlink" title="Train targets转Tags"></a>Train targets转Tags</h2><p>具体算法如下：</p>
@@ -125,7 +122,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/03/28/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AEncode-Tag-Realize-High-Precision-Text-Editing%E3%80%8B/" data-id="ck8b7fnqo0008sfwvfvchhvbj"
+      <a data-url="majsunflower.cn/2020/03/28/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AEncode-Tag-Realize-High-Precision-Text-Editing%E3%80%8B/" data-id="ck8d76aqd000dkwwvfg3e32n7"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/LaserTagger/" rel="tag">LaserTagger</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
@@ -137,6 +134,15 @@
   
     
   <nav class="article-nav">
+    
+      <a href="/2020/03/29/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AJointly-Learning-to-Align-and-Translate-with-Transformer%E3%80%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">前一篇</strong>
+        <div class="article-nav-title">
+          
+            论文阅读：《Jointly Learning to Align and Translate with Transformer》
+          
+        </div>
+      </a>
     
     
       <a href="/2020/03/11/%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A8%A1%E7%B3%8A%E5%8C%B9%E9%85%8D%E7%9A%84%E6%96%B9%E6%B3%95%E9%83%BD%E6%9C%89%E5%93%AA%E4%BA%9B/" class="article-nav-link">

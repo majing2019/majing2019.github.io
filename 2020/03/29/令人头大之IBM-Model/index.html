@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    令人头大之IBM Model |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-令人头大之IBM-Model" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      令人头大之IBM Model
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/03/29/%E4%BB%A4%E4%BA%BA%E5%A4%B4%E5%A4%A7%E4%B9%8BIBM-Model/" class="article-date">
+  <time datetime="2020-03-29T12:18:37.000Z" itemprop="datePublished">2020-03-29</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>最近一段时间工作中，急需补充giza、fast align算法的背后原理，因此集中补一补这些令人头大的算法。本来打算看完IBM-Model1~Model5和HMM，但后来卡到了Model-3上，准备在后续的博客中继续更新。因此本篇将重点介绍Model-1~Model2。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://wenku.baidu.com/view/4cda374769eae009581becd2.html" target="_blank" rel="noopener">https://wenku.baidu.com/view/4cda374769eae009581becd2.html</a><br><a href="https://www.cl.uni-heidelberg.de/courses/ss15/smt/scribe2.pdf" target="_blank" rel="noopener">https://www.cl.uni-heidelberg.de/courses/ss15/smt/scribe2.pdf</a></p>
+</blockquote>
+<h1 id="词对齐算法之IBM-Model"><a href="#词对齐算法之IBM-Model" class="headerlink" title="词对齐算法之IBM Model"></a>词对齐算法之IBM Model</h1><p>假设任意一个英语句子e和一个法语句子f，定义f翻译成e的概率为Pr(e|f)，其归一化条件为$\sum_{e} \operatorname{Pr}(e | f)=1$，于是将f翻译成e的问题就变成求解$\hat{e}=\operatorname{argmax} \operatorname{Pr}(e | f)$。我们可以把它理解成一个噪声信道模型，假设我们看到的源语言文本F是由一段目标语言文本E经过某种奇怪的编码得到的，那么翻译的目标就是要将F还原成E，这也就是就是一个解码的过程，如下图：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/1.png" alt="图片"></p>
+<p>表达成公式如下：$\mathrm{E}=\arg \max _{\mathrm{E}} P(\mathrm{E}) P(\mathrm{F} | \mathrm{E})$。P(E)为语言模型，它反映“E像一个句子”的程度，即流利度；P(F|E)为翻译模型，它反映“F像E”的程度，即忠实度；联合使用两个模型效果好于单独使用翻译模型，因为后者容易导致一些不好的译文。因此，统计机器翻译要解决的是3个问题：</p>
+<ul>
+<li>语言模型<em>P</em>(E)的建模和参数估计</li>
+<li>翻译模型<em>P</em>(F|E)的建模和参数估计</li>
+<li>解码（搜索）算法</li>
+</ul>
+<p>语言模型给出任何一个句子的出现概率$\operatorname{Pr}\left(E=e_{1} e_{2} \ldots e_{n}\right)$，N元语法模型是最简单也是最常见的语言模型，其他语言模型包括：隐马尔科夫模型（HMM）（加入词性标记信息）、概率上下文无关语法（PCFG）（加入短语结构信息）、概率链语法（Probabilistic Link Grammar）（加入链语法的结构信息）。N元语言模型公式如下：</p>
+<p>$\begin{aligned} P(w) &amp;=\prod_{i=1}^{n} P\left(w_{i} | w_{1} w_{2} \ldots w_{i-1}\right) \ &amp; \approx \prod_{i=1}^{n} P\left(w_{i} | w_{i-N+1} w_{i-N+2} \ldots w_{i-1}\right) \end{aligned}$</p>
+<p>用一张概率转移图可形象表示，如下为一个2元语言模型：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/2.png" alt="图片"></p>
+<p>翻译模型<em>P</em>(F|E)反映的是一个源语言句子E翻译成一个目标语言句子F的概率，由于源语言句子和目标语言句子几乎不可能在语料库中出现过，因此这个概率无法直接从语料库统计得到，必须分解成词语翻译的概率和句子结构（或者顺序）翻译的概率。因此翻译模型的计算引入了隐含变量词对齐：$P(\mathrm{F} | \mathrm{E})=\sum_{A} P(\mathrm{F}, \mathrm{A} | \mathrm{E})$</p>
+<p>翻译概率<em>P</em>(F|E)的计算转化为对齐概率<em>P</em>(F,A|E)的估计。IBM Model安成了对P(F,A|E)的估计。那么IBM Model从1~3分别有什么不同呢？IBM Model 1仅考虑词对词的互译概率，IBM Model 2加入了词的位置变化的概率，IBM Model 3加入了一个词翻译成多个词。</p>
+<p>IBM模型是份经典的研究工作，这5个模型既是当初基于词的统计机器翻译模型的基础，也是现在统计机器翻译中主流技术中的重要一步。作为一个生成模型，IBM模型有着自身”严密”的模型演绎。总的来说，Model 1和2是在一个展开公式下的建模，而Model 3、4和5则是在另一个展开公式下的建模(fertility based model)。IBM Model属于single word based model，它只允许一对一和一对多的对齐，不存在多对一的对齐，这跟phrase based SMT模型不同。当然，从模型的复杂程度上讲，这5个模型之间的关系是1<2<3<4<5，从模型的计算顺序来讲，是1->2-&gt;3-&gt;4-&gt;5。</p>
+<h2 id="IBM-Model-1"><a href="#IBM-Model-1" class="headerlink" title="IBM Model-1"></a>IBM Model-1</h2><blockquote>
+<p>参考：<br><a href="https://www.nltk.org/_modules/nltk/translate/ibm1.html" target="_blank" rel="noopener">https://www.nltk.org/_modules/nltk/translate/ibm1.html</a><br><a href="http://mt-class.org/jhu/slides/lecture-ibm-model1.pdf" target="_blank" rel="noopener">http://mt-class.org/jhu/slides/lecture-ibm-model1.pdf</a><br><a href="https://zhuanlan.zhihu.com/p/72160554" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/72160554</a></p>
+</blockquote>
+<p>IBM模型1&amp;2的推导过程：</p>
+<ul>
+<li>猜测目标语言句子长度</li>
+<li>从左至右，对于每个目标语言单词<ul>
+<li>首先猜测该单词由哪一个源语言单词翻译而来</li>
+<li>再猜测该单词应该翻译成什么目标语言词</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/3.png" alt="图片"></p>
+<p>IBM Model-1进行了如下假设：</p>
+<ul>
+<li>假设翻译的目标语言句子为： $\mathrm{F}=f_{1}^{m}=f_{1} f_{2} \cdots f_{m}$</li>
+<li>假设翻译的源语言句子为：$\mathrm{E}=e_{1}^{l}=e_{1} e_{2} \cdots e_{l}$</li>
+<li>假设词语对齐表示为：$\mathrm{A}=a_{1}^{m}=a_{1} a_{2} \cdots a_{m}, \forall i \in\{1, \cdots, m\}, a_{i} \in\{0, \cdots, l\}$</li>
+<li>那么词语对齐的概率可以表示为：$\operatorname{Pr}(\mathrm{F}, \mathrm{A} | \mathrm{E})=\operatorname{Pr}(m | \mathrm{E}) \prod_{j=1}^{m} \operatorname{Pr}\left(a_{j} | a_{1}^{j-1}, f_{1}^{j-1}, m, \mathrm{E}\right) \operatorname{Pr}\left(f_{j} | a_{1}^{j}, f_{1}^{j-1}, m, \mathrm{E}\right)$</li>
+<li>在Model-1中，假设所有翻译长度都是等概率的</li>
+<li>假设词语对齐只与源语言长度有关，与其他因素无关：$\operatorname{Pr}\left(a_{j} | a_{1}^{j-1}, f_{1}^{j-1}, m, \mathrm{E}\right)=\frac{1}{l+1}$</li>
+<li>假设目标词语的选择只与其对应的源语言词语有关，与其他因素无关：$\operatorname{Pr}\left(f_{j} | a_{1}^{j}, f_{1}^{j-1}, m, \mathrm{E}\right)=t\left(f_{j} | e_{a_{j}}\right)$</li>
+<li>那么对齐概率可以表示为：$\operatorname{Pr}(\mathrm{F}, \mathrm{A} | \mathrm{E})=\frac{\varepsilon}{(l+1)^{m}} \prod_{j=1}^{m} t\left(f_{j} | e_{a_{j}}\right)$</li>
+<li>对所有可能的对齐求和，那么翻译概率就可以表示为：$\operatorname{Pr}(\mathrm{F} | \mathrm{E})=\sum_{\mathrm{A}} \operatorname{Pr}(\mathrm{F}, \mathrm{A} | \mathrm{E})=\frac{\varepsilon}{(l+1)^{m}} \sum_{a_{1}=1}^{l} \cdots \sum_{a_{m}=1}^{l} \prod_{j=1}^{m} t\left(f_{j} | e_{a_{j}}\right)$</li>
+</ul>
+<p>这就是IBM Model 1的翻译模型公式，也就是说，给定参数t(f|e)，我们就可以计算出句子E翻译成句子F的概率。对于其中翻译概率表t(f|e)满足归一约束条件：$\sum_{f} t(f | e)=1$</p>
+<p>延伸：在IBM-Model2中增加如下假设：</p>
+<ul>
+<li>假设词语对齐只与源语言长度、目标语言的长度和两个词的位置有关，与其他因素无关：$\operatorname{Pr}\left(a_{j} | a_{1}^{j-1}, f_{1}^{j-1}, m, \mathrm{E}\right)=a\left(a_{j} | j, m, l\right)$，归一化条件为$\sum_{i=0}^{l} a(i | j, m, l)=1$</li>
+</ul>
+<h3 id="翻译概率的定义"><a href="#翻译概率的定义" class="headerlink" title="翻译概率的定义"></a>翻译概率的定义</h3><p>对于长度为$l_f$的外语句子$f={f_1,…,f_{l_f}}$，长度为$l_e$的英文句子$e={e_1,…,e_{l_e}}$，从英文到外文的词对齐$e_j-&gt;f_i$关系$a:j-&gt;i$，有翻译概率定义：</p>
+<p>$p(\mathbf{e}, a | \mathbf{f})=\frac{\epsilon}{\left(l_{f}+1\right)^{l_{e}}} \prod_{j=1}^{l_{e}} t\left(e_{j} | f_{a(j)}\right)$，例如下图：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/4.png" alt="图片"></p>
+<h3 id="参数求解"><a href="#参数求解" class="headerlink" title="参数求解"></a>参数求解</h3><p>根据最大似然估计，我们希望得到一组概率分布，使得我们的训练语料库出现的概率最大。也就是说，给定训练语料库E和F，我们要求解一个概率分布t(f|e)，使得翻译概率Pr(F|E)最大。这是一个受约束的极值问题，约束条件即是t(f|e)的归一性条件。为了求解这个问题，我们需要引入拉格朗日乘子，构造一个辅助函数，将上述受约束的极值问题转换成一个不受约束的极值问题。</p>
+<p>引入拉格朗日乘子$\Lambda_{e}$，构造辅助函数：$h(t, \lambda) \equiv \frac{\varepsilon}{(l+1)^{m}} \sum_{a_{i}=1}^{l} \cdots \sum_{a_{m}=1}^{l} \prod_{j=1}^{m} t\left(f_{j} | e_{a_{j}}\right)-\sum_{e} \lambda_{e}\left(\sum_{f} t(f | e)-1\right)$。将上述函数对t(f|e)求导得到：$\frac{\partial h(t, \lambda)}{\partial t(f | e)}=\frac{\varepsilon}{(l+1)^{m}} \sum_{a_{1}=1}^{l} \cdots \sum_{a_{n}=1}^{l} \delta\left(f, f_{j}\right) \delta\left(e, e_{a_{j}}\right) \frac{\prod_{k=1}^{m} t\left(f_{k} | e_{a_{k}}\right)}{\mathrm{t}(f | e)}-\lambda_{e}$。</p>
+<p>令上式为0，我们得到：$t(f | e)=\lambda_{e}^{-1} \frac{\varepsilon}{(l+1)^{m}} \sum_{a_{1}=1}^{l} \cdots \sum_{a_{m}=1}^{l} \delta\left(f, f_{j}\right) \delta\left(e, e_{a_{j}}\right) \prod_{k=1}^{m} t\left(f_{k} | e_{a_{k}}\right)$。我们看到，这个公式的左边和右边都出现了t(f|e)，我们无法直接用这个公式从给定的语料库(F|E)中计算出t(f|e)，我们可以将这个公式看成是一个迭代公式，给定一个初值t(f|e)，利用这个公式反复迭代，最后可以收敛到一个稳定的t(f|e)值，这就是EM算法。其中$\sum_{j=1}^{m} \delta\left(f, f_{j}\right) \delta\left(e, e_{a_{j}}\right)$表示对齐A中e连接到f的次数。</p>
+<p>定义在E和F的所有可能的对齐A下e和f连接数的均值为：$c(f | e ; \mathrm{F}, \mathrm{E}) \equiv \sum_{\mathrm{A}} \operatorname{Pr}(\mathrm{A} | \mathrm{F}, \mathrm{E}) \sum_{j=1}^{m} \delta\left(f, f_{j}\right) \delta\left(e, e_{a_{j}}\right)$，且$\begin{array}{c}c(f | e ; \mathrm{F}, \mathrm{E})=\sum_{\mathrm{A}} \frac{\operatorname{Pr}(\mathrm{F}, \mathrm{A} | \mathrm{E})}{\operatorname{Pr}(\mathrm{F} | \mathrm{E})} \sum_{j=1}^{m} \delta\left(f, f_{j}\right) \delta\left(e, e_{a_{j}}\right) \ =\frac{\sum_{A} \operatorname{Pr}(\mathrm{F}, \mathrm{A} | \mathrm{E}) \sum_{j=1}^{m} \delta\left(f, f_{j}\right) \delta\left(e, e_{a_{j}}\right)}{\operatorname{Pr}(\mathrm{F}[\mathrm{E})}\end{array}$。</p>
+<p>将c(f|e;F,E)代入迭代公式，并将Pr(F|E)并入参数λe，我们得到新的迭代公式：$t(f | e)=\lambda_{e}^{-1} c(f | e ; \mathrm{F}, \mathrm{E})$</p>
+<p>这个新的迭代公式可以理解为：</p>
+<ul>
+<li>一旦我们得到了一组参数t(f|e)，我们就可以计算所有的词语对齐的概率Pr(F,A|E)</li>
+<li>有了每个词语对齐的概率Pr(F,A|E)，我们就可以计算新的t(f|e)的值，就是所有的出现词语链接(e,f)的词语对齐概率之和，并对e进行归一化。</li>
+</ul>
+<p>以上就是EM算法的中心思想。</p>
+<h3 id="EM算法迭代"><a href="#EM算法迭代" class="headerlink" title="EM算法迭代"></a>EM算法迭代</h3><p>我们可以使用EM算法迭代求解出对齐概率t，下面为EM算法求解过程：</p>
+<ul>
+<li><p>初始化$t(e|f)$</p>
+</li>
+<li><p>E-step: probability of alignments</p>
+<ul>
+<li><p>计算目标函数$p(a | \mathbf{e}, \mathbf{f})=\frac{p(\mathbf{e}, a | \mathbf{f})}{p(\mathbf{e} | \mathbf{f})}$, (使用上面公式计算$p(e,a|f)$)</p>
+<ul>
+<li><p>计算$p(e|f)$</p>
+<p>$\begin{aligned} p(\mathbf{e} | \mathbf{f}) &amp;=\sum_{a} p(\mathbf{e}, a | \mathbf{f}) \ &amp;=\sum_{a(1)=0}^{l_{f}} \ldots \sum_{a\left(l_{e}\right)=0}^{l_{f}} p(\mathbf{e}, a | \mathbf{f}) \ &amp;=\sum_{a(1)=0}^{l_{f}} \ldots \sum_{a\left(l_{e}\right)=0} \frac{\epsilon}{\left(l_{f}+1\right)^{l_{e}}} \prod_{j=1}^{l_{e}} t\left(e_{j} | f_{a(j)}\right) \end{aligned}$</p>
+<p>​        $\begin{array}{l}{=\frac{\epsilon}{\left(l_{f}+1\right)^{l_{e}}} \sum_{a(1)=0}^{l_{f}} \ldots \sum_{a\left(l_{e}\right)=0}^{l_{f}} \prod_{j=1}^{l_{e}} t\left(e_{j} | f_{a(j)}\right)} \ {=\frac{\epsilon}{\left(l_{f}+1\right)^{l_{e}}} \prod_{j=1}^{l_{e}} \sum_{i=0}^{l_{f}} t\left(e_{j} | f_{i}\right)}\end{array}​$</p>
+</li>
+</ul>
+<p>​        一个计算例子如下：<br><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/5.png" alt="图片"></p>
+</li>
+<li><p>计算$p(a|e,f)$</p>
+<p>  ​    $\begin{aligned} p(\mathbf{a} | \mathbf{e}, \mathbf{f}) &amp;=p(\mathbf{e}, \mathbf{a} | \mathbf{f}) / p(\mathbf{e} | \mathbf{f}) \ &amp;=\frac{\frac{\epsilon}{\left(l_{f}+1\right)^{l_{e}}} \prod_{j=1}^{l_{e}} t\left(e_{j} | f_{a(j)}\right)}{\frac{\epsilon}{\left(l_{f}+1\right)^{l_{e}}} \prod_{j=1}^{l_{e}} \sum_{i=0}^{l_{f}} t\left(e_{j} | f_{i}\right)} \ &amp;=\prod_{j=1}^{l_{e}} \frac{t\left(e_{j} | f_{a(j)}\right)}{\sum_{i=0}^{l_{f}} t\left(e_{j} | f_{i}\right)} \end{aligned}$</p>
+</li>
+<li><p>M-step: count collection</p>
+<ul>
+<li>计算$c(e | f ; \mathbf{e}, \mathbf{f})=\sum_{a} p(a | \mathbf{e}, \mathbf{f}) \sum_{j=1}^{l_{e}} \delta\left(e, e_{j}\right) \delta\left(f, f_{a(j)}\right)​$，并可以简化为$c(e | f ; \mathbf{e}, \mathbf{f})=\frac{t(e | f)}{\sum_{i=0}^{l_{f}} t\left(e | f_{i}\right)} \sum_{j=1}^{l_{e}} \delta\left(e, e_{j}\right) \sum_{i=0}^{l_{f}} \delta\left(f, f_{i}\right)​$</li>
+<li>估计模型$t(e | f ; \mathbf{e}, \mathbf{f})=\frac{\left.\sum_{\mathbf{e}} \mathbf{f}_{\mathbf{j}} c(e | f ; \mathbf{e}, \mathbf{f})\right)}{\left.\sum_{e} \sum_{(\mathbf{e}, \mathbf{f})} c(e | f ; \mathbf{e}, \mathbf{f})\right)}$</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="计算实例"><a href="#计算实例" class="headerlink" title="计算实例"></a>计算实例</h3><ul>
+<li>训练句子：<ul>
+<li>sentence1:  the house ||| la maison</li>
+<li>sentence2:  house ||| maison</li>
+</ul>
+</li>
+<li>画出所有对齐的可能<ul>
+<li>sentence1: <ul>
+<li>a1:  the-&gt;la、house-&gt;maison</li>
+<li>a2: the-&gt;maison、house-&gt;la</li>
+</ul>
+</li>
+<li>sentence2: <ul>
+<li>a3: house-&gt;aison</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>初始化<ul>
+<li>source_side_vocabulary: {the, house}, size=2</li>
+<li>t(la|the) = 1/size = 1/2</li>
+<li>t(maison|the) = 1/size = 1/2</li>
+<li>t(la|house) = 1/size = 1/2</li>
+<li>t(maison|house) = 1/size = 1/2</li>
+</ul>
+</li>
+<li>第一次迭代<ul>
+<li>Expectation:<ul>
+<li>alignment probability<ul>
+<li>p(e,a1|f) = t(la|the) <em> t(maison|house) =1/2 </em> 1/2  = 1/4</li>
+<li>p(e, a2|f) = t(maison|the) <em> t(la|house) = 1/2 </em> 1/2 = 1/4</li>
+<li>p(e, a3|f) = t(maison|house) = 1/2</li>
+</ul>
+</li>
+<li>normalize alignment probability<ul>
+<li>p(a1|E,F) = p(e,a1|f)/sum(p(E,a|F)) = p(e,a1|f)/(p(e,a1|f)+p(e, a2|f)) = 1/4/(1/4+1/4) = 1/2</li>
+<li>p(a2|E,F) = p(e,a2|f)/(p(e,a1|f)+p(e, a2|f)) = 1/4/(1/4+1/4) = 1/2</li>
+<li>p(a3|E,F) = p(e,a3|f)/p(e,a3|f) = 1</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Max:<ul>
+<li>collect counts<ul>
+<li>c(la|the) = p(a1|E,F) <em> count(la|the) = 1/2 </em> 1 = 1/2</li>
+<li>c(maison|the) = p(a2|E,F) <em> count(maison|the) = 1/2 </em> 1 = 1/2</li>
+<li>c(la|house) = p(a2|E,F) <em> count(la|house) = 1/2 </em> 1 = 1/2</li>
+<li>c(maison|house) = p(a1|E,F) <em> count(maison|house) + p(a3|E,F) </em> count(maison|house) = 1/2 <em> 1 + 1 </em> 1 = 3/2</li>
+</ul>
+</li>
+<li>normalize<ul>
+<li>t(la|the) = c(la|the)/sum(c(*|the)) = c(la|the)/(c(la|the) + c(maison|the) ) = 1/2/(1/2 + 1/2) = 1/2</li>
+<li>t(maison|the) = c(maison|the)/sum(c(*|the)) = c(maison|the)/(c(la|the) + c(maison|the) ) = 1/2/(1/2 + 1/2) = 1/2</li>
+<li>t(la|house) = 1/2/(1/2 + 3/2) = 1/4</li>
+<li>t(maison|house) = 3/2/(1/2 + 3/2) = 3/4</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>第二次迭代<ul>
+<li>Expectation:<ul>
+<li>alignment probability<ul>
+<li>p(e,a1|f) = 1/2 * 3/4 = 3/8</li>
+<li>p(e, a2|f) = 1/2 * 1/4 = 1/8</li>
+<li>p(e, a3|f) = 3/4</li>
+</ul>
+</li>
+<li>normalize alignment probability<ul>
+<li>p(a1|E,F) = 3/8/(3/8 + 1/8) = 3/4</li>
+<li>p(a2|E,F) = 1/8/(3/8 + 1/8) = 1/4</li>
+<li>p(a3|E,F) = 3/4/3/4 = 1</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Max:<ul>
+<li>collect counts<ul>
+<li>c(la|the) = 3/4 * 1 = 3/4</li>
+<li>c(maison|the) = 1/4 * 1 = 1/4</li>
+<li>c(la|house) = 1/4 * 1 = 1/4</li>
+<li>c(maison|house) = 3/4 <em> 1 + 1 </em> 1 = 7/4</li>
+</ul>
+</li>
+<li>normalize<ul>
+<li>t(la|the) = 3/4/(3/4 + 1/4) = 3/4</li>
+<li>t(maison|the) = 1/4/(3/4 + 1/4) = 1/4</li>
+<li>t(la|house) = 1/4/(1/4 + 7/4) = 1/8</li>
+<li>t(maison|house) = 7/4/(1/4 + 7/4) = 7/8</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="NLTK源码分析"><a href="#NLTK源码分析" class="headerlink" title="NLTK源码分析"></a>NLTK源码分析</h3><ul>
+<li>整体代码</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">counts &#x3D; Counts()</span><br><span class="line">for aligned_sentence in parallel_corpus:</span><br><span class="line">    trg_sentence &#x3D; aligned_sentence.words</span><br><span class="line">    src_sentence &#x3D; [None] + aligned_sentence.mots</span><br><span class="line"></span><br><span class="line">    # E step (a): Compute normalization factors to weigh counts</span><br><span class="line">    total_count &#x3D; self.prob_all_alignments(src_sentence, trg_sentence)</span><br><span class="line"></span><br><span class="line">    # E step (b): Collect counts</span><br><span class="line">    for t in trg_sentence:</span><br><span class="line">        for s in src_sentence:</span><br><span class="line">            count &#x3D; self.translation_table[t][s]</span><br><span class="line">            normalized_count &#x3D; count &#x2F; total_count[t]</span><br><span class="line">            counts.t_given_s[t][s] +&#x3D; normalized_count</span><br><span class="line">            counts.any_t_given_s[s] +&#x3D; normalized_count</span><br><span class="line">    </span><br><span class="line">    # M step: Update probabilities with maximum likelihood estimate</span><br><span class="line">    self.maximize_lexical_translation_probabilities(counts)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>计算$\sum_{a} p(\mathbf{e}, a | \mathbf{f})$</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">def prob_all_alignments(self, src_sentence, trg_sentence):</span><br><span class="line">  alignment_prob_for_t &#x3D; defaultdict(lambda: 0.0)</span><br><span class="line">  for t in trg_sentence:</span><br><span class="line">      for s in src_sentence:</span><br><span class="line">          alignment_prob_for_t[t] +&#x3D; self.translation_table[t][s]</span><br><span class="line">  return alignment_prob_for_t</span><br></pre></td></tr></table></figure>
+<ul>
+<li>计算M-step</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">def maximize_lexical_translation_probabilities(self, counts):</span><br><span class="line">    for t, src_words in counts.t_given_s.items():</span><br><span class="line">        for s in src_words:</span><br><span class="line">            estimate &#x3D; counts.t_given_s[t][s] &#x2F; counts.any_t_given_s[s]</span><br><span class="line">            self.translation_table[t][s] &#x3D; max(estimate, IBMModel.MIN_PROB)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>给定句对计算alignment</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">best_alignment &#x3D; []</span><br><span class="line">for j, trg_word in enumerate(sentence_pair.words):</span><br><span class="line">    best_prob &#x3D; max(self.translation_table[trg_word][None], IBMModel.MIN_PROB)</span><br><span class="line">    best_alignment_point &#x3D; None</span><br><span class="line">    for i, src_word in enumerate(sentence_pair.mots):</span><br><span class="line">        align_prob &#x3D; self.translation_table[trg_word][src_word]</span><br><span class="line">        if align_prob &gt;&#x3D; best_prob:  # prefer newer word in case of tie</span><br><span class="line">            best_prob &#x3D; align_prob</span><br><span class="line">            best_alignment_point &#x3D; i</span><br><span class="line"></span><br><span class="line">    best_alignment.append((j, best_alignment_point))</span><br><span class="line">sentence_pair.alignment &#x3D; Alignment(best_alignment)</span><br></pre></td></tr></table></figure>
+<h2 id="IBM-Model-2"><a href="#IBM-Model-2" class="headerlink" title="IBM Model-2"></a>IBM Model-2</h2><blockquote>
+<p>参考：<br><a href="https://www.nltk.org/_modules/nltk/translate/ibm2.html" target="_blank" rel="noopener">https://www.nltk.org/_modules/nltk/translate/ibm2.html</a><br><a href="http://www.ai.mit.edu/courses/6.891-nlp/l11.pdf" target="_blank" rel="noopener">http://www.ai.mit.edu/courses/6.891-nlp/l11.pdf</a></p>
+</blockquote>
+<p>IBM模型1的一个问题是它的重新排序能力非常弱，因为$p(f,a|s)$仅使用词法转换概率$t(t|s)$来计算。因此，如果模型有2个候选$t_1$和$t_2$具有相同的词汇翻译，但是对翻译后的单词进行了不同的重新排序，那么模型对这两个翻译都给出相同的分数。IBM-Model2使用对齐概率模型$p(i|j,s,f)$表示位置i、j的对齐概率，并用它计算$\operatorname{Pr}(t, a | s)=\frac{\epsilon}{(J+1)^{I}} \prod_{j=1}^{J} \operatorname{tr}\left(t_{j} | s_{a(j)}\right) \operatorname{Pr}_{a}(a(j) | j, J, I)$，其中$\operatorname{Pr}_{a}(a(j) | j, J, I)​$模拟一个单词在源句中的位置i被重新排序到目标句中的位置j的概率。</p>
+<p>问题定义为：求解概率P(f|e)，其中$e=\{e_1,…,e_l\}$, $f=\{f_1,..,f_m\}$, 对齐定义为$\{a_1, …, a_m\}$且$a_j\in \{0,..,l\}$, 一共有$(l+1)^m$个对齐。IBM Model1的对齐概率认为是等概率的，即$P(\mathbf{a} | \mathbf{e})=C \times \frac{1}{(l+1)^{m}}$，且C是常数$C=\operatorname{prob}(\operatorname{length}(\mathbf{f})=m)$. 对于IBM Model1来说它生成出一个句子的具体过程为：</p>
+<ul>
+<li>选择长度为f(均等概率C产生的长度)</li>
+<li>使用均等概率$1/(l+1)^m$产生对齐a</li>
+<li>使用概率$P(\mathbf{f} | \mathbf{a}, \mathbf{e})=\prod_{j=1}^{m} \mathbf{T}\left(f_{j} | e_{a_{j}}\right)$产生目标语言</li>
+<li>最终结果$P(\mathbf{f}, \mathbf{a} | \mathbf{e})=P(\mathbf{a} | e) P(\mathbf{f} | \mathbf{a}, e)=\frac{C}{(l+1)^{m}} \prod_{j=1}^{m} \mathbf{T}\left(f_{j} | e_{a_{j}}\right)$</li>
+</ul>
+<h3 id="翻译概率的定义-1"><a href="#翻译概率的定义-1" class="headerlink" title="翻译概率的定义"></a>翻译概率的定义</h3><p>在IBM Model-2中，定义D(i|j,l,m) = 给定source lenth e和target lenth f，第j个target word和第i个source word对齐的概。因此定义$P\left(\mathbf{a}=\left\{a_{1}, \ldots a_{m}\right\} | \mathbf{e}, l, m\right)=\prod_{j=1}^{m} \mathbf{D}\left(a_{j} | j, l, m\right)$，则翻译概率定义为：$P(\mathbf{f}, \mathbf{a} | \mathbf{e}, l, m)=\prod_{j=1}^{m} \mathbf{D}\left(a_{j} | j, l, m\right) \mathbf{T}\left(f_{j} | e_{a_{j}}\right)$。可以看出来，IBM-Model1是Model2的一个特例，在IBM-Model1中$\mathrm{D}(i | j, l, m)=\frac{1}{l+1}$</p>
+<p>因此对于IBM Model2来说它生成出一个句子的具体过程为：</p>
+<ul>
+<li>选择长度为f(均等概率C产生的长度)</li>
+<li>使用概率$\prod_{j=1}^{m} \mathrm{D}\left(a_{j} | j, l, m\right)$产生对齐$a=\{a_1,…,a_m\}$</li>
+<li>使用概率$P(\mathbf{f} | \mathbf{a}, \mathbf{e})=\prod_{j=1}^{m} \mathbf{T}\left(f_{j} | e_{a_{j}}\right)$产生目标语言</li>
+<li>最终结果$P(\mathbf{f}, \mathbf{a} | \mathbf{e})=P(\mathbf{a} | \mathbf{e}) P(\mathbf{f} | \mathbf{a}, \mathbf{e})=C \prod_{j=1}^{m} \mathbf{D}\left(a_{j} | j, l, m\right) \mathbf{T}\left(f_{j} | e_{a_{j}}\right)$</li>
+</ul>
+<h3 id="参数求解-1"><a href="#参数求解-1" class="headerlink" title="参数求解"></a>参数求解</h3><p>假设Model-2翻译模型定义为：$\operatorname{Pr}(\mathrm{F} | \mathrm{E})=\varepsilon \prod_{j=1}^{m} \sum_{i=0}^{l} t\left(f_{j} | e_{a_{j}}\right) a\left(a_{j} | j, m, l\right)$，同样通过引入拉格朗日乘子推导可以得到：</p>
+<p>$t(f | e)=\lambda_{e}^{-1} c(f | e ; \mathrm{F}, \mathrm{E})$</p>
+<p>$a(i | j, m, l)=\mu_{j m l}^{-1} c(i | j, m, l ; \mathrm{F}, \mathrm{E})$</p>
+<p>$c(f | e ; \mathrm{F}, \mathrm{E})=\sum_{j=1}^{m} \sum_{i=0}^{l} \frac{t(f | e) a(i | j, m, l) \delta\left(f, f_{j}\right) \delta\left(e, e_{i}\right)}{t\left(f | e_{0}\right) a(0 | j, m, l)+\cdots+t\left(f | e_{l}\right) a(l | j, m, l)}$</p>
+<p>$c(i | j, m, l ; \mathrm{F}, \mathrm{E})=\frac{t\left(f_{j} | e_{i}\right) a(i | j, m, l)}{t\left(f_{j} | e_{0}\right) a(0 | j, m, l)+\cdots+t\left(f_{j} | e_{l}\right) a(l | j, m, l)}$</p>
+<p>考虑到训练语料库(F|E)是由一系列句子对组成的：$\left(\mathrm{F}^{(1)}, \mathrm{E}^{(\mathrm{i})}\right),\left(\mathrm{F}^{(2)}, \mathrm{E}^{(2)}\right), \cdots,\left(\mathrm{F}^{(\mathrm{s})}, \mathrm{E}^{(\mathrm{s})}\right)$</p>
+<p>因此实际计算时我们采用以下公式：</p>
+<p>$t(f | e)=\lambda_{e}^{-1} \sum_{s} c\left(f | e ; \mathrm{F}^{(\mathrm{s})}, \mathrm{E}^{(\mathrm{s})}\right)$</p>
+<p>$a(i | j, m, l)=\mu_{j m l}^{-1} \sum_{s} c\left(i | j, m, l ; \mathrm{F}^{(\mathrm{s})}, \mathrm{E}^{(\mathrm{s})}\right)$</p>
+<p>这里$\Lambda_{e}$和$\mu_{j m}$仅仅起到归一化因子的作用。</p>
+<h3 id="EM算法迭代-1"><a href="#EM算法迭代-1" class="headerlink" title="EM算法迭代"></a>EM算法迭代</h3><ul>
+<li>初始化$\begin{array}{r}\mathrm{T}(f | e) \ \mathrm{D}(i | j, l, m)\end{array}$</li>
+<li>计算对齐概率$a[i, j, k]=\frac{\mathrm{D}\left(a_{j}=i | j, l, m\right) \mathrm{T}\left(f_{j} | e_{i}\right)}{\sum_{i^{\prime}=0}^{l} \mathrm{D}\left(a_{j}=i^{\prime} | j, l, m\right) \mathrm{T}\left(f_{j} | e_{i^{\prime}}\right)}$</li>
+<li>E步：<ul>
+<li>计算e和f对齐的期望次数：$\text { tcount }(e, f)=\sum_{\{|k, j|=f} a[i, j, k]$</li>
+<li>计算e和任意target word对齐的期望次数：$\text { scount }(e)=\sum_{e[k, i]=\ell}^{i, k} \sum_{j=1}^{m[k]} a[i, j, k]$</li>
+<li>计算对于source lenth 为l和target lenth 为m的句对ei和fj对齐的期望次数：$\operatorname{acount}(i, j, l, m)=\sum_{, m[k]=m} a_{\vdots=m}[i, j, k]$</li>
+<li>计算表示source lenth 为l和target lenth 为m的期望次数：$\operatorname{acount}(j, l, m)=|\{k: l[k]=l, m[k]=m\}|$</li>
+</ul>
+</li>
+<li>M步：<ul>
+<li>重新估算翻译概率T(f|e)：$P(f | e)=\frac{\text { tcount }(e, f)}{\text { scount }(e)}$</li>
+<li>重新估算对齐概率D(i|j,l,m)：$\left.P\left(a_{j}=i | j, l, m\right)\right)=\frac{a \operatorname{count}(i, j, l, m)}{\operatorname{acount}(j, l, m)}$</li>
+</ul>
+</li>
+</ul>
+<h3 id="计算实例-1"><a href="#计算实例-1" class="headerlink" title="计算实例"></a>计算实例</h3><ul>
+<li>训练句子：<ul>
+<li>sentence1:  the dog ||| le chien</li>
+<li>sentence2:  the cat ||| le chat</li>
+<li>sentence3: the bus ||| I’ autobus</li>
+</ul>
+</li>
+<li>初始化<ul>
+<li>source_side_vocabulary: {the, dog, cat, bus}, size=4</li>
+<li>随机初始化<ul>
+<li>T(f|e)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/6.png" alt="图片"></p>
+<p>​        * D(i|j,l,m)</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/7.png" alt="图片"></p>
+<ul>
+<li>E步：<ul>
+<li>计算tcount(e,f)</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/8.png" alt="图片"></p>
+<p>如tcount(the, le) = a(1, 1, 0) + a(1, 1, 1) = 0.5264 + 0.4665 = 0.9929</p>
+<ul>
+<li>计算scount(e)</li>
+<li>计算account(i,j,l,m)</li>
+<li>计算account(j,l,m)</li>
+<li>M步：<ul>
+<li>重新估算T(f|e)(下图为经过几轮迭代后的变化)</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/9.png" alt="图片"></p>
+<ul>
+<li>重新估算D(i|j,l,m)</li>
+<li>IBM paper中建议用Model-1估计T(f|e)并用来初始化Model-2</li>
+</ul>
+<h3 id="NLTK源码分析-1"><a href="#NLTK源码分析-1" class="headerlink" title="NLTK源码分析"></a>NLTK源码分析</h3><ul>
+<li>整体代码<ul>
+<li>初始化</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">if probability_tables is None:</span><br><span class="line">    ibm1 &#x3D; IBMModel1(sentence_aligned_corpus, 2 * iterations)</span><br><span class="line">    self.translation_table &#x3D; ibm1.translation_table</span><br><span class="line">    # a(i | j,l,m) &#x3D; 1 &#x2F; (l+1) for all i, j, l, m</span><br><span class="line">    l_m_combinations &#x3D; set()</span><br><span class="line">    for aligned_sentence in sentence_aligned_corpus:</span><br><span class="line">        l &#x3D; len(aligned_sentence.mots)</span><br><span class="line">        m &#x3D; len(aligned_sentence.words)</span><br><span class="line">        if (l, m) not in l_m_combinations:</span><br><span class="line">            l_m_combinations.add((l, m))</span><br><span class="line">            initial_prob &#x3D; 1 &#x2F; (l + 1)</span><br><span class="line">            for i in range(0, l + 1):</span><br><span class="line">                for j in range(1, m + 1):</span><br><span class="line">                    self.alignment_table[i][j][l][m] &#x3D; initial_prob</span><br><span class="line">else:</span><br><span class="line">    self.translation_table &#x3D; probability_tables[&quot;translation_table&quot;]</span><br><span class="line">    # D(i|j,l,m)</span><br><span class="line">    self.alignment_table &#x3D; probability_tables[&quot;alignment_table&quot;]</span><br><span class="line">    for n in range(0, iterations):</span><br><span class="line">        self.train(sentence_aligned_corpus)</span><br><span class="line">    self.align_all(sentence_aligned_corpus)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>训练</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">def train(self, parallel_corpus):</span><br><span class="line">    counts &#x3D; Model2Counts()</span><br><span class="line">    for aligned_sentence in parallel_corpus:</span><br><span class="line">        src_sentence &#x3D; [None] + aligned_sentence.mots</span><br><span class="line">        trg_sentence &#x3D; [&quot;UNUSED&quot;] + aligned_sentence.words</span><br><span class="line">        l &#x3D; len(aligned_sentence.mots)</span><br><span class="line">        m &#x3D; len(aligned_sentence.words)</span><br><span class="line">        # E step (a): Compute normalization factors to weigh counts</span><br><span class="line">        alignment_prob_for_t &#x3D; defaultdict(lambda: 0.0)</span><br><span class="line">        for j in range(1, len(trg_sentence)):</span><br><span class="line">            t &#x3D; trg_sentence[j]</span><br><span class="line">            for i in range(0, len(src_sentence)):</span><br><span class="line">                alignment_prob_for_t[t] +&#x3D; self.prob_alignment_point(</span><br><span class="line">                    i, j, src_sentence, trg_sentence</span><br><span class="line">                )</span><br><span class="line">        total_count &#x3D; alignment_prob_for_t</span><br><span class="line">        # E step (b): Collect counts</span><br><span class="line">        for j in range(1, m + 1):</span><br><span class="line">            t &#x3D; trg_sentence[j]</span><br><span class="line">            for i in range(0, l + 1):</span><br><span class="line">                s &#x3D; src_sentence[i]</span><br><span class="line">                l &#x3D; len(src_sentence) - 1</span><br><span class="line">                m &#x3D; len(trg_sentence) - 1</span><br><span class="line">                s &#x3D; src_sentence[i]</span><br><span class="line">                t &#x3D; trg_sentence[j]</span><br><span class="line">                count &#x3D; self.translation_table[t][s] * self.alignment_table[i][j][l][m]</span><br><span class="line">                normalized_count &#x3D; count &#x2F; total_count[t]</span><br><span class="line">                self.t_given_s[t][s] +&#x3D; normalized_count</span><br><span class="line">                self.any_t_given_s[s] +&#x3D; normalized_count</span><br><span class="line">                self.alignment[i][j][l][m] +&#x3D; normalized_count</span><br><span class="line">                self.alignment_for_any_i[j][l][m] +&#x3D; normalized_count</span><br><span class="line">    # M step: Update probabilities with maximum likelihood estimates</span><br><span class="line">    self.maximize_lexical_translation_probabilities(counts)</span><br><span class="line">    self.maximize_alignment_probabilities(counts)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>计算M-step</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def maximize_alignment_probabilities(self, counts):</span><br><span class="line">    MIN_PROB &#x3D; IBMModel.MIN_PROB</span><br><span class="line">    for i, j_s in counts.alignment.items():</span><br><span class="line">        for j, src_sentence_lengths in j_s.items():</span><br><span class="line">            for l, trg_sentence_lengths in src_sentence_lengths.items():</span><br><span class="line">                for m in trg_sentence_lengths:</span><br><span class="line">                    estimate &#x3D; (</span><br><span class="line">                        counts.alignment[i][j][l][m]</span><br><span class="line">                        &#x2F; counts.alignment_for_any_i[j][l][m]</span><br><span class="line">                    )</span><br><span class="line">                    self.alignment_table[i][j][l][m] &#x3D; max(estimate, MIN_PROB)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>给定句对计算alignment：$a_{j}^{*, 2}=\operatorname{argmax}_{j}\left(\mathrm{T}\left(f_{j} | e_{a_{j}}\right) \mathrm{D}(j | i, l, m)\right)​$</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">def align(self, sentence_pair):</span><br><span class="line">    best_alignment &#x3D; []</span><br><span class="line">    l &#x3D; len(sentence_pair.mots)</span><br><span class="line">    m &#x3D; len(sentence_pair.words)</span><br><span class="line">    for j, trg_word in enumerate(sentence_pair.words):</span><br><span class="line">        # Initialize trg_word to align with the NULL token</span><br><span class="line">        best_prob &#x3D; (</span><br><span class="line">            self.translation_table[trg_word][None]</span><br><span class="line">            * self.alignment_table[0][j + 1][l][m]</span><br><span class="line">        )</span><br><span class="line">        best_prob &#x3D; max(best_prob, IBMModel.MIN_PROB)</span><br><span class="line">        best_alignment_point &#x3D; None</span><br><span class="line">        for i, src_word in enumerate(sentence_pair.mots):</span><br><span class="line">            align_prob &#x3D; (</span><br><span class="line">                self.translation_table[trg_word][src_word]</span><br><span class="line">                * self.alignment_table[i + 1][j + 1][l][m]</span><br><span class="line">            )</span><br><span class="line">            if align_prob &gt;&#x3D; best_prob:</span><br><span class="line">                best_prob &#x3D; align_prob</span><br><span class="line">                best_alignment_point &#x3D; i</span><br><span class="line"></span><br><span class="line">        best_alignment.append((j, best_alignment_point))</span><br><span class="line"></span><br><span class="line">    sentence_pair.alignment &#x3D; Alignment(best_alignment)</span><br></pre></td></tr></table></figure>
+<h2 id="IBM-Model-3"><a href="#IBM-Model-3" class="headerlink" title="IBM Model-3"></a>IBM Model-3</h2><blockquote>
+<p>参考：<br><a href="https://web.stanford.edu/class/archive/cs/cs224n/cs224n.1162/handouts/cs224n-lecture3-MT.pdf" target="_blank" rel="noopener">https://web.stanford.edu/class/archive/cs/cs224n/cs224n.1162/handouts/cs224n-lecture3-MT.pdf</a><br><a href="http://www.ai.mit.edu/courses/6.891-nlp/l11.pdf" target="_blank" rel="noopener">http://www.ai.mit.edu/courses/6.891-nlp/l11.pdf</a><br><a href="http://www.ai.mit.edu/courses/6.891-nlp/l12.pdf" target="_blank" rel="noopener">http://www.ai.mit.edu/courses/6.891-nlp/l12.pdf</a><br><a href="https://www.nltk.org/_modules/nltk/translate/ibm3" target="_blank" rel="noopener">https://www.nltk.org/_modules/nltk/translate/ibm3</a>.html<br><a href="http://www1.maths.lth.se/matematiklth/vision/publdb/reports/pdf/schoenemann-ccnll-10.pdf" target="_blank" rel="noopener">http://www1.maths.lth.se/matematiklth/vision/publdb/reports/pdf/schoenemann-ccnll-10.pdf</a></p>
+</blockquote>
+<p>从Model-3到Model-5，翻译模型如下图所示：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/10.png" alt="图片"></p>
+<p>具体步骤是：</p>
+<ul>
+<li>首先根据源语言词语的繁殖概率，确定每个源语言词翻译成多少个目标语言词</li>
+<li>根据每个源语言词语的目标语言词数，将每个源语言词复制若干次</li>
+<li>将复制后得到的每个源语言词，根据翻译概率，翻译成一个目标语言词</li>
+<li>根据调序概率，将翻译得到的目标语言词重新调整顺序，得到目标语言句子</li>
+</ul>
+<p>对于Model-3来说，其推导过程为：</p>
+<ul>
+<li>对于句子中每一个英语单词e，选择一个产出率φ，其概率为n(φ|e)</li>
+<li>对于所有单词的产出率求和得到m-prime</li>
+<li>按照下面的方式构造一个新的英语单词串：删除产出率为0的单词，复制产出率为1的单词，复制两遍产出率为2的单词，依此类推</li>
+<li>在这m-prime个单词的每一个后面，决定是否插入一个空单词NULL，插入和不插入的概率分别为p1和p0</li>
+<li>φ0为插入的空单词NULL的个数</li>
+<li>设m为目前的总单词数：m-prime+φ0</li>
+<li>根据概率表t(f|e)，将每一个单词e替换为外文单词f</li>
+<li>对于不是由空单词NULL产生的每一个外语单词，根据概率表d(j|i,l,m)，赋予一个位置。这里j是法语单词在法语串中的位置，i是产生当前这个法语单词的对应英语单词在英语句子中的位置，l是英语串的长度，m是法语串的长度</li>
+<li>如果任何一个目标语言位置被多重登录（含有一个以上单词），则返回失败</li>
+<li>给空单词NULL产生的单词赋予一个目标语言位置。这些位置必须是空位置（没有被占用）。任何一个赋值都被认为是等概率的，概率值为1/φ0</li>
+<li>最后，读出法语串，其概率为上述每一步概率的乘积</li>
+</ul>
+<h3 id="翻译概率的定义-2"><a href="#翻译概率的定义-2" class="headerlink" title="翻译概率的定义"></a>翻译概率的定义</h3><p>Model-3引入fertility参数来约束一个源语言单词可以产生多少个目标语言单词, 并且从Model-3开始其建模过程和Model-1、Model-2有所不同，其产生句子的总体过程如下：</p>
+<ul>
+<li>对每个ej产生一个fertility $\phi_{j}$只依赖于ej）</li>
+<li>对每个ej生成$\phi_{j}$个target word词（只依赖于ej而不依赖于任何其他context）</li>
+<li>给每个target words选择一个位置（只依赖于ej的位置和句子长度）</li>
+</ul>
+<p>具体过程如下：</p>
+<ul>
+<li>有英文句子$e=\{e_1,…,e_l\}$, 想要建模$P(f|e)$</li>
+<li>使用概率$P\left(\left\{\phi_{0} \ldots \phi_{l}\right\} | \mathbf{e}\right)$选择$l+1$个fertilities$\{\phi_{0} \ldots \phi_{l}\}$<ul>
+<li>$P\left(\left\{\phi_{0} \ldots \phi_{l}\right\} | \mathbf{e}\right)=P\left(\phi_{0} | \phi_{1} \ldots \phi_{l}\right) \prod_{i=1}^{l} \mathrm{F}\left(\phi_{i} | e_{i}\right)$<ul>
+<li>$F(\phi|e)$表示e和$\phi$个单词对齐的概率：F(0|the)=0.1、F(1|the)=0.9、F(2|the)=0…F(0|not)=0.01、F(1|not)=0.09、F(2|not)=0.9</li>
+<li>$P\left(\phi_{0} | \phi_{1} \ldots \phi_{l}\right)$表示以出现$p_1$正面的概率硬币m次，出现$\phi_0$次正面的概率：$P\left(\phi_{0} | \phi_{1} \ldots \phi_{l}\right)=\frac{m !}{\left(m-\phi_{0}\right) ! \phi_{0} !} p_{1}^{\phi_{0}}\left(1-p_{1}\right)^{m-\phi_{0}}$<ul>
+<li>$m=\sum_{i=1}^{l} \phi_{i}$，可以这样了理解：假设已经有m个source word产生，则这m个词的每个词都增加一个$p_1$概率的空对齐</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>对于每一个$e_i$, 使用概率$\prod_{i=0}^{l} \prod_{k=1}^{\phi_{i}} \mathrm{R}\left(\pi_{i, k} | i, l, m\right) \mathrm{T}\left(f_{i, k} | e_{i}\right)$选择位置$\pi_{i,k}\in 1…m$和target word $f_{i,k}$<ul>
+<li>$R(j|i,l,m)$表示给定source lenth l、target lenth m 和 source position i，产生target position j的概率</li>
+<li>$R(j|i,l,m)$要注意与之前的$D(i|j,l,m)$区别，$D(i|j,l,m)$表示给定source lenth l、target lenth m 和 target position j，产生source position i的概率</li>
+</ul>
+</li>
+<li>根据上面推导产生模型:</li>
+</ul>
+<p>$\begin{aligned} \phi=&amp;\left\{\phi_{0} \ldots \phi_{m}\right\} \ \pi=&amp;\left\{\pi_{i, k}: i=0 \ldots m, k=1 \ldots \phi_{i}\right\} \ \mathbf{f} 2=&amp;\left\{f_{i, k}: i=0 \ldots m, k=1 \ldots \phi_{i}\right\} \ &amp; P(\phi, \pi, \mathbf{f} 2 | \mathbf{e})=\ \frac{m !}{\left(m-\phi_{0}\right) ! \phi_{0} !} p_{1}^{\phi_{0}}\left(1-p_{1}\right)^{m-\phi_{0}} &amp;\left(\prod_{i=0}^{l} \prod_{k=1}^{\phi_{i}} \mathbf{R}\left(\pi_{i, k} | i, l, m\right) \mathbf{T}\left(f_{i, k} | e_{i}\right)\right) \end{aligned}$</p>
+<ul>
+<li>进一步优化：</li>
+</ul>
+<p>$\begin{array}{c}P(\mathbf{f}, \mathbf{a} | \mathbf{e})= \ \frac{m !}{\left(m-\phi_{0}\right) ! \phi_{0} !} p_{1}^{\phi_{0}}\left(1-p_{1}\right)^{m-\phi_{0}}\left(\prod_{i=1}^{l} \mathbf{F}\left(\phi_{i} | e_{i}\right) \phi_{i} !\right)\left(\prod_{i=1}^{l} \prod_{k=1}^{\phi_{i}} \mathbf{R}\left(\pi_{i, k} | i, l, m\right)\right)\left(\prod_{i=0}^{l} \prod_{k=1}^{\phi_{i}} \mathbf{T}\left(f_{i, k} | e_{i}\right)\right)\end{array}$</p>
+<h3 id="EM算法迭代-2"><a href="#EM算法迭代-2" class="headerlink" title="EM算法迭代"></a>EM算法迭代</h3><ul>
+<li>初始化<ul>
+<li>fertility_table：$F(\phi | e)$</li>
+<li>translation_table：T(f|e)用Model-2的结果初始化</li>
+<li>distortion_table：R(j|i,l,m)</li>
+<li>p1=0.5</li>
+<li>alignment_table：a[i,j,k]用Model-2的结果初始化</li>
+</ul>
+</li>
+<li>E步：Model-1和Model-2可以计算出expect count，Model-3计算量太大，所以使用了一个近似算法<ul>
+<li>什么是expect count？以句对e = I do not understand the logic of these people，f = Je ne comprends pas la logique de ces gens -la为例，在给定当前模型参数下，$\phi_{3}$（not 的 fertility）的期望值为$\sum_{\mathbf{a} \in \mathcal{A}} P(\mathbf{a} | \mathbf{f}, \mathbf{e}) \phi_{3}(\mathbf{a})=\sum_{\mathbf{a} \in \mathcal{A}} \frac{P(\mathbf{f}, \mathbf{a} | \mathbf{e})}{\sum_{\mathbf{a}^{\prime} \in \mathcal{A}} P\left(\mathbf{f}, \mathbf{a}^{\prime} | \mathbf{e}\right)} \phi_{3}(\mathbf{a})$，其中$\phi_{3}(\mathbf{a})$表示对齐a中$\phi_{3}(\mathbf{a})$的值</li>
+<li>在Model-3中使用high probability alignments $\overline{\mathcal{A}}$计算$\sum_{\mathbf{a} \in \mathcal{A}} \frac{P(\mathbf{f}, \mathbf{a} | \mathbf{e})}{\sum_{\mathbf{a}^{\prime} \in \overline{\mathcal{A}}} P\left(\mathbf{f}, \mathbf{a}^{\prime} | \mathbf{e}\right)} \phi_{3}(\mathbf{a})$减少计算复杂度</li>
+</ul>
+</li>
+<li>M步：重新估算参数概率</li>
+</ul>
+<h3 id="Viterbi训练"><a href="#Viterbi训练" class="headerlink" title="Viterbi训练"></a>Viterbi训练</h3><blockquote>
+<p>参考：<br>词语对齐的对数线性模型：<a href="http://nlp.ict.ac.cn/~liuyang/papers/acl05_chn.pdf" target="_blank" rel="noopener">http://nlp.ict.ac.cn/~liuyang/papers/acl05_chn.pdf</a></p>
+</blockquote>
+<p>Viterbi参数训练算法的总体思路：</p>
+<ul>
+<li>给定初始参数</li>
+<li>用已有的参数求概率最大（Viterbi）的词语对齐</li>
+<li>用得到的概率最大的词语对齐重新计算参数</li>
+<li>回到第二步，直到收敛为止</li>
+</ul>
+<p>在对参数计算公式无法化简的情况下，采用Viterbi参数训练算法是一种可行的做法，这种算法通常可以迅速收敛到一个可以接受的结果。</p>
+<p>由于IBM Model 1和2存在简化的迭代公式，实际上在EM算法迭代是并不用真的去计算所有的对齐，而是可以利用迭代公式直接计算下一次的参数；由于IBM Model 3、4、5的翻译模型公式无法化简，理论上应该进行EM迭代。由于实际上由于计算所有词语对齐的代价太大，通常采用Viterbi训练，每次E步骤只生成最好的一个或者若干个对齐。</p>
+<p>Generalized Iterative Scaling算法(GIS)。</p>
+<h3 id="计算实例-2"><a href="#计算实例-2" class="headerlink" title="计算实例"></a>计算实例</h3><p>以一个实际例子来说明翻译过程：I do not understand the logic of these people翻译成法语。</p>
+<ul>
+<li>pick fertilities：以概率$\begin{aligned} P\left(\phi_{1} \ldots \phi_{l} | \mathbf{e}\right) &amp;=\prod_{i=1}^{l} \mathbf{F}\left(\phi_{i} | e_{i}\right) \ &amp;=\mathrm{F}(1 | I) \mathrm{F}(0 | d o) \mathrm{F}(2 | n o t) \mathrm{F}(1 | \text { understand }) \mathrm{F}(1 | \text { the }) \ &amp; \mathrm{F}(1 | \text { logic }) \mathrm{F}(1 | \text { of }) \mathrm{F}(1 | \text { these }) \mathrm{F}(1 | \text { people }) \end{aligned}$产生</li>
+</ul>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/11.png" alt="图片"></p>
+<ul>
+<li>replace words：以概率$\begin{aligned} \prod_{i=1}^{l} \phi_{i} ! \prod_{k=1}^{\phi_{i}} \mathrm{T}\left(\mathrm{f}_{i, k} | e_{i}\right)=&amp; 1 ! \times 0 ! \times 2 ! \times 1 ! \times 1 ! \times 1 ! \times 1 ! \times 1 ! \times 1 ! \times \ &amp; \mathrm{T}(J e | I) \mathrm{T}(n e | n o t) \mathrm{T}(p a s | n o t) \times \ &amp; \mathrm{T}(\text {comprends} | \text {understand}) \mathrm{T}(l a | \text {the}) \mathrm{T}(\text {logique } | \text {logic}) \times \ &amp; \mathrm{T}(\text {de } | \text {of}) \mathrm{T}(\text {ces} | \text {these}) \mathrm{T}(\text {gens } | \text {people}) \end{aligned}​$产生目标词汇</li>
+</ul>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/15.png" alt="图片"></p>
+<ul>
+<li>reorder：以概率$\begin{aligned} \prod_{i=1}^{1} \prod_{k=1}^{\phi_{i}} \mathrm{R}\left(\pi_{i, k} | i, l, m\right)=&amp; \mathrm{R}(j=1 | i=1, l=9, m=10) \mathrm{R}(2 | 3,9,10) \mathrm{R}(3 | 4,9,10) \times \ &amp; \mathrm{R}(4 | 3,9,10) \mathrm{R}(5 | 5,9,10) \mathrm{R}(6 | 6,9,10) \times \ &amp; \mathrm{R}(7 | 7,9,10) \mathrm{R}(8 | 8,9,10) \mathrm{R}(9 | 9,9,10) \end{aligned}$重新排序</li>
+</ul>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/13.png" alt="图片"></p>
+<ul>
+<li>spurious words：以概率$\begin{aligned} P\left(\phi_{0} | \phi_{1} \ldots \phi_{1}\right) \prod_{k=1}^{60} \mathrm{T}\left(\mathrm{f}_{0, k} | N U L L\right) &amp;=\frac{n !}{\left(n-\phi_{0}\right) ! \phi_{0} !} p_{1}^{00}\left(1-p_{1}\right)^{n-\phi_{0}} \prod_{k=1}^{60} \mathrm{T}\left(\mathrm{f}_{0, k} | N U L L\right) \ &amp;=\frac{9 !}{811 !} p_{1}\left(1-p_{1}\right)^{8} \mathrm{T}(-l a | N U L L) \ &amp;=9 p_{1}\left(1-p_{1}\right)^{8} \mathrm{T}(-l a | N U L L) \end{aligned}​$产生</li>
+</ul>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ibmmodel/14.png" alt="图片">，这里$n=\sum_{i=1}^{l} \phi_{l}=m-\phi_{0}$</p>
+<ul>
+<li>p1是$\phi_{0}$（即空对齐）的概率，spurious words即产生T(f|NULL)</li>
+</ul>
+<h3 id="NLTK源码分析-2"><a href="#NLTK源码分析-2" class="headerlink" title="NLTK源码分析"></a>NLTK源码分析</h3><ul>
+<li>整体代码<ul>
+<li>初始化</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">if probability_tables is None:</span><br><span class="line">    ibm2 &#x3D; IBMModel2(sentence_aligned_corpus, iterations)</span><br><span class="line">    self.translation_table &#x3D; ibm2.translation_table</span><br><span class="line">    self.alignment_table &#x3D; ibm2.alignment_table</span><br><span class="line">    # d(j | i,l,m) &#x3D; 1 &#x2F; m for all i, j, l, m</span><br><span class="line">    l_m_combinations &#x3D; set()</span><br><span class="line">    for aligned_sentence in sentence_aligned_corpus:</span><br><span class="line">        l &#x3D; len(aligned_sentence.mots)</span><br><span class="line">        m &#x3D; len(aligned_sentence.words)</span><br><span class="line">        if (l, m) not in l_m_combinations:</span><br><span class="line">            l_m_combinations.add((l, m))</span><br><span class="line">            initial_prob &#x3D; 1 &#x2F; m</span><br><span class="line">            for j in range(1, m + 1):</span><br><span class="line">                for i in range(0, l + 1):</span><br><span class="line">                    self.distortion_table[j][i][l][m] &#x3D; initial_prob</span><br><span class="line">     # simple initialization, taken from GIZA++</span><br><span class="line">    self.fertility_table[0] &#x3D; defaultdict(lambda: 0.2)</span><br><span class="line">    self.fertility_table[1] &#x3D; defaultdict(lambda: 0.65)</span><br><span class="line">    self.fertility_table[2] &#x3D; defaultdict(lambda: 0.1)</span><br><span class="line">    self.fertility_table[3] &#x3D; defaultdict(lambda: 0.04)</span><br><span class="line">    MAX_FERTILITY &#x3D; 10</span><br><span class="line">    initial_fert_prob &#x3D; 0.01 &#x2F; (MAX_FERTILITY - 4)</span><br><span class="line">    for phi in range(4, MAX_FERTILITY):</span><br><span class="line">        self.fertility_table[phi] &#x3D; defaultdict(lambda: initial_fert_prob)</span><br><span class="line">    self.p1 &#x3D; 0.5</span><br><span class="line">else:</span><br><span class="line">    self.translation_table &#x3D; probability_tables[&quot;translation_table&quot;]</span><br><span class="line">    self.alignment_table &#x3D; probability_tables[&quot;alignment_table&quot;]</span><br><span class="line">    self.fertility_table &#x3D; probability_tables[&quot;fertility_table&quot;]</span><br><span class="line">    self.p1 &#x3D; probability_tables[&quot;p1&quot;]</span><br><span class="line">    self.distortion_table &#x3D; probability_tables[&quot;distortion_table&quot;]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>训练</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">def train(self, parallel_corpus):</span><br><span class="line">        counts &#x3D; Model3Counts()</span><br><span class="line">        for aligned_sentence in parallel_corpus:</span><br><span class="line">            l &#x3D; len(aligned_sentence.mots)</span><br><span class="line">            m &#x3D; len(aligned_sentence.words)</span><br><span class="line">            # Sample the alignment space</span><br><span class="line">            sampled_alignments, best_alignment &#x3D; self.sample(aligned_sentence)</span><br><span class="line">            # Record the most probable alignment</span><br><span class="line">            aligned_sentence.alignment &#x3D; Alignment(best_alignment.zero_indexed_alignment())</span><br><span class="line">            # E step (a): Compute normalization factors to weigh counts, https:&#x2F;&#x2F;github.com&#x2F;nltk&#x2F;nltk&#x2F;blob&#x2F;5023d6b933ef1a5b1f25fba1d5ed11a8a43a47e4&#x2F;nltk&#x2F;translate&#x2F;ibm_model.py中有详细计算</span><br><span class="line">            total_count &#x3D; self.prob_of_alignments(sampled_alignments)</span><br><span class="line">            # E step (b): Collect counts</span><br><span class="line">            for alignment_info in sampled_alignments:</span><br><span class="line">                count &#x3D; self.prob_t_a_given_s(alignment_info)</span><br><span class="line">                normalized_count &#x3D; count &#x2F; total_count</span><br><span class="line">                for j in range(1, m + 1):</span><br><span class="line">                   counts.update_lexical_translation(normalized_count, alignment_info, j)</span><br><span class="line">                   counts.update_distortion(normalized_count, alignment_info, j, l, m)</span><br><span class="line">                counts.update_null_generation(normalized_count, alignment_info)</span><br><span class="line">                counts.update_fertility(normalized_count, alignment_info)</span><br><span class="line">        # M step:</span><br><span class="line">        # If any probability is less than MIN_PROB, clamp it to MIN_PROB</span><br><span class="line">        existing_alignment_table &#x3D; self.alignment_table</span><br><span class="line">        self.reset_probabilities()</span><br><span class="line">        self.alignment_table &#x3D; existing_alignment_table  # don&#39;t retrain</span><br><span class="line"></span><br><span class="line">        self.maximize_lexical_translation_probabilities(counts)</span><br><span class="line">        self.maximize_distortion_probabilities(counts)</span><br><span class="line">        self.maximize_fertility_probabilities(counts)</span><br><span class="line">        self.maximize_null_generation_probabilities(counts)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>计算M-step<ul>
+<li>最大化distortion概率</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">def maximize_distortion_probabilities(self, counts):</span><br><span class="line">    MIN_PROB &#x3D; IBMModel.MIN_PROB</span><br><span class="line">    for j, i_s in counts.distortion.items():</span><br><span class="line">        for i, src_sentence_lengths in i_s.items():</span><br><span class="line">            for l, trg_sentence_lengths in src_sentence_lengths.items():</span><br><span class="line">                for m in trg_sentence_lengths:</span><br><span class="line">                    estimate &#x3D; (counts.distortion[j][i][l][m]&#x2F; counts.distortion_for_any_j[i][l][m])</span><br><span class="line">                    self.distortion_table[j][i][l][m] &#x3D; max(estimate, MIN_PROB)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>计算给定source sentence，产生target sentence和alignment的概率</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">def prob_t_a_given_s(self, alignment_info):</span><br><span class="line">    src_sentence &#x3D; alignment_info.src_sentence</span><br><span class="line">    trg_sentence &#x3D; alignment_info.trg_sentence</span><br><span class="line">    l &#x3D; len(src_sentence) - 1  # exclude NULL</span><br><span class="line">    m &#x3D; len(trg_sentence) - 1</span><br><span class="line">    p1 &#x3D; self.p1</span><br><span class="line">    p0 &#x3D; 1 - p1</span><br><span class="line"></span><br><span class="line">    probability &#x3D; 1.0</span><br><span class="line">    MIN_PROB &#x3D; IBMModel.MIN_PROB</span><br><span class="line"></span><br><span class="line">    # Combine NULL insertion probability</span><br><span class="line">    null_fertility &#x3D; alignment_info.fertility_of_i(0)</span><br><span class="line">    probability *&#x3D; pow(p1, null_fertility) * pow(p0, m - 2 * null_fertility)</span><br><span class="line">    if probability &lt; MIN_PROB:</span><br><span class="line">        return MIN_PROB</span><br><span class="line"></span><br><span class="line">    # Compute combination (m - null_fertility) choose null_fertility</span><br><span class="line">    for i in range(1, null_fertility + 1):</span><br><span class="line">        probability *&#x3D; (m - null_fertility - i + 1) &#x2F; i</span><br><span class="line">        if probability &lt; MIN_PROB:</span><br><span class="line">            return MIN_PROB</span><br><span class="line"></span><br><span class="line">    # Combine fertility probabilities</span><br><span class="line">    for i in range(1, l + 1):</span><br><span class="line">        fertility &#x3D; alignment_info.fertility_of_i(i)</span><br><span class="line">        probability *&#x3D; (</span><br><span class="line">            factorial(fertility) * self.fertility_table[fertility][src_sentence[i]]</span><br><span class="line">        )</span><br><span class="line">        if probability &lt; MIN_PROB:</span><br><span class="line">            return MIN_PROB</span><br><span class="line"></span><br><span class="line">    # Combine lexical and distortion probabilities</span><br><span class="line">    for j in range(1, m + 1):</span><br><span class="line">        t &#x3D; trg_sentence[j]</span><br><span class="line">        i &#x3D; alignment_info.alignment[j]</span><br><span class="line">        s &#x3D; src_sentence[i]</span><br><span class="line">        probability *&#x3D; (self.translation_table[t][s] * self.distortion_table[j][i][l][m])</span><br><span class="line">        if probability &lt; MIN_PROB:</span><br><span class="line">            return MIN_PROB</span><br><span class="line"></span><br><span class="line">    return probability</span><br></pre></td></tr></table></figure>
+<h3 id="计算alignment"><a href="#计算alignment" class="headerlink" title="计算alignment"></a>计算alignment</h3><ul>
+<li>用Model-2计算最可能的alignment：$\mathbf{a}^{<em>, 2}=\operatorname{argmax}_{\mathbf{a} \in \mathcal{A}} P_{2}(\mathbf{f}, \mathbf{a} | \mathbf{e})$、$a_{j}^{</em> 2}=\operatorname{argmax}_{j}\left(\mathrm{T}\left(f_{j} | e_{a_{j}}\right) \mathrm{D}(j | i, l, m)\right)$</li>
+<li>计算a2的邻居（邻居指通过替换a2中某个对齐或交换某两个对齐产生的新的对齐）</li>
+<li>迭代计算a3（初值设置为a2）：$\mathbf{a}^{<em>, 3}=\operatorname{argmax}_{\mathbf{a} \in \mathcal{N}\left(\mathbf{a}^{</em>, 3}\right)} \quad P_{3}(\mathbf{a}, \mathbf{f} | \mathbf{e})​$<ul>
+<li>上式等价于求解概率的负对数</li>
+<li>对于所有的source position $j \in\{1, \ldots, J\}$和target position $i \in\{0, \ldots, \tilde{I}\}$,引入$x_{i j} \in\{0,1\}$表示i和j是否对齐，且由于每个i只能和1个j对齐，因此存在约束$\sum_{i} x_{i j}=1 \quad, j=1, \ldots, J$，从而求解目标为：$c_{i j}^{x}=-\log \left[p\left(f_{j} | e_{i}\right) \cdot p(j | i)\right]$</li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/03/29/%E4%BB%A4%E4%BA%BA%E5%A4%B4%E5%A4%A7%E4%B9%8BIBM-Model/" data-id="ck8d76arq001tkwwv8wabg62e"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/SMT/" rel="tag">SMT</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/03/29/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AJointly-Learning-to-Align-and-Translate-with-Transformer%E3%80%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">论文阅读：《Jointly Learning to Align and Translate with Transformer》</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
