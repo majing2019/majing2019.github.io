@@ -2,11 +2,6 @@
 <search>
   <entry>
     <title>HMM之——基础学习</title>
-    <url>/2020/04/12/HMM%E4%B9%8B%E2%80%94%E2%80%94%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0-1/</url>
-    <content><![CDATA[]]></content>
-  </entry>
-  <entry>
-    <title>HMM之——基础学习</title>
     <url>/2020/04/12/HMM%E4%B9%8B%E2%80%94%E2%80%94%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<p>最近工作中经常要用到HMM，所以专门来复习下，主要讲解的是HMM的Forward和Backward算法，以及参数估计算法。</p>
 <a id="more"></a>
