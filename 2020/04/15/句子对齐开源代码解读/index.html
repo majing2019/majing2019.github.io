@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    句子对齐开源代码解读 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-句子对齐开源代码解读" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      句子对齐开源代码解读
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/04/15/%E5%8F%A5%E5%AD%90%E5%AF%B9%E9%BD%90%E5%BC%80%E6%BA%90%E4%BB%A3%E7%A0%81%E8%A7%A3%E8%AF%BB/" class="article-date">
+  <time datetime="2020-04-15T14:08:21.000Z" itemprop="datePublished">2020-04-15</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>最近需要根据句子对齐，给中英句对进行打分，因此看了一下相关的开源项目。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://blog.csdn.net/ykf173/article/details/86747592" target="_blank" rel="noopener">https://blog.csdn.net/ykf173/article/details/86747592</a><br><a href="http://www.cips-cl.org/static/anthology/CCL-2015/CCL-15-019.pdf" target="_blank" rel="noopener">http://www.cips-cl.org/static/anthology/CCL-2015/CCL-15-019.pdf</a></p>
+</blockquote>
+<h1 id="Gale和Church的句对齐算法"><a href="#Gale和Church的句对齐算法" class="headerlink" title="Gale和Church的句对齐算法"></a>Gale和Church的句对齐算法</h1><blockquote>
+<p>参考：<br><a href="https://zhuanlan.zhihu.com/p/59071889" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/59071889</a><br><a href="https://github.com/NLPpupil/gale_and_church_align" target="_blank" rel="noopener">https://github.com/NLPpupil/gale_and_church_align</a><br><a href="https://www.aclweb.org/anthology/J93-1004.pdf" target="_blank" rel="noopener">https://www.aclweb.org/anthology/J93-1004.pdf</a></p>
+</blockquote>
+<p>Gale和Church在1993年提出了一个基于长度进行句对齐的算法，并在附录里公开了C源代码。这篇论文相当经典，以至于之后的关于句对齐的论文大多数要引用它。论文的题目是 A Program for Aligning Sentences in Bilingual Corpora。这个方法适合欧美语系，思想就是根据句子的长度来比较的。比较出名的hunalign工具是基于galechurch想法写的，并做了改进。Hunalign可以用于十几种语句的对齐，但是很遗憾，中文不太使用，但是也不是完全不适用，只是效果不太好。LF就是根据它做了一些小的改进，对其效果还可以。</p>
+<p>对齐分两步。第一步是段落对其，第二步是在段落内部进行句对齐。段落对齐重要，不过简单，问题在于段落内部的句对齐。所以本文只解析已知段落对齐，怎样在段落内进行句对齐。首先定义几个概念，所有论文中出现的符号都对应定义里的符号。</p>
+<ul>
+<li><strong>句子</strong> 一个短的字符串。</li>
+<li><strong>段落</strong> 语文里的自然段。分为源语言L1的段落和目标语言L2的段落，或称原文段落和译文段落。段落由一个序列的连续句子组成。</li>
+<li><strong>片段</strong> 一个序列的连续的句子，是段落的子集。对应论文中的portion of text。</li>
+<li><strong>片段对</strong> 原文片段和译文片段组成的对。</li>
+<li>$l_1, l_2$分别对应片段对中原文部分和译文部分的字符总数。</li>
+<li>$c, s^2$ 假设源语言中的一个字符在目标语言中对应的字符数是一个随机变量，且该随机变量服从正态分布 N(c, s^2) 。（如何估计可参考：<a href="https://www.zhihu.com/question/39080163" target="_blank" rel="noopener">https://www.zhihu.com/question/39080163</a>）</li>
+<li>$\delta$ 论文中定义为 $\left(l_{2}-l_{1} c\right) / \sqrt{l_{1} s^{2}}$。每一个片段对都有自己的一个$\delta$$。</li>
+<li><strong>对齐模式</strong> 或称<strong>匹配模式</strong>，描述一个句块对由几个原文句子和几个译文句子组成。比如1-2表示一个原文句子翻译成两个译文句子的对齐模式。</li>
+<li><strong>match</strong> 对齐模式的概率分布。</li>
+<li><strong>距离</strong>（distance measure） 衡量片段对两个片段之间的距离。距离度量是对$-\log (\operatorname{Prob}(\operatorname{match} | \delta))$的估计。当一个片段对确定后，我们就知道它的mathc和$\delta$。距离越大，此片段对对齐的概率越小。</li>
+<li><strong>片段对序列</strong> 一个序列的片段对，这些片段对的原文部分的集合是原文段落的一个划分，译文部分的集合是译文段落的一个划分。</li>
+<li><strong>距离和</strong> 距离和是片段对序列中所有片段对的</li>
+<li><strong>对齐序列</strong> 距离和最小的片段对序列。</li>
+</ul>
+<p>对齐算法的输入是某一对相互对齐的段落，输出是对齐序列。接下来就变成了动态规划问题，类似最小编辑距离。片段对序列那么多，哪个是对齐序列呢？如果用穷举法，计算量太大，显然不现实。换个角度想，假设我们已经知道了对齐序列，用$D(i, j)$表示该对齐序列的距离和，其中$i$是原文段落最后一个句子的index，$j$是译文段落最后一个句子的index。对齐序列的距离和可以表示成最后一个片段对的距离加上去掉最后一个片段对的剩下的片段对序列的距离和（可以认为对齐序列的子序列也是对齐序列）。最后一个片段对有六种对齐模式，所以要对每种模式分情况讨论，选择结果最小的那个。动态规划的递归式就是这么来的。</p>
+<p>$D(i, j)=\min \left\{\begin{array}{ccc}D(i, j-1) &amp; + &amp; d\left(0, t_{j} ; 0,0\right) \ D(i-1, j) &amp; + &amp; d\left(s_{i}, 0 ; 0,0\right) \ D(i-1, j-1) &amp; + &amp; d\left(s_{i}, t_{j} ; 0,0\right) \ D(i-1, j-2) &amp; + &amp; d\left(s_{i}, t_{j} ; 0, t_{j-1}\right) \ D(i-2, j-1) &amp; + &amp; d\left(s_{i}, t_{j} ; s_{i-1}, 0\right) \ D(i-2, j-2) &amp; + &amp; \left.d\left(s_{i}, t_{j};s_{i-1}, t_{j-1}\right)\right\}\end{array}\right.$</p>
+<p>递归式的基础情况D(0,0)=0,通过递归式，我们可以求出对齐序列的距离和，在求距离和的过程中，我们顺便记录了对齐轨迹，也就是顺便求出了对齐序列。这就是算法的主干思想。下面就是它的主要代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">import math</span><br><span class="line">import scipy.stats</span><br><span class="line"># 先使用统计的方法计算出对齐模式的概率分布</span><br><span class="line">match &#x3D; &#123;(1, 2): 0.023114355231143552,  </span><br><span class="line">         (1, 3): 0.0012165450121654502, </span><br><span class="line">         (2, 2): 0.006082725060827251, </span><br><span class="line">         (3, 1): 0.0006082725060827251, </span><br><span class="line">         (1, 1): 0.9422141119221411, </span><br><span class="line">         (2, 1): 0.0267639902676399&#125;</span><br><span class="line"># 源语言的一个字符对应于目标语言的字符数(正太分布)的均值</span><br><span class="line">c &#x3D; 1.467</span><br><span class="line"># 源语言的一个字符对应于目标语言的字符数(正太分布)的方差</span><br><span class="line">s2 &#x3D; 6.315</span><br><span class="line"></span><br><span class="line">def prob_delta(delta):</span><br><span class="line">    return scipy.stats.norm(0,1).cdf(delta) </span><br><span class="line"></span><br><span class="line">def length(sentence):</span><br><span class="line">    punt_list &#x3D; &#39;,.!?:;~，。！？：；～”“《》&#39;</span><br><span class="line">    sentence &#x3D; sentence</span><br><span class="line">    return sum(1 for char in sentence if char not in punt_list)</span><br><span class="line"></span><br><span class="line">def distance(partition1,partition2,match_prob):</span><br><span class="line">    l1 &#x3D; sum(map(length,partition1))</span><br><span class="line">    l2 &#x3D; sum(map(length,partition2))</span><br><span class="line">    try:</span><br><span class="line">        delta &#x3D; (l2-l1*c)&#x2F;math.sqrt(l1*s2)</span><br><span class="line">    except ZeroDivisionError:</span><br><span class="line">        return float(&#39;inf&#39;)</span><br><span class="line">    prob_delta_given_match &#x3D; 2*(1 - prob_delta(abs(delta)))    </span><br><span class="line">    try:</span><br><span class="line">        return - math.log(prob_delta_given_match) - math.log(match_prob)</span><br><span class="line">    except ValueError:</span><br><span class="line">        return float(&#39;inf&#39;)</span><br><span class="line"></span><br><span class="line">def align(para1,para2):</span><br><span class="line">    &quot;&quot;&quot;</span><br><span class="line">    输入两个句子序列，生成句对</span><br><span class="line">    句对是倒序的，从段落结尾开始向开头对齐</span><br><span class="line">    &quot;&quot;&quot;</span><br><span class="line">    align_trace &#x3D; &#123;&#125; </span><br><span class="line">    for i in range(len(para1) + 1):</span><br><span class="line">        for j in range(len(para2) + 1):     </span><br><span class="line">            if i &#x3D;&#x3D; j &#x3D;&#x3D; 0:</span><br><span class="line">                align_trace[0, 0] &#x3D; (0, 0, 0) </span><br><span class="line">            else:</span><br><span class="line">                align_trace[i,j] &#x3D; (float(&#39;inf&#39;),0,0)</span><br><span class="line">                for (di, dj), match_prob in match.items():</span><br><span class="line">                    if i-di&gt;&#x3D;0 and j-dj&gt;&#x3D;0:</span><br><span class="line">                        align_trace[i,j] &#x3D; min(align_trace[i,j],(align_trace[i-di, j-dj][0] + distance(para1[i-di:i],para2[j-dj:j],match_prob), di, dj))</span><br><span class="line">                </span><br><span class="line">    i, j &#x3D; len(para1), len(para2)</span><br><span class="line">    while True:</span><br><span class="line">        (c, di, dj) &#x3D; align_trace[i, j]</span><br><span class="line">        if di &#x3D;&#x3D; dj &#x3D;&#x3D; 0:</span><br><span class="line">            break</span><br><span class="line">        yield &#39;&#39;.join(para1[i-di:i]), &#39;&#39;.join(para2[j-dj:j])</span><br><span class="line">        i -&#x3D; di</span><br><span class="line">        j -&#x3D; dj</span><br></pre></td></tr></table></figure>
+<h1 id="Champollion"><a href="#Champollion" class="headerlink" title="Champollion"></a>Champollion</h1><blockquote>
+<p>参考：<br><a href="https://www.aclweb.org/anthology/L06-1465/" target="_blank" rel="noopener">https://www.aclweb.org/anthology/L06-1465/</a><br><a href="https://www.aclweb.org/anthology/C10-2081.pdf" target="_blank" rel="noopener">https://www.aclweb.org/anthology/C10-2081.pdf</a><br><a href="https://github.com/LowResourceLanguages/champollion" target="_blank" rel="noopener">https://github.com/LowResourceLanguages/champollion</a></p>
+</blockquote>
+<p>Champollion是基于长度和词典的对齐算法，是中国人写的，对于中-英对齐比较好。相比于Gale&amp;Church这种对长度比较敏感（适合于英-法）的算法，Champollion更多关注到了内容。Champollion相比于其他算法的优点如下：</p>
+<ul>
+<li>Champollion假设输入有很大噪声（以往假设源语言与目标语言的match模式主要为1:1，但在中英语料中，句子对齐噪声非常大），使得删除和插入的次数变得很重要</li>
+<li>与其他以词典为基础的算法不同，每个词根据对齐的重要性不同赋予了不同的权重。文中举例如下：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">a. Marketplace bombing kills 23 in Iraq</span><br><span class="line">b. 伊拉克 集市 爆炸 造成 23 人 死亡</span><br></pre></td></tr></table></figure>
+<p>在这个例子中，(23, 23)这个pair相比于(Iraq, 伊拉克)更重要。因为(Iraq, 伊拉克)相比于(23, 23)更经常出现。<br>Champollion因此赋予更少出现的translation pair更大的权重。</p>
+<ul>
+<li>Champollion对于每个segment pair（每个segment有1～多句话）进行打分，对于非1～1对齐进行了惩罚</li>
+</ul>
+<h2 id="句子相似度计算"><a href="#句子相似度计算" class="headerlink" title="句子相似度计算"></a>句子相似度计算</h2><p>论文将计算相似度问题转化为检索系统中计算query跟document相似度的问题。计算stf=segment term frequency（某个term在一个segment中出现的次数），定义$\text {idtf}=\frac{T}{ \text {occurences}_{-} \text {in}_{-} \text {the}_{-} \text {document}}$，其中T是document中的总term数。stf衡量term在segment中重要性，idtf衡量term在document中重要性。 Stf-idtf衡量了一个translate-pair对两个segment对齐的重要性。</p>
+<p>Champollion将两个segment看成对顺序不敏感的词袋：$\begin{array}{l}E=\left\{e_{1}, e_{2}, \ldots, e_{m-1}, e_{m}\right\} \ C=\left\{c_{1}, c_{2}, \ldots, c_{n-1}, c_{n}\right\}\end{array}$。</p>
+<p>定义k个在两个segment中出现的translate-pair：$P=\left\{\left(e_{1}^{\prime}, c_{1}^{\prime}\right),\left(e_{2}^{\prime}, c_{2}^{\prime}\right) \ldots\left(e_{k}^{\prime}, c_{k}^{\prime}\right)\right\}$，则E和C的相似度定义为：</p>
+<p>$\begin{array}{l}\operatorname{sim}(E, C)=\sum_{i=1}^{k} \lg \left(\operatorname{stf}\left(e_{i}^{\prime}, c_{i}^{\prime}\right)^{<em>} i d t f\left(e_{i}^{\prime}\right)\right. \ </em> \text { alignment }_{-} \text {penalty } \ \text { +length_penalty }(E, C)\end{array}$</p>
+<p>其中alignment_penalty是一个[0, 1]的值，对于1-1的对齐其值为1。length_penalty是一个函数，对于长度不匹配的翻译要进行一下惩罚。</p>
+<h2 id="动态规划算法"><a href="#动态规划算法" class="headerlink" title="动态规划算法"></a>动态规划算法</h2><p>Champollion允许1-0, 0-1, 1-1, 2-1, 1-2, 1-3, 3-1, 1-4 和 4-1对齐，其动态规划转移方程为：</p>
+<p>$S(i, j)=\max \left\{\begin{array}{c}S(i-1, j)+\operatorname{sim}(i, \phi) \ S(i, j-1)+\operatorname{sim}(\phi, j) \ S(i-1, j-1)+\operatorname{sim}(i, j) \ S(i-1, j-2)+\operatorname{sim}(i, j-1) \ S(i-2, j-1)+\operatorname{sim}(i-1, j) \ S(i-2, j-2)+\operatorname{sim}(i-1, j-1) \ S(i-1, j-3)+\operatorname{sim}(i, j-2) \ S(i-3, j-1)+\operatorname{sim}(i-2, j) \ S(i-1, j-4)+\operatorname{sim}(i, j-3) \ S(i-4, j-1)+\operatorname{sim}(i-3, j)\end{array}\right.$</p>
+<h1 id="YALIGN"><a href="#YALIGN" class="headerlink" title="YALIGN"></a>YALIGN</h1><blockquote>
+<p>参考：<br><a href="https://github.com/machinalis/yalign" target="_blank" rel="noopener">https://github.com/machinalis/yalign</a><br><a href="https://mailman.uib.no/public/corpora/2013-September/018912.html" target="_blank" rel="noopener">https://mailman.uib.no/public/corpora/2013-September/018912.html</a></p>
+</blockquote>
+<p>Yalign工具使用了一下，但效果不太好，它主要提供了两个功能：</p>
+<ul>
+<li>一个句子相似度度量：给定两个句子，它就会对这两个句子相互翻译的可能性产生一个粗略的估计(0到1之间的一个数字)。</li>
+<li>一个序列对齐工具：这样给定两个文档(一个句子列表)，它产生一个对齐，最大化单个(每个句子对)相似度的总和。所以Yalign的主要算法实际上是一个标准序列对齐算法的包装。</li>
+</ul>
+<p>在序列对齐上，Yalign使用Needleman-Wunch算法的一个变体来查找两个给定文档中的句子之间的最佳对齐。它带来的优点是，使该算法具有多项式时间最坏情况的复杂性，并产生最优对齐。反之其缺点是不能处理相互交叉的对齐或从两个句子到一个句子的对齐。关于Needleman-Wunch算法可参考<a href="https://zhuanlan.zhihu.com/p/26212767" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/26212767</a>。</p>
+<p>对齐之后，只有翻译概率高的句子才会被包含在最终的对齐中。也就是说，有些结果会被过滤，以提供高质量的校准。使用一个阈值以便在句子相似度度量足够差时排除该对。</p>
+<p>对于句子相似度度量，Yalign使用统计分类器的似然输出，并将其调整为0-1范围。分类器被训练来确定一对句子是否互相翻译。Yalign使用支持向量机作为分类器，对齐的质量不仅取决于输入，还取决于经过训练的分类器的质量。</p>
+<p>下面是它的一些重要函数或类的说明：</p>
+<ul>
+<li>Sentence: 训练数据的基本类型，继承list</li>
+<li>input_conversation.py：将文本/tmx/html格式的训练数据转化为Sentence</li>
+<li>YalignModel: 主类，配合basic_model函数进行模型训练、导入、预测</li>
+<li>SentencePairScore：定义句对的特征并进行打分</li>
+<li>SequenceAligner：序列对齐类</li>
+<li>SVMClassifier：训练一个支持向量机</li>
+<li>WordPairScore：词及词翻译的概率，可以使用fast-align获取s</li>
+</ul>
+<h1 id="Bleualign"><a href="#Bleualign" class="headerlink" title="Bleualign"></a>Bleualign</h1><blockquote>
+<p>参考：<br><a href="https://www.aclweb.org/anthology/W11-4624.pdf" target="_blank" rel="noopener">https://www.aclweb.org/anthology/W11-4624.pdf</a><br><a href="https://github.com/rsennrich/Bleualign" target="_blank" rel="noopener">https://github.com/rsennrich/Bleualign</a></p>
+</blockquote>
+<p>Bleualign借助机器翻译的结果进行对齐。使用机器翻译的目的是用目标语表示原文的大概意思，然后和译文进行比较，其算法的主要流程如下：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E5%8F%A5%E5%AD%90%E5%AF%B9%E9%BD%90/1.png" alt="图片"></p>
+<p>Bleualign没使用过，不知道实际效果怎么样。</p>
+<h1 id="Vecalign"><a href="#Vecalign" class="headerlink" title="Vecalign"></a>Vecalign</h1><blockquote>
+<p>参考：<br><a href="https://github.com/thompsonb/vecalign" target="_blank" rel="noopener">https://github.com/thompsonb/vecalign</a><br>Vecalign: Improved Sentence Alignment in Linear Time and Space（<a href="https://www.aclweb.org/anthology/D19-1136.pdf）" target="_blank" rel="noopener">https://www.aclweb.org/anthology/D19-1136.pdf）</a></p>
+</blockquote>
+<p>vecalign计算句子相似度的方法跟之前不同，它使用了facebook开源的laser embedding进行句子相似度计算，计算公式如下：$c(x, y)=\frac{(1-\cos (x, y))_{\text {nSents }}(x) \text { nSents }(y)}{\sum_{s=1}^{S} 1-\cos \left(x, y_{s}\right)+\sum_{s=1}^{S} 1-\cos \left(x_{s}, y\right)}$，且对于非1-1对齐采取了一定的惩罚。下面是它的核心代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br></pre></td><td class="code"><pre><span class="line">def vecalign(vecs0,</span><br><span class="line">             vecs1,</span><br><span class="line">             final_alignment_types,</span><br><span class="line">             del_percentile_frac,</span><br><span class="line">             width_over2,</span><br><span class="line">             max_size_full_dp,</span><br><span class="line">             costs_sample_size,</span><br><span class="line">             num_samps_for_norm,</span><br><span class="line">             norms0&#x3D;None,</span><br><span class="line">             norms1&#x3D;None):</span><br><span class="line">    if width_over2 &lt; 3:</span><br><span class="line">        logger.warning(</span><br><span class="line">            &#39;width_over2 was set to %d, which does not make sense. &#39;</span><br><span class="line">            &#39;increasing to 3.&#39;, width_over2)</span><br><span class="line">        width_over2 &#x3D; 3</span><br><span class="line"></span><br><span class="line">    # make sure input embeddings are norm&#x3D;&#x3D;1</span><br><span class="line">    make_norm1(vecs0)</span><br><span class="line">    make_norm1(vecs1)</span><br><span class="line"></span><br><span class="line">    # save off runtime stats for summary</span><br><span class="line">    runtimes &#x3D; OrderedDict()</span><br><span class="line"></span><br><span class="line">    # Determine stack depth</span><br><span class="line">    s0, s1 &#x3D; vecs0.shape[1], vecs1.shape[1]</span><br><span class="line">    max_depth &#x3D; 0</span><br><span class="line">    while s0 * s1 &gt; max_size_full_dp ** 2:</span><br><span class="line">        max_depth +&#x3D; 1</span><br><span class="line">        s0 &#x3D; s0 &#x2F;&#x2F; 2</span><br><span class="line">        s1 &#x3D; s1 &#x2F;&#x2F; 2</span><br><span class="line"></span><br><span class="line">    # init recursion stack</span><br><span class="line">    # depth is 0-based (full size is 0, 1 is half, 2 is quarter, etc)</span><br><span class="line">    stack &#x3D; &#123;0: &#123;&#39;v0&#39;: vecs0, &#39;v1&#39;: vecs1&#125;&#125;</span><br><span class="line"></span><br><span class="line">    # downsample sentence vectors</span><br><span class="line">    t0 &#x3D; time()</span><br><span class="line">    for depth in range(1, max_depth + 1):</span><br><span class="line">        stack[depth] &#x3D; &#123;&#39;v0&#39;: downsample_vectors(stack[depth - 1][&#39;v0&#39;]),</span><br><span class="line">                        &#39;v1&#39;: downsample_vectors(stack[depth - 1][&#39;v1&#39;])&#125;</span><br><span class="line">    runtimes[&#39;Downsample embeddings&#39;] &#x3D; time() - t0</span><br><span class="line"></span><br><span class="line">    # compute norms for all depths, add sizes, add alignment types</span><br><span class="line">    t0 &#x3D; time()</span><br><span class="line">    for depth in stack:</span><br><span class="line">        stack[depth][&#39;size0&#39;] &#x3D; stack[depth][&#39;v0&#39;].shape[1]</span><br><span class="line">        stack[depth][&#39;size1&#39;] &#x3D; stack[depth][&#39;v1&#39;].shape[1]</span><br><span class="line">        if depth &#x3D;&#x3D; 0:</span><br><span class="line">            stack[depth][&#39;alignment_types&#39;] &#x3D; final_alignment_types</span><br><span class="line">        else:</span><br><span class="line">            stack[depth][&#39;alignment_types&#39;] &#x3D; [(1, 1)]</span><br><span class="line"></span><br><span class="line">        if depth &#x3D;&#x3D; 0 and norms0 is not None:</span><br><span class="line">            if norms0.shape !&#x3D; vecs0.shape[:2]:</span><br><span class="line">                print(&#39;norms0.shape:&#39;, norms0.shape)</span><br><span class="line">                print(&#39;vecs0.shape[:2]:&#39;, vecs0.shape[:2])</span><br><span class="line">                raise Exception(&#39;norms0 wrong shape&#39;)</span><br><span class="line">            stack[depth][&#39;n0&#39;] &#x3D; norms0</span><br><span class="line">        else:</span><br><span class="line">            stack[depth][&#39;n0&#39;] &#x3D; compute_norms(</span><br><span class="line">                stack[depth][&#39;v0&#39;], stack[depth][&#39;v1&#39;], num_samps_for_norm)</span><br><span class="line"></span><br><span class="line">        if depth &#x3D;&#x3D; 0 and norms1 is not None:</span><br><span class="line">            if norms1.shape !&#x3D; vecs1.shape[:2]:</span><br><span class="line">                print(&#39;norms1.shape:&#39;, norms1.shape)</span><br><span class="line">                print(&#39;vecs1.shape[:2]:&#39;, vecs1.shape[:2])</span><br><span class="line">                raise Exception(&#39;norms1 wrong shape&#39;)</span><br><span class="line">            stack[depth][&#39;n1&#39;] &#x3D; norms1</span><br><span class="line">        else:</span><br><span class="line">            stack[depth][&#39;n1&#39;] &#x3D; compute_norms(</span><br><span class="line">                stack[depth][&#39;v1&#39;], stack[depth][&#39;v0&#39;], num_samps_for_norm)</span><br><span class="line"></span><br><span class="line">    runtimes[&#39;Normalize embeddings&#39;] &#x3D; time() - t0</span><br><span class="line"></span><br><span class="line">    # Compute deletion penalty for all depths</span><br><span class="line">    t0 &#x3D; time()</span><br><span class="line">    for depth in stack:</span><br><span class="line">        stack[depth][&#39;del_knob&#39;] &#x3D; make_del_knob(</span><br><span class="line">            e_laser&#x3D;stack[depth][&#39;v0&#39;][0, :, :],</span><br><span class="line">            f_laser&#x3D;stack[depth][&#39;v1&#39;][0, :, :],</span><br><span class="line">            e_laser_norms&#x3D;stack[depth][&#39;n0&#39;][0, :],</span><br><span class="line">            f_laser_norms&#x3D;stack[depth][&#39;n1&#39;][0, :],</span><br><span class="line">            sample_size&#x3D;costs_sample_size)</span><br><span class="line">        stack[depth][&#39;del_penalty&#39;] &#x3D; \</span><br><span class="line">            stack[depth][&#39;del_knob&#39;].percentile_frac_to_del_penalty(</span><br><span class="line">                del_percentile_frac)</span><br><span class="line">        logger.debug(&#39;del_penalty at depth %d: %f&#39;,</span><br><span class="line">                     depth, stack[depth][&#39;del_penalty&#39;])</span><br><span class="line">    runtimes[&#39;Compute deletion penalties&#39;] &#x3D; time() - t0</span><br><span class="line">    tt &#x3D; time() - t0</span><br><span class="line">    logger.debug(</span><br><span class="line">        &#39;%d x %d full DP make features: %.6fs (%.3e per dot product)&#39;,</span><br><span class="line">        stack[max_depth][&#39;size0&#39;], stack[max_depth][&#39;size1&#39;], tt,</span><br><span class="line">        tt &#x2F; (stack[max_depth][&#39;size0&#39;] + 1e-6) &#x2F;</span><br><span class="line">        (stack[max_depth][&#39;size1&#39;] + 1e-6))</span><br><span class="line">    # full DP at maximum recursion depth</span><br><span class="line">    t0 &#x3D; time()</span><br><span class="line">    stack[max_depth][&#39;costs_1to1&#39;] &#x3D; make_dense_costs(stack[max_depth][&#39;v0&#39;],</span><br><span class="line">                                                      stack[max_depth][&#39;v1&#39;],</span><br><span class="line">                                                      stack[max_depth][&#39;n0&#39;],</span><br><span class="line">                                                      stack[max_depth][&#39;n1&#39;])</span><br><span class="line"></span><br><span class="line">    runtimes[&#39;Full DP make features&#39;] &#x3D; time() - t0</span><br><span class="line">    t0 &#x3D; time()</span><br><span class="line">    _, stack[max_depth][&#39;x_y_tb&#39;] &#x3D; dense_dp(</span><br><span class="line">        stack[max_depth][&#39;costs_1to1&#39;], stack[max_depth][&#39;del_penalty&#39;])</span><br><span class="line">    stack[max_depth][&#39;alignments&#39;] &#x3D; dense_traceback(</span><br><span class="line">        stack[max_depth][&#39;x_y_tb&#39;])</span><br><span class="line">    runtimes[&#39;Full DP&#39;] &#x3D; time() - t0</span><br><span class="line"></span><br><span class="line">    # upsample the path up to the top resolution</span><br><span class="line">    compute_costs_times &#x3D; []</span><br><span class="line">    dp_times &#x3D; []</span><br><span class="line">    upsample_depths &#x3D; [0, ] if max_depth &#x3D;&#x3D; 0 else list(</span><br><span class="line">        reversed(range(0, max_depth)))</span><br><span class="line">    for depth in upsample_depths:</span><br><span class="line">        if max_depth &gt; 0:  # upsample previoius alignment to current resolution</span><br><span class="line">            course_alignments &#x3D; upsample_alignment(</span><br><span class="line">                stack[depth + 1][&#39;alignments&#39;])</span><br><span class="line">            # features may have been truncated when downsampleing,</span><br><span class="line">            # so alignment may need extended</span><br><span class="line">            extend_alignments(</span><br><span class="line">                course_alignments, stack[depth][&#39;size0&#39;],</span><br><span class="line">                stack[depth][&#39;size1&#39;])  # in-place</span><br><span class="line">        else:</span><br><span class="line">            # We did a full size 1-1 search,</span><br><span class="line">            # so search same size with more alignment types</span><br><span class="line">            course_alignments &#x3D; stack[0][&#39;alignments&#39;]</span><br><span class="line"></span><br><span class="line">        # convert couse alignments to a searchpath</span><br><span class="line">        stack[depth][&#39;searchpath&#39;] &#x3D; alignment_to_search_path(</span><br><span class="line">            course_alignments)</span><br><span class="line"></span><br><span class="line">        # compute ccosts for sparse DP</span><br><span class="line">        t0 &#x3D; time()</span><br><span class="line">        stack[depth][&#39;a_b_costs&#39;], stack[depth][&#39;b_offset&#39;] &#x3D; \</span><br><span class="line">            make_sparse_costs(stack[depth][&#39;v0&#39;], stack[depth][&#39;v1&#39;],</span><br><span class="line">                              stack[depth][&#39;n0&#39;], stack[depth][&#39;n1&#39;],</span><br><span class="line">                              stack[depth][&#39;searchpath&#39;],</span><br><span class="line">                              stack[depth][&#39;alignment_types&#39;],</span><br><span class="line">                              width_over2)</span><br><span class="line"></span><br><span class="line">        tt &#x3D; time() - t0</span><br><span class="line">        num_dot_products &#x3D; len(stack[depth][&#39;b_offset&#39;]) * \</span><br><span class="line">            len(stack[depth][&#39;alignment_types&#39;]) * width_over2 * 2</span><br><span class="line">        logger.debug(&#39;%d x %d sparse DP (%d alignment types, %d window) &#39;</span><br><span class="line">                     &#39;make features: %.6fs (%.3e per dot product)&#39;,</span><br><span class="line">                     stack[max_depth][&#39;size0&#39;], stack[max_depth][&#39;size1&#39;],</span><br><span class="line">                     len(stack[depth][&#39;alignment_types&#39;]), width_over2 * 2,</span><br><span class="line">                     tt, tt &#x2F; (num_dot_products + 1e6))</span><br><span class="line"></span><br><span class="line">        compute_costs_times.append(time() - t0)</span><br><span class="line">        t0 &#x3D; time()</span><br><span class="line">        # perform sparse DP</span><br><span class="line">        stack[depth][&#39;a_b_csum&#39;], stack[depth][&#39;a_b_xp&#39;], \</span><br><span class="line">            stack[depth][&#39;a_b_yp&#39;], stack[depth][&#39;new_b_offset&#39;] &#x3D; \</span><br><span class="line">            sparse_dp(</span><br><span class="line">                stack[depth][&#39;a_b_costs&#39;], stack[depth][&#39;b_offset&#39;],</span><br><span class="line">                stack[depth][&#39;alignment_types&#39;], stack[depth][&#39;del_penalty&#39;],</span><br><span class="line">                stack[depth][&#39;size0&#39;], stack[depth][&#39;size1&#39;])</span><br><span class="line"></span><br><span class="line">        # performace traceback to get alignments and alignment scores</span><br><span class="line">        # for debugging, avoid overwriting stack[depth][&#39;alignments&#39;]</span><br><span class="line">        akey &#x3D; &#39;final_alignments&#39; if depth &#x3D;&#x3D; 0 else &#39;alignments&#39;</span><br><span class="line">        stack[depth][akey], stack[depth][&#39;alignment_scores&#39;] &#x3D; \</span><br><span class="line">            sparse_traceback(stack[depth][&#39;a_b_csum&#39;],</span><br><span class="line">                             stack[depth][&#39;a_b_xp&#39;],</span><br><span class="line">                             stack[depth][&#39;a_b_yp&#39;],</span><br><span class="line">                             stack[depth][&#39;new_b_offset&#39;],</span><br><span class="line">                             stack[depth][&#39;size0&#39;],</span><br><span class="line">                             stack[depth][&#39;size1&#39;])</span><br><span class="line">        dp_times.append(time() - t0)</span><br><span class="line"></span><br><span class="line">    runtimes[&#39;Upsample DP compute costs&#39;] &#x3D; sum(compute_costs_times[:-1])</span><br><span class="line">    runtimes[&#39;Upsample DP&#39;] &#x3D; sum(dp_times[:-1])</span><br><span class="line"></span><br><span class="line">    runtimes[&#39;Final DP compute costs&#39;] &#x3D; compute_costs_times[-1]</span><br><span class="line">    runtimes[&#39;Final DP&#39;] &#x3D; dp_times[-1]</span><br><span class="line">    return stack</span><br></pre></td></tr></table></figure>
+<p>其他相关资源</p>
+<ul>
+<li><a href="https://github.com/cocoxu/Shakespeare/tree/master/bilingual-sentence-aligner" target="_blank" rel="noopener">https://github.com/cocoxu/Shakespeare/tree/master/bilingual-sentence-aligner</a></li>
+<li>[<a href="https://github.com/loomchild/maligna](" target="_blank" rel="noopener">https://github.com/loomchild/maligna](</a></li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/04/15/%E5%8F%A5%E5%AD%90%E5%AF%B9%E9%BD%90%E5%BC%80%E6%BA%90%E4%BB%A3%E7%A0%81%E8%A7%A3%E8%AF%BB/" data-id="ck91ft67d0005ddwvg2nzgygj"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8F%A5%E5%AD%90%E5%AF%B9%E9%BD%90/" rel="tag">句子对齐</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/04/12/HMM%E4%B9%8B%E2%80%94%E2%80%94%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">HMM之——基础学习</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
