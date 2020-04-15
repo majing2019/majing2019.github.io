@@ -50,6 +50,7 @@
 <h1 id="Extend"><a href="#Extend" class="headerlink" title="Extend"></a>Extend</h1><p>在<a href="https://kexue.fm/archives/7187" target="_blank" rel="noopener">https://kexue.fm/archives/7187</a>中提出了一个能提升albert在下游任务中表现的方法：    在下游任务中，放弃albert的权重共享的约束，也就是把albert当bert用。</p>
 ]]></content>
       <tags>
+        <tag>论文阅读</tag>
         <tag>Bert</tag>
       </tags>
   </entry>
