@@ -1,6 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>论文阅读：ALBert</title>
+    <url>/2020/04/15/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9AALBert/</url>
+    <content><![CDATA[<p>Albert在quora question pair上得分最高，我确始终没看过论文，今天就来补一补。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://paperswithcode.com/paper/albert-a-lite-bert-for-self-supervised" target="_blank" rel="noopener">https://paperswithcode.com/paper/albert-a-lite-bert-for-self-supervised</a><br>语篇分析：<a href="http://www.shuang0420.com/2017/09/20/NLP%20%E7%AC%94%E8%AE%B0%20-%20Discourse%20Analysis/" target="_blank" rel="noopener">http://www.shuang0420.com/2017/09/20/NLP%20%E7%AC%94%E8%AE%B0%20-%20Discourse%20Analysis/</a><br><a href="https://kexue.fm/archives/7187" target="_blank" rel="noopener">https://kexue.fm/archives/7187</a></p>
+</blockquote>
+<h1 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h1><p>ALBERT主要是从减少模型参数的角度对BERT进行优化，主要有如下3个优化点：</p>
+<ul>
+<li>Factorized embedding parameterization：</li>
+<li>Cross-layer parameter sharing</li>
+<li>Inter-sentence coherence loss</li>
+</ul>
+<h1 id="Factorized-embedding-parameterization"><a href="#Factorized-embedding-parameterization" class="headerlink" title="Factorized embedding parameterization"></a>Factorized embedding parameterization</h1><p>在BERT、XLNet、RoBERTa等模型中，由于模型结构的限制，WordePiece embedding的大小$E$总是与隐层大小$H$相同，即$E \equiv H$。从建模的角度考虑，词嵌入学习的是单词与上下文无关的表示，而隐层则是学习与上下文相关的表示。显然后者更加复杂，需要更多的参数，也就是说模型应当增大隐层大小$H$ ，或者说满足$H \gg E$。但实际上词汇表的大小通$V$常非常大，如果$E=H$的话，增加隐层大小$H$后将会使embedding matrix的维度$V \times E$非常巨大。</p>
+<p>因此本文想要打破$E$与$H$之间的绑定关系，从而减小模型的参数量，同时提升模型表现。具体做法是将embedding matrix分解为两个大小分别为$V \times E$和$E \times H$矩阵，也就是说先将单词投影到一个低维的embedding空间$E$，再将其投影到高维的隐藏空间$H$ 。这使得embedding matrix的维度从$O(V \times H)$减小到$O(V \times E+E \times H)$。当$H \gg E$时，参数量减少非常明显。在实现时，随机初始化$V \times E$和$E \times H$的矩阵，计算某个单词的表示需用一个单词的one-hot向量乘以$V \times E$维的矩阵（也就是lookup），再用得到的结果乘$E \times H$维的矩阵即可。两个矩阵的参数通过模型学习。</p>
+<h1 id="Cross-layer-parameter-sharing"><a href="#Cross-layer-parameter-sharing" class="headerlink" title="Cross-layer parameter sharing"></a>Cross-layer parameter sharing</h1><p>本文提出的另一个减少参数量的方法就是层之间的参数共享，即多个层使用相同的参数。参数共享有三种方式：只共享feed-forward network的参数、只共享attention的参数、共享全部参数。ALBERT默认是共享全部参数的，在后续实验结果中我们可以看到几种方式的模型表现。</p>
+<p>如下图所示，实验表明加入参数共享之后，每一层的输入embedding和输出embedding的L2距离和余弦相似度都比BERT稳定了很多。这证明参数共享能够使模型参数更加稳定。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/1.png" alt="图片"></p>
+<h1 id="Inter-sentence-coherence-loss"><a href="#Inter-sentence-coherence-loss" class="headerlink" title="Inter-sentence coherence loss"></a>Inter-sentence coherence loss</h1><p>除了减少模型参数外，本外还对BERT的预训练任务Next-sentence prediction (NSP)进行了改进。在BERT中，NSP任务的正例是文章中连续的两个句子，而负例则是从两篇文档中各选一个句子构造而成。在先前的研究中，已经证明NSP是并不是一个合适的预训练任务。本文推测其原因是模型在判断两个句子的关系时不仅考虑了两个句子之间的连贯性（coherence），还会考虑到两个句子的话题（topic）。而两篇文档的话题通常不同，模型会更多的通过话题去分析两个句子的关系，而不是句子间的连贯性，这使得NSP任务变成了一个相对简单的任务。</p>
+<p>因此本文提出了Sentence-order prediction (SOP)来取代NSP。具体来说，其正例与NSP相同，但负例是通过选择一篇文档中的两个连续的句子并将它们的顺序交换构造的。这样两个句子就会有相同的话题，模型学习到的就更多是句子间的连贯性。</p>
+<h1 id="Model-setup"><a href="#Model-setup" class="headerlink" title="Model setup"></a>Model setup</h1><p>本文为ALBERT选择了四种参数设置：base, large, xlarge和xxlarge。如下图所示</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/2.png" alt="图片"></p>
+<h1 id="Experimental-Results"><a href="#Experimental-Results" class="headerlink" title="Experimental Results"></a>Experimental Results</h1><h2 id="BERT-vs-ALBERT"><a href="#BERT-vs-ALBERT" class="headerlink" title="BERT vs. ALBERT"></a>BERT vs. ALBERT</h2><p>从下图的实验结果可见，ALBERT的训练速度明显比BERT快，ALBERT-xxlarge的表现更是全方面超过了BERT。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/3png.png" alt="图片"></p>
+<h2 id="Factorized-Embedding-Parameterization"><a href="#Factorized-Embedding-Parameterization" class="headerlink" title="Factorized Embedding Parameterization"></a>Factorized Embedding Parameterization</h2><p>从下图实验结果可见，对于不共享参数的情况，$E$几乎是与大越好；而共享参数之后，$E$太大反而会使模型表现变差，$E=128$模型表现最好，因此ALBERT的默认参数设置中$E=128$。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/4.png" alt="图片"></p>
+<p>考虑到ALBERT-base的$H=768$ ，那么$E=768$时，模型应该可以看作没有减少embedding参数量的情况。而不共享参数的实验结果表明此时模型表现更好，那么似乎说明了Factorized embedding在一定程度上降低了模型的表现。</p>
+<h2 id="Cross-Layer-Parameter-Sharing"><a href="#Cross-Layer-Parameter-Sharing" class="headerlink" title="Cross-Layer Parameter Sharing"></a>Cross-Layer Parameter Sharing</h2><p>如下图所示，可以看出参数共享几乎也是对模型结果有负面影响的。但是考虑到其能够大幅削减参数量，并且对结果影响不是特别大，因此权衡之下选择了参数共享。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/5.png" alt="图片"></p>
+<h2 id="SOP"><a href="#SOP" class="headerlink" title="SOP"></a>SOP</h2><p>如下图实验结果所示，如果不使用NSP或SOP作为预训练任务的话，模型在NSP和SOP两个任务上表现都很差；如果使用NSP作为预训练任务的话，模型确实能很好的解决NSP问题，但是在SOP问题上表现却很差，几乎相当于随机猜，因此说明NSP任务确实很难学到句子间的连贯性；而如果用SOP作为预训练任务，则模型也可以较好的解决NSP问题，同时模型在下游任务上表现也更好。说明SOP确实是更好的预训练任务。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/6.png" alt="图片"></p>
+<h2 id="Effect-Of-Network-Depth-And-Width"><a href="#Effect-Of-Network-Depth-And-Width" class="headerlink" title="Effect Of Network Depth And Width"></a>Effect Of Network Depth And Width</h2><p>从下面两个对比试验结果我们可以看出，增加模型的层数或隐层大小确实能够在一定程度上提升模型的表现。但当大小增加到一定量时，反而会使模型表现变差。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/7.png" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/8.png" alt="图片"></p>
+<h2 id="Additional-Training-Data-And-Dropout-Effects"><a href="#Additional-Training-Data-And-Dropout-Effects" class="headerlink" title="Additional Training Data And Dropout Effects"></a>Additional Training Data And Dropout Effects</h2><p>ALBERT训练时还加入了XLNet和RoBERTa训练时用的额外数据，实验表明加入额外数据（W additional data）确实会提升模型表现。此外，作者还观察到模型似乎一直没有过拟合数据，因此去除了Dropout，从对比试验可以看出，去除Dropout（W/O Dropout）后模型表现确实更好。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/9.png" alt="图片"></p>
+<h2 id="Current-State-Of-The-Art-On-NLU-Tasks"><a href="#Current-State-Of-The-Art-On-NLU-Tasks" class="headerlink" title="Current State-Of-The-Art On NLU Tasks"></a>Current State-Of-The-Art On NLU Tasks</h2><p>最后是ALBERT在各个NLU任务上的表现，几乎都达到了state-of-the-art的表现。</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/10.png" alt="图片"></p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ALBERT/11.png" alt="图片"></p>
+<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><ul>
+<li>本文提出了Factorized embedding和层之间参数共享两种削减参数量的方式，在大家都想着把模型做大的时候给大家指出了另一条可行的路，意义重大。但本文提出的两种方法实际上都带来了模型效果的下降，也就是说本文似乎也还没有找到BERT中真正的冗余参数，减少模型参数量这方面还需要更多的研究。</li>
+<li>本文提出了SOP，很好地替换了NSP作为预训练任务，给模型表现带来了明显提升。</li>
+<li>本文的削减参数使模型表现下降，结果更好主要是靠SOP、更大的$H$ 、更多的数据、去除dropout。那么如果不削减参数的话再使用SOP、加更多的数据、去除dropout呢？</li>
+<li>本文的削减参数量参数量带来了模型训练速度的提升，但是ALBERT-xxlarge比BERT-xlarge参数量少了约1000M，而训练速度并没有太大的提升（只有1.2倍）。原因应该是更少的参数量的确能带来速度上的提升，但是本文提出的Factorized embedding引入了额外的矩阵运算，并且同时ALBERT-xxlarge大幅增加了$H$，实际上增加了模型的计算量。</li>
+<li>本文还有两个小细节可以学习，一个是在模型不会过拟合的情况下不使用dropout，文中有提到batch_norm+dropout可能带来负面效果，dropout存在训练和推断的不一致问题，也就是“严格来讲训练模型和预测模型并不是同一个模型”，模型变大变深时，这种不一致性可能会进一步放大，所以dropout对于超大模型可能并不是一种有效的防止过拟合的方法；另一个则是warm-start，即在训练深层网络（例如12层）时，可以先训练浅层网络（例如6层），再在其基础上做fine-tune，这样可以加快深层模型的收敛。</li>
+</ul>
+<h1 id="Extend"><a href="#Extend" class="headerlink" title="Extend"></a>Extend</h1><p>在<a href="https://kexue.fm/archives/7187" target="_blank" rel="noopener">https://kexue.fm/archives/7187</a>中提出了一个能提升albert在下游任务中表现的方法：    在下游任务中，放弃albert的权重共享的约束，也就是把albert当bert用。</p>
+]]></content>
+      <tags>
+        <tag>Bert</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>句子对齐开源代码解读</title>
     <url>/2020/04/15/%E5%8F%A5%E5%AD%90%E5%AF%B9%E9%BD%90%E5%BC%80%E6%BA%90%E4%BB%A3%E7%A0%81%E8%A7%A3%E8%AF%BB/</url>
     <content><![CDATA[<p>最近需要根据句子对齐，给中英句对进行打分，因此看了一下相关的开源项目。</p>
