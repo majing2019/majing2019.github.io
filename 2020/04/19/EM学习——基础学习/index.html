@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    EM学习——基础学习 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-EM学习——基础学习" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      EM学习——基础学习
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/04/19/EM%E5%AD%A6%E4%B9%A0%E2%80%94%E2%80%94%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/" class="article-date">
+  <time datetime="2020-04-19T15:05:48.000Z" itemprop="datePublished">2020-04-19</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>接下来几天将复习Graphical Model的一系列模型。今天先复习一下EM算法。</p>
+<a id="more"></a>
+<h1 id="Graphical-Model和Latent-Variable"><a href="#Graphical-Model和Latent-Variable" class="headerlink" title="Graphical Model和Latent Variable"></a>Graphical Model和Latent Variable</h1><p>首先，我们了解一下graphical model的技术思路：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/1.png" alt="图片"></p>
+<p>从上图中可以看到，Graphical Model可以分成两类，一类是有向图，典型代表是HMM；一类是无向图，典型代表是CRF。当我们能找出状态之间的依赖关系时，可以使用HMM，因为HMM可以利用conditional independence条件独立性质；当我们刻画不出依赖关系时，可以使用CRF。其中，从HMM可以推导出MEMM模型，从MEMM可以推导出CRF模型。我们通常使用的CRF是Linear CRF，其中的Linear是从Log Linear Model中得来的。Log Linear Model可推出的另外一个模型是logistic regressioin，区别是逻辑回归针对static data，CRF针对sequencial data。整个Graphical Model的参数估计使用的是EM算法，推理使用Viterbi算法。</p>
+<p>在有隐含变量（latent variable）的模型中，我们经常使用EM算法。那什么是latent variable呢？一个Latent variable model可以用z~x表示，意思是用看不见的z去生成看得见的x。以下图为例，假设任务是生成人脸，那么隐含变量就包含性别、眼睛颜色、头发颜色等信息：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/2.png" alt="图片"></p>
+<p>EM的核心是计算参数theta，如下图：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/3.png" alt="图片"></p>
+<p>在计算时分为两种情况：</p>
+<ul>
+<li>Complete case：(z, x)都是可观测的，如逻辑回归（已知x预测$\theta​$），一般使用MLE</li>
+<li>Imcomplete case：x是可观测的，z是不可观测的，使用EM style算法</li>
+</ul>
+<h1 id="MLE-for-Complete-and-Imcomplete-Case"><a href="#MLE-for-Complete-and-Imcomplete-Case" class="headerlink" title="MLE for Complete and Imcomplete Case"></a>MLE for Complete and Imcomplete Case</h1><p>下面我们来看一下MLE的求解思路。MLE的核心思想是求解$argmax_{\theta}(D|\theta)​$，也就是求最大化D情况下的theta值。比如在逻辑回归中就是求解$argmax_{\theta}P({x_i, y_i}_{i=1}^n|\theta)​$。而在graphic model中变为$argmax_{\theta}P({x, z|\theta})​$。在Complete Case和Incomplete Case中MLE可以分别继续写成如下形式（可以看到$logp(z|\theta_z)​$是典型的MLE，我们可以通过数据统计反推出theta值）：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/4.png" alt="图片"></p>
+<blockquote>
+<p>【注】：在图模型中联合概率很难表示，有几个技巧可以尝试：<br>（1）使用conditional independence对形如$P(a,b,c,d,e|\theta)$进行转换：例如n-gram语言模型P(I hate ad|y=垃圾)，在朴素贝叶斯中就会近似为P(I|y=垃圾)P(hate|y=垃圾)P(ad|y=垃圾)<br>（2）使用D-seperation或Markov Blanket对形如$P(a|b,c,d,e,f)$进行转换：比如发现d、e、f对a没有影响，转换为P(a|b,c)，进而再转化为函数形式f(\theta)，再使用优化方法找出解或者近似解<br>（3）在Incomplete Case中，由于z也是未知的，所以把z边缘化了<br>（4）上面图中$p(z|\theta)$和$p(x|z, \theta)$也可以认为是两个函数$f(\theta)和g(\theta)$，也可以使用优化算法进行求解。对于Incomplete Case，$f(\theta)和g(\theta)$很难求解，所以使用EM-style算法求解</p>
+</blockquote>
+<p>在Complete Case中基本是通过统计方式计算的，以下图为例（假设观测到的是单词，隐变量是词性，建立一个HMM模型，我们可以统计词性之间的Transition Probabilty和词性到单词的Emition Probability）：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/5.png" alt="图片"></p>
+<h1 id="EM-Derivation"><a href="#EM-Derivation" class="headerlink" title="EM Derivation"></a>EM Derivation</h1><p>EM中一共有3类变量：</p>
+<ul>
+<li>$\theta​$: model parameter</li>
+<li>$z​$: latent variable</li>
+<li>$x$: obversation</li>
+</ul>
+<p>目标：用MLE最大化$L(\theta)=logP(x|\theta)​$，也就是求解$argmax_{\theta}L(\theta)=argmax_{\theta}logP(x|\theta)​$。</p>
+<p>假设：使用iterative算法，已经求解出$\theta_1$,$\theta_2$, …, $\theta_n$，则如何计算$\theta_{n+1}$?</p>
+<p>已知：$\theta_n$是对应于$L(\theta_n)$的解，那么$\theta_{n+1}$就是使得$argmax_{\theta}L(\theta) - argmax_{\theta_{n+1}}L(\theta_{n+1})$最大的值（可以理解为使得目标函数提升最大的值），且$argmax_{\theta}L(\theta) - argmax_{\theta_{n+1}}L(\theta_{n+1}) = logP(x|\theta) - logP(x|\theta_n)$，上面思考过程来源于下图：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/6.png" alt="图片"></p>
+<p>从上面图中看到，当我们已经优化到log sum的形式时，就很难继续求解了。所以我们想到用一个不等式去近似它。这个不等式就叫做Jensen’s Inequality：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/7.png" alt="图片">（【注】: Jensen’s Inequality可以从凸函数的性质得出来）</p>
+<p>经过Jensen’s neuqlity简化，上图中式子可推导成：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/8.png" alt="图片"></p>
+<p>继续推导可以得到下图（第6行是由于是常量所以消去了）：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/9.png" alt="图片"></p>
+<p>我们可以把最后一项写成Expectation的形式，怎么理解呢？$P(z|x, \theta_n)$是所有可能的z的一个概率分布，我们把每一个可能的z带入到$logP(x, z|\theta)$中，我们就可以计算$logP(x, z|\theta)$的 一个平均值，也就是期望值。由于已知$x$、$\theta_n$，我们可以求出z的期望值。那么对于$logP(x,z|\theta)$来说，由于$x$、$z$、$\theta_n$都是已知的，想求解最大似然，就变成了一个complete case，我们可以通过MLE求解使其最大的$\theta$。</p>
+<blockquote>
+<p>【注】：你可能想问，已知$x$, $\theta_n$，是怎么求出$P(z|x, \theta_n)$的呢？在具体问题中，我们通常会把$P(z|x, \theta_n)$写成一个函数的形式，自然就可以求出来了</p>
+</blockquote>
+<p>EM算法其实就是两个步骤的一个循环，已知$x$, $\theta$求$z$的期望，再用这个$z$求解$\theta$，再去迭代得求解$z$，如下图：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/10.png" alt="图片"></p>
+<p>EM算法一定是收敛的，它本质上是coordinate descent，即按照坐标轴去优化。</p>
+<h1 id="K-means"><a href="#K-means" class="headerlink" title="K-means"></a>K-means</h1><p>K-means整体上就是选中心点—&gt;根据与中心点的举例聚类—&gt;重新计算中心点，这样一个迭代的过程，如下图所示：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/11.png" alt="图片"></p>
+<h2 id="Cost-Function"><a href="#Cost-Function" class="headerlink" title="Cost Function"></a>Cost Function</h2><p>Kmeans的代价函数如下图：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/12.png" alt="图片"></p>
+<p>可以看到有两个参数：</p>
+<ul>
+<li>$\mu_k$表示中心点，可以看成是模型参数</li>
+<li>$\gamma_{ik}$表示对$\mu_k$的选择，可以看成是隐变量</li>
+</ul>
+<h2 id="K-means和EM的关系"><a href="#K-means和EM的关系" class="headerlink" title="K-means和EM的关系"></a>K-means和EM的关系</h2><p>K-means的迭代过程就是先选择$\mu_k$，再计算$\gamma_{ik}$，再根据聚成的簇重新选择$\mu_k$。但K-means是一个EM-style的算法，而不是一个严格意义的EM。因为在EM中，要计算的是隐变量的期望值，即对于$\gamma_{ik}$表示$x_i$属于第$k$个cluster的概率，则$\gamma_{i0}=0.8$, $\gamma_{i1}=0.2$….（有点像GMM哈）。但在K-means中，我们直接令$\gamma_{i0}=1$了。因此Kmeans也叫Hard-Clustering，GMM也叫Soft-Clustering。如下图：</p>
+<p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/em/13.png" alt="图片"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/04/19/EM%E5%AD%A6%E4%B9%A0%E2%80%94%E2%80%94%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/" data-id="ck977r7d70000rewvbenodbi9"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/EM/" rel="tag">EM</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/04/15/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9AALBert/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">论文阅读：ALBert</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
