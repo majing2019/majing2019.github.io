@@ -8,15 +8,15 @@
 <blockquote>
 <p>参考：<br><a href="https://arxiv.org/abs/1011.4088" target="_blank" rel="noopener">https://arxiv.org/abs/1011.4088</a><br><a href="http://cseweb.ucsd.edu/~elkan/250Bwinter2012/loglinearCRFs.pdf" target="_blank" rel="noopener">http://cseweb.ucsd.edu/~elkan/250Bwinter2012/loglinearCRFs.pdf</a></p>
 </blockquote>
-<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><h2 id="生成模型-VS-判别模型"><a href="#生成模型-VS-判别模型" class="headerlink" title="生成模型 VS 判别模型"></a>生成模型 VS 判别模型</h2><p>下面这张图展示了生成模型和判别模型的联系和区别：这两种模型都是用极大似然估计来估计概率，只是两个估计的概率公式不同，生成模型是p(x, y)，判别模型是p(y|x)。为什么生成模型能生成数据呢，因为p(x, y) = p(y) * p(x|y)，我们可以学习到p(x|y)，那么当我们采样y时，就可以根据它生成x了。</p>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><h2 id="生成模型-VS-判别模型"><a href="#生成模型-VS-判别模型" class="headerlink" title="生成模型 VS 判别模型"></a>生成模型 VS 判别模型</h2><p>下面这张图展示了生成模型和判别模型的联系和区别：这两种模型都是用极大似然估计来估计概率，只是两个估计的概率公式不同，生成模型是$p(x, y)$，判别模型是$p(y|x)$。为什么生成模型能生成数据呢，因为$p(x, y) = p(y) * p(x|y)$，我们可以学习到$p(x|y)$，那么当我们采样y时，就可以根据它生成x了。</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/1.png" alt="图片"></p>
 <p>生成模型可以用于生成，也可以用于判别。但判别模型只能用于判别。生成模型需要学习到更多有关数据的细节。比如有很多猫和狗的图片，对于生成模型，它就会学到很多猫和狗的长什么样的细节（因为学不到的话它也生成不出来）；但对于判别模型，主要学习到猫和狗的区别，如下图：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/2.png" alt="图片"></p>
-<p>生成模型的目标函数是P(x, y)，而判别函数是P(y|x)。转化P(x,y)=P(y)P(x|y)，也就是生成模型学习到的一个是P(x|y)，比如对于y=猫来说，能学习到一个x的分布（即猫的特征分布，有时这个分布用高斯分布去模拟），如下图：</p>
+<p>生成模型的目标函数是P(x, y)，而判别函数是P(y|x)。转化$P(x,y)=P(y)P(x|y)$，也就是生成模型学习到的一个是$P(x|y)$，比如对于y=猫来说，能学习到一个x的分布（即猫的特征分布，有时这个分布用高斯分布去模拟），如下图：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/3.png" alt="图片"></p>
-<p>那怎么生成呢？事实上我们可以从P(x|y=猫)这个分布中去采样一个x（比如对于图片来说，x就是像素矩阵），而这个x就是一个猫的图片了。下面再以预测男、女身高为例，做一个生成模型，过程如下图（当需要生成时，直接从正太分布x~N(\miu, \sigma^2)中采样即可）：</p>
+<p>那怎么生成呢？事实上我们可以从$P(x|y=猫)$这个分布中去采样一个x（比如对于图片来说，x就是像素矩阵），而这个x就是一个猫的图片了。下面再以预测男、女身高为例，做一个生成模型，过程如下图（当需要生成时，直接从正太分布x~$N(\mu, \sigma^2$)中采样即可）：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/4.png" alt="图片"></p>
-<p>那么在判别问题上，哪个模型效果更好呢？从生成视角看，生成式建模的是P(x,y)=P(y)<em>P(x|y)，从判别视角看，生成式建模的是P(x,y)=P(x)</em>P(y|x)。而判别式建模的就是P(y|x)。也就是两类模型都去做了判别P(y|x)，而生成模型同时学习了P(x)（可以理解成一个prior）。从直观上感觉，只做一件事情的判别模型会更好。因为生成模型要同时兼顾P(x)和P(y|x)，它要找到这两者之间的一个平衡点。因此，我们可以得出以下结论：</p>
+<p>那么在判别问题上，哪个模型效果更好呢？从生成视角看，生成式建模的是$P(x,y)=P(y)<em>P(x|y)$，从判别视角看，生成式建模的是$P(x,y)=P(x)</em>P(y|x)$。而判别式建模的就是$P(y|x)$。也就是两类模型都去做了判别$P(y|x)$，而生成模型同时学习了$P(x)$（可以理解成一个prior）。从直观上感觉，只做一件事情的判别模型会更好。因为生成模型要同时兼顾$P(x)$和$P(y|x)$，它要找到这两者之间的一个平衡点。因此，我们可以得出以下结论：</p>
 <ul>
 <li>当数据量大时，使用判别模型会优于生成模型</li>
 <li>当数据量小时，生成模型有可能比判别模型要好（因为生成模型有prior，即p(x)，有时为了防止过拟合，会在模型中加入正则项，其实这个正则项就是一个prior）</li>
@@ -61,7 +61,7 @@
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/16.png" alt="图片"></p>
 <p>那么接下来的问题就是，如何去定义这个score function呢？我们用一个指数函数计算score：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/17.png" alt="图片"></p>
-<p>上图式子计算了一个clique的分数，其中F_j(y_c)是特征函数。比如y_1-y_2-y_3这个无向图中，我们有2个特征，分别就是F_1(y_1, y_2, y_3)、F_2(y_1, y_2, y_3)。也就是说，每一个clique里可以抽取出J个特征（每个特征都是一个数）。w_j*F_j(y_c)就是一个线性函数，整个模型的参数\theta={w}。</p>
+<p>上图式子计算了一个clique的分数，其中$F_j(y_c)$是特征函数。比如$y_1$-$y_2$-$y_3$这个无向图中，我们有2个特征，分别就是$F_1(y_1, y_2, y_3)$、$F_2(y_1, y_2, y_3)$。也就是说，每一个clique里可以抽取出J个特征（每个特征都是一个数）。$w_j*F_j(y_c)$就是一个线性函数，整个模型的参数$\theta={w}$。</p>
 <p>那么F特征是什么呢？F主要评估了变量之间的契合度。那为什么这个模型叫Log-Linear呢？看下图就知道了：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/18.png" alt="图片"></p>
 <p>下面用文本的一个例子来说明计算这个联合概率的过程：</p>
@@ -72,22 +72,22 @@
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/21.png" alt="图片"></p>
 <p>其中特征函数f_j定义如下，可以看出来我们并没有做特征工程，而是把输入x_j直接看成是特征：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/22.png" alt="图片"></p>
-<p>那么一共有多少特征呢？如果标签y有3个(即y={1,2,3})，x的维度为d，则特征总个数为3d，即J=3d。比如，我们分别令y = 1, 2, 3，则f_j的具体值如下：</p>
+<p>那么一共有多少特征呢？如果标签y有3个(即y={1,2,3})，x的维度为d，则特征总个数为3d，即J=3d。比如，我们分别令y = 1, 2, 3，则$f_j$的具体值如下：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/23.png" alt="图片"></p>
-<p>接着，我们把f_j的值带入到P(y|x;\theta)中：</p>
+<p>接着，我们把$f_j$的值带入到$P(y|x;\theta)$中：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/24.png" alt="图片"></p>
 <p>可以看出来，参数w的维度是3d。我们把上面式子在形式上进行一些简化：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/25.png" alt="图片"></p>
 <p>可以看出来这就是一个多元逻辑回归模型（可以用在多分类问题上）。</p>
 <h1 id="HMM存在的一些问题"><a href="#HMM存在的一些问题" class="headerlink" title="HMM存在的一些问题"></a>HMM存在的一些问题</h1><h3 id="MEMM"><a href="#MEMM" class="headerlink" title="MEMM"></a>MEMM</h3><p>假设我们用HMM做词性标注，构建如下模型，会发现有什么问题？</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/26.png" alt="图片"></p>
-<p>很显然，对于词性标注而言，词性z_1不仅仅只依赖于当前词x_3，还可能跟其他词有关。那么怎么改进这个模型呢？为了让z_1跟所有词相关，我们把它改造成下图：</p>
+<p>很显然，对于词性标注而言，词性$z_1$不仅仅只依赖于当前词$x_3$，还可能跟其他词有关。那么怎么改进这个模型呢？为了让$z_1$跟所有词相关，我们把它改造成下图：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/27.png" alt="图片"></p>
 <p>但上图这个模型又有什么问题呢？我们先写一下上图的联合概率：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/28.png" alt="图片"></p>
 <p>可以发现上式中第二项，也就是发射概率，是很难表示的。如果说联合概率很难表示，能不能把它改造成一个判别模型呢，用条件概率去表示呢？下图就是改造后的判别模型：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/29.png" alt="图片"></p>
-<p>我们可以看出来上图中P(z_i|z_{i-1}, x)是很好表示的（比如用一个线性函数+softmax），那么这个模型就是MEMM模型。下面这张图是MEMM的另一种表示：</p>
+<p>我们可以看出来上图中$P(z_i|z_{i-1}, x)$是很好表示的（比如用一个线性函数+softmax），那么这个模型就是MEMM模型。下面这张图是MEMM的另一种表示：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/30.png" alt="图片"></p>
 <p>但是MEMM有什么问题呢？</p>
 <h3 id="Label-Bias-Problem"><a href="#Label-Bias-Problem" class="headerlink" title="Label Bias Problem"></a>Label Bias Problem</h3><p>首先，我们来看一看什么叫Label Bias。我们先来看下图，哪一条路径的概率最大呢？</p>
@@ -96,15 +96,15 @@
 <p>我们可以把概率换成是score来表示，有了分数，我们就可以用global normalization了。这也就是无向图和有向图的主要区别，如下图：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/32.png" alt="图片"></p>
 <p>我们可以将(z1, z2)、(z2, z3)、(z3, z4)看成是clique，计算(z1, z2, x)等的feature function (f1, f2, f3, …f10)，再进行加权，就有了score。</p>
-<h3 id="从Log-linear-Model到Log-linear-CRF"><a href="#从Log-linear-Model到Log-linear-CRF" class="headerlink" title="从Log-linear Model到Log-linear CRF"></a>从Log-linear Model到Log-linear CRF</h3><p>我们直接从Log-linear的公式进行推导，其实就是把特征函数f_j(x,y)表示出来。在无向图中我们把这个特征写成是F_j(x,y)（这里的x、y可以看成是一个时间的序列，而不是一个单独的变量）。由于y是一个状态集合，因而(x,y)的特征函数由(y1, y2, x)、(y2, y3, x)、(y3, y4, x)…组成，因此F_j(x,y)=sum(f_j(y_i, y_{i-1}, x))。如下图：</p>
+<h3 id="从Log-linear-Model到Log-linear-CRF"><a href="#从Log-linear-Model到Log-linear-CRF" class="headerlink" title="从Log-linear Model到Log-linear CRF"></a>从Log-linear Model到Log-linear CRF</h3><p>我们直接从Log-linear的公式进行推导，其实就是把特征函数$f_j(x,y)$表示出来。在无向图中我们把这个特征写成是$F_j(x,y)$（这里的x、y可以看成是一个时间的序列，而不是一个单独的变量）。由于y是一个状态集合，因而(x,y)的特征函数由(y1, y2, x)、(y2, y3, x)、(y3, y4, x)…组成，因此$F_j(x,y)=sum(f_j(y_i, y_{i-1}, x))$。如下图：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/33.png" alt="图片"></p>
-<p>f_j可以通过人工，或者神经网络的方式得到，接下来就是求解w_j。我们的目标是最大化似然函数：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/34.png" alt="图片">，因此选择好一个优化方法，就可以求解w_j了（比如将loss作为分子对w求偏导）。</p>
+<p>$f_j$可以通过人工，或者神经网络的方式得到，接下来就是求解$w_j$。我们的目标是最大化似然函数：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/34.png" alt="图片">，因此选择好一个优化方法，就可以求解$w_j$了（比如将loss作为分子对w求偏导）。</p>
 <p>【注】：</p>
 <ul>
 <li>上式中T是团的个数，在实践序列中，就是timestep-1</li>
 <li>上式中exp有两个sum，其中第一个sum是对每个clique的结果求和（因为我们要把所有clique的结果乘起来），第二个sum是对每个clique内部所有特征的加和。？好像写反了</li>
-<li>f_j(y_i, y_{i-1}, x)中的f_j在神经网络中常使用softmax</li>
-<li>f_j(y_i, y_{i-1}, x)中的的x可以理解为x1, x2,…，即特征是根据y_i, y_{i-1}和所有的x计算出来的，即f_j(y_i, y_{i-1}, x_1, x_2, …)</li>
+<li>$f_j(y_i, y_{i-1}, x)$中的$f_j$在神经网络中常使用softmax</li>
+<li>$f_j(y_i, y_{i-1}, x)$中的的x可以理解为x1, x2,…，即特征是根据$y_i, y_{i-1}$和所有的x计算出来的，即$f_j(y_i, y_{i-1}, x_1, x_2, …)$</li>
 </ul>
 <h1 id="Log-linear-CRF"><a href="#Log-linear-CRF" class="headerlink" title="Log-linear CRF"></a>Log-linear CRF</h1><p>我们的目标是求解：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/35.png" alt="图片"></p>
@@ -114,40 +114,40 @@
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/36.png" alt="图片"></p>
 <p>看到上面的形式，我们应首先想到维特比算法，一想到维特比算法，就要想到路径，路径的sum值是最大的，如下图（n是时间长度，m是状态个数）：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/37.png" alt="图片"></p>
-<p>我们定义的子问题是：u(k, v)表示从t=1到t=k，且t时刻的状态为v的最好的路径的分数。我们最终想求的是max(u(n, 1)、u(n, 2)… u(n, m))为最终答案，如下图：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/38.png" alt="图片"></p>
-<p>那么我们怎么把u(k, v)表示成一个子问题呢？从t=1到t=k一定会经过u(k-1, 1)或u(k-1, 2)…或u(k-1, m)，如下图：</p>
+<p>我们定义的子问题是：$u(k, v)$表示从$t=1$到$t=k$，且t时刻的状态为v的最好的路径的分数。我们最终想求的是$max(u(n, 1)$、$u(n, 2)$… $u(n, m))$为最终答案，如下图：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/38.png" alt="图片"></p>
+<p>那么我们怎么把$u(k, v)$表示成一个子问题呢？从t=1到t=k一定会经过$u(k-1, 1)$或$u(k-1, 2)$…或$u(k-1, m)$，如下图：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/39.png" alt="图片"></p>
 <p>我们用式子表达出来是：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/40.png" alt="图片"></p>
 <p>看上去，我们把这个二维的矩阵里的score值逐步填充进去就可以了。当想求解最佳状态的路径时，只需要设置好pointer，反向就能从矩阵中找到最佳路径了。整个算法的复杂度是O(m<em>n)</em>O(m)。</p>
-<p>【注】：如果score函数是g_i(y_{i-2}, y_{i-1}, y_{i})，那么算法复杂度就可能变为O(m^2<em>n)</em>O(m)</p>
+<p>【注】：如果score函数是$g_i(y_{i-2}, y_{i-1}, y_{i})$，那么算法复杂度就可能变为$O(m^2<em>n)</em>O(m)$</p>
 <h2 id="Parameter-Estimation"><a href="#Parameter-Estimation" class="headerlink" title="Parameter Estimation"></a>Parameter Estimation</h2><h3 id="Log-Linear的w求解"><a href="#Log-Linear的w求解" class="headerlink" title="Log-Linear的w求解"></a>Log-Linear的w求解</h3><p>接下来我们来看，在x、y已知的情况下，我们怎么求解w？求导数就好了。我们先来看一下Log-Linear的w是怎么求解的：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/41.png" alt="图片"></p>
-<p>上式中最后一项可以看成是F_j(x, y’)的期望：</p>
+<p>上式中最后一项可以看成是$F_j(x, y’)$的期望：</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/42.png" alt="图片"></p>
-<p>可以看到第一项F_j(x, y)是x、y的特征工程，后一项是关于y’的期望。</p>
+<p>可以看到第一项$F_j(x, y)$是x、y的特征工程，后一项是关于y’的期望。</p>
 <h3 id="Log-Linear-CRF的w求解"><a href="#Log-Linear-CRF的w求解" class="headerlink" title="Log-Linear CRF的w求解"></a>Log-Linear CRF的w求解</h3><ul>
 <li>求解partition function z<ul>
-<li>Forward算法：在CRF中，partition function z(x, w)中的x变成了一个序列，我们来看一下这个z怎么计算。我们依然可以使用动态规划算法求解sum(g_i(y_{i-1}, y_i))。具体如下图所示：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/43.png" alt="图片"></li>
+<li>Forward算法：在CRF中，partition function z(x, w)中的x变成了一个序列，我们来看一下这个z怎么计算。我们依然可以使用动态规划算法求解$sum(g_i(y_{i-1}, y_i))$。具体如下图所示：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/43.png" alt="图片"></li>
 </ul>
 </li>
 </ul>
-<p>上图中\alpha(k+1, v)表示y_{k+1}=v的情况下，所有状态的可能性。为了求解\alpha(k+1, v)，我们把y_k作为一个中介，而y_k有1~u种可能。举个栗子，假如有4个状态，3个输出，那么我们最后想求\apha(4, 1) + \apha(4,2) + \apha(4,3)的和作为z(x, w)，且\apha(4,1)=\apha(3,1) + \apha(3,2) + \apha(3,3)，如下图：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/44.png" alt="图片"></p>
+<p>上图中$\alpha(k+1, v)$表示$y_{k+1}=v$的情况下，所有状态的可能性。为了求解$\alpha(k+1, v)$，我们把$y_k$作为一个中介，而$y_k$有1~u种可能。举个栗子，假如有4个状态，3个输出，那么我们最后想求$\alpha(4, 1)+\alpha(4,2)+\alpha(4,3)$的和作为z(x, w)​，且$\alpha(4,1)=\alpha(3,1) + \alpha(3,2) + \alpha(3,3)$，如下图：<img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/44.png" alt="图片"></p>
 <ul>
-<li><p>Backward算法：跟Forward相似，只不过是y_k=u时考虑{y_k{k+1}, y_n}的所有可能性，这时候y_{k+1}成为了中介。</p>
+<li><p>Backward算法：跟Forward相似，只不过是$y_k=u$时考虑${y_k{k+1}, y_n}$的所有可能性，这时候$y_{k+1}$成为了中介。</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/45.png" alt="图片"><img src="https://uploader.shimo.im/f/wJoM9tAvdSPjIp06.png!thumbnail" alt="图片"></p>
 </li>
 </ul>
 <ul>
-<li><p>求解P(y_k=u|x;w)</p>
+<li><p>求解$P(y_k=u|x;w)$</p>
 <ul>
-<li>z(x, w)是考虑所有的可能性，因此可以认为z(x, w)=p(y_k=1|x;w) + p(y_k=2|x, w) + … + p(y_k=m|x;w)</li>
-<li>根据前向算法和后向算法，可以算出z(x, w)</li>
-<li>p(y_k=u|x;w)表示y_k=u的情况下，前向和后向的所有可能情况，如下图：</li>
+<li>$z(x, w)$是考虑所有的可能性，因此可以认为$z(x, w)=p(y_k=1|x;w) + p(y_k=2|x, w) + … + p(y_k=m|x;w)$</li>
+<li>根据前向算法和后向算法，可以算出$z(x, w)$</li>
+<li>$p(y_k=u|x;w)$表示$y_k=u$的情况下，前向和后向的所有可能情况，如下图：</li>
 </ul>
 </li>
 </ul>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/46.png" alt="图片"></p>
-<p>为了求出w，我们需要对p(y|x;w)求导，</p>
+<p>为了求出w，我们需要对$p(y|x;w)$求导，</p>
 <p><img src="http://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/crf/47.png" alt="图片"></p>
 ]]></content>
       <tags>
