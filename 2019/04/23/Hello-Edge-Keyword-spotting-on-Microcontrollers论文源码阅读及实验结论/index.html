@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    Hello Edge: Keyword spotting on Microcontrollers论文源码阅读及实验结论 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-Hello-Edge-Keyword-spotting-on-Microcontrollers论文源码阅读及实验结论" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Hello Edge: Keyword spotting on Microcontrollers论文源码阅读及实验结论
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2019/04/23/Hello-Edge-Keyword-spotting-on-Microcontrollers%E8%AE%BA%E6%96%87%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%8F%8A%E5%AE%9E%E9%AA%8C%E7%BB%93%E8%AE%BA/" class="article-date">
+  <time datetime="2019-04-23T13:49:25.000Z" itemprop="datePublished">2019-04-23</time>
+</a>
+        
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+  </div>
+
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>高通的大哥想做语音唤醒实验，我自己对这个也很感兴趣，所以阅读了一下相关论文，并做了一次实验。本篇主要对源码进行解读。</p>
+<a id="more"></a>
+<h2 id="论文结论"><a href="#论文结论" class="headerlink" title="论文结论"></a>论文结论</h2><ul>
+<li>LSTM使用的内存最少</li>
+<li>整体DS-CNN &gt; CRNN &gt; GRU &gt; LSTM &gt; Basic_LSTM &gt; CNN &gt; DNN</li>
+</ul>
+<h2 id="KWS-for-FIXLEN代码阅读"><a href="#KWS-for-FIXLEN代码阅读" class="headerlink" title="KWS_for_FIXLEN代码阅读"></a>KWS_for_FIXLEN代码阅读</h2><h3 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h3><h4 id="音频相关"><a href="#音频相关" class="headerlink" title="音频相关"></a>音频相关</h4><ul>
+<li>words_list：_silence_,_unknown_,yes,no,up,down,left,right,on,off,stop,go<ul>
+<li>label_count（How many classes are to be recognized）：12</li>
+<li>wanted_words: yes,no,up,down,left,right,on,off,stop,go</li>
+</ul>
+</li>
+<li>sample_rate（需要和提供的wav文件的采样率匹配）：16000 </li>
+<li>clip_duration_ms（录音文件的时长）：1000 <ul>
+<li>desired_samples （sample_rate * clip_duration_ms / 1000 语音需要的样本点个数）：16000</li>
+</ul>
+</li>
+<li>window_size_ms（帧长）：40.0<ul>
+<li>window_size_samples（sample_rate * window_size_ms / 1000）：640</li>
+</ul>
+</li>
+<li>window_stride_ms（帧移）：40.0 帧移<ul>
+<li>window_stride_samples（sample_rate * window_stride_ms / 1000）：640</li>
+<li>spectrogram_length（0:1 + int((desired_samples - window_size_samples) / window_stride_samples) ? desired_samples - window_size_samples &lt; 0 声音有多少帧）: 25</li>
+</ul>
+</li>
+<li>dct_coefficient_count（对MFCC来说每一帧有多少系数）：10<ul>
+<li>fingerprint_size （dct_coefficient_count * spectrogram_length）: 250</li>
+</ul>
+</li>
+<li>background_volume（背景噪声的音量，默认0.1。这是一种Data Augmentation的技术，通过给语音增加噪声来提高模型的泛化能力）</li>
+<li>background_frequency（多少比例的训练数据会增加噪声）：0.8</li>
+<li>silence_percentage（How much of the training data should be silence）：10.0</li>
+<li>unknown_percentage(How much of the training data should be unknown words):10.0</li>
+<li>validation_percentage(What percentage of wavs to use as a validation set):10</li>
+<li>testing_percentage(What percentage of wavs to use as a test set):10</li>
+<li>time_shift_ms（录音都是长度1秒的文件，但是在实际预测的时候用户开始的实际是不固定的，为了模拟这种情况，我们这里会随机的把录音文件往前或者往后平移一段时间，这个参数就是指定平移的范围。默认100(ms)，说明会随机的在[-100,100]之间平移数据）：100.0 <ul>
+<li>time_shift_samples（time_shift_ms * sample_rate/ 1000）：16</li>
+</ul>
+</li>
+</ul>
+<h4 id="模型相关"><a href="#模型相关" class="headerlink" title="模型相关"></a>模型相关</h4><ul>
+<li>网络参数<ul>
+<li>model_architecture：single_fc, conv, low_latency_conv, low_latency_svdf, dnn, cnn, basic_lstm, lstm, gru, crnn, ds_cnn</li>
+<li>model_size_info：[144, 144, 144]</li>
+</ul>
+</li>
+<li>训练参数<ul>
+<li>learning_rate: [0.0005, 0.0001, 0.00002]</li>
+<li>how_many_training_steps: [10000,10000,10000]</li>
+<li>summaries_dir</li>
+<li>train_dir</li>
+<li>eval_step_interval: 400</li>
+<li>save_step_interval：100</li>
+</ul>
+</li>
+</ul>
+<h3 id="数据准备"><a href="#数据准备" class="headerlink" title="数据准备"></a>数据准备</h3><ul>
+<li><p>python train.py —mode prepare —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —data_dir data/speech_commands</p>
+<ul>
+<li>如果需要下载原始数据：python train.py —mode prepare —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —data_url <a href="http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz" target="_blank" rel="noopener">http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz</a> —data_dir data/speech_commands</li>
+<li><p><strong>prepare_data_index</strong>：根据音频文件名哈希到不同集合中（尽量让同一个发声人在一个集合中），将静音根据比例添加到不同集合中，把一些unknown的wav根据比例添加到不同集合中，最后进行集合内shuffle （先忽略background文件夹下的wav）。</p>
+<ul>
+<li><p>这里涉及到划分训练集、验证集和测试集的一个小技巧。通常我们的训练数据是不断增加的，如果按照随机的按比例划分训练集、验证集和测试集，那幺增加一个新的数据重新划分后有可能把原来的训练集中的数据划分到测试数据里。因为我们的模型可能要求incremental的训练，因此这就相对于把测试数据也拿来训练了。因此我们需要一种“稳定”的划分方法——原来在训练集中的数据仍然在训练数据中。这里我们使用的技巧就是对于文件名进行hash，然后根据hash的结果对总量取模来划分到不同的集合里。这样就能保证同一个数据第一次如果是在训练集合里，那幺它永远都会划分到训练集合里。不过它只能大致保证三个集合的比例而不能绝对的保证比例</p>
+</li>
+<li><p>另一点是每个集合里都要加入一定比例(silence_percentage)的silence和unknown词</p>
+</li>
+<li><p><strong>input</strong>：silence_percentage, unknown_percentage, validation_percentage, testing_percentage, wanted_words</p>
+</li>
+<li><p><strong>output</strong>：data_index: {‘validation’: [{‘label’: word, ‘file’: wav_path}], ‘testing’: […], ‘training’: […]}</p>
+<ul>
+<li><p>words_list：[_silence_, _unknown_, yes, no, up, down, left, right, on, off, stop, go]</p>
+</li>
+<li><p>word_to_index（不需要识别的词都映射成1）：{‘marvin’: 1, ‘tree’: 1, ‘learn’: 1, ‘dog’: 1, ‘sheila’: 1, ‘bird’: 1, ‘right’: 7, ‘off’: 9, ‘backward’: 1, ‘six’: 1, ‘two’: 1, ‘no’: 3, ‘yes’: 2, ‘one’: 1, ‘follow’: 1, ‘up’: 4, ‘three’: 1, ‘forward’: 1, ‘happy’: 1, ‘nine’: 1, ‘bed’: 1, ‘zero’: 1, ‘house’: 1, ‘visual’: 1, ‘five’: 1, ‘seven’: 1, ‘cat’: 1, ‘left’: 6, ‘stop’: 10, ‘go’: 11, ‘four’: 1, ‘on’: 8, ‘wow’: 1, ‘down’: 5, ‘eight’: 1}</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>prepare_background_data: <ul>
+<li>单独处理background_noise文件夹下的音频</li>
+<li>input：BACKGROUND_NOISE_DIR_NAME</li>
+<li>output:<ul>
+<li>background_data: （16000, 0）的float tensor</li>
+<li>重要函数：<strong>wav_decoder = contrib_audio.decode_wav(wav_loader, desired_channels=1)</strong> ：将16-bit PCM Wave 文件解码成一维 float tensor</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>prepare_processing_graph：先将音频解码的tensorflow graph创建好，等session.run的时候执行<ul>
+<li>加载一个WAVE文件 —&gt; 解码（(16000,0)的float tensor） —&gt; 缩放音量（element-wise乘，得到还是(16000,0)的float tensor） —&gt; 语音平移 —&gt; 加入背景噪声（(desired_samples,)且在-1.0到1.0的float tensor） —&gt; 计算频谱 （(1, 25, 513)这里第一个维度是通道数，单通道是1）—&gt; 建立一个MFCC指纹（<strong>(1, 25, 10)</strong>）</li>
+<li>语音平移：如果是右移，那幺需要在左边补零；如果是左移，则要右边补零。这个padding的量也是在生成batch数据的时候动态产生的，所以也定义为一个placeholder。因为语音的tensor是(16000,1)的，所有padding是一个[2,2]的tensor，不过通常只在第一个维度(时间)padding。比如右移100个点，那幺传入的tensor是[[100,0],[0,0]]。如果是左移，我们除了要padding，还要把左边的部分“切掉“，因此还会传入一个time_shift_offset_placeholder_，如果是右移，那幺这个值是零。比如我们要实现左移100个点，那幺传入的time_shift_padding_placeholder_应该是[[0,100],[0,0]],而time_shift_offset_placeholder_应该是[100]。_</li>
+<li>混入噪声：placeholder background_data_placeholder_表示噪声，而background_volume_placeholder_表示混入的音量(比例)，如果background_volume_placeholder_是零就表示没有噪声。把它们乘起来就得到background_mul，然后把它加到sliced_foreground就得到background_add，因为加起来音量可能超过1，所有需要把大于1的变成1，这可以使用clip_by_value函数把音量限制在[-1,1]的区间里</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="模型声明"><a href="#模型声明" class="headerlink" title="模型声明"></a>模型声明</h3><ul>
+<li>输入、输出<ul>
+<li>input: fingerprint_input（batch_size, fingerprint_size）, model_settings, model_size_info, is_training</li>
+<li>output: logits, dropout_prob(if training, 是一个placeholder)</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>dnn: create_dnn_model<ul>
+<li>参数：<ul>
+<li>W1：（fingerprint_size, model_size_info[0]）</li>
+<li>b1: (model_size_info[0])</li>
+<li>W2: （model_size_info[0], model_size_info[1]）</li>
+<li>b2: （model_size_info[1]）</li>
+<li>W3：（model_size_info[1], model_size_info[2]）</li>
+<li>b3: （model_size_info[2]）</li>
+<li>weights: （model_size_info[2], label_count）</li>
+<li>bias: （label_count）</li>
+<li>总参数个数：250 <em> 144 + 144 + 144 </em> 144 + 144 + 144 <em> 144 + 144+ 144 </em> 12 + 12 = 79644</li>
+<li>操作个数：</li>
+</ul>
+</li>
+<li>前向计算过程：fingerprint_input用flow代替, * 表示矩阵乘<ul>
+<li>flow  —&gt;（batch_size, fingerprint_size）</li>
+<li>flow1 = dropout(relu(flow * W1 + b1 ))  —&gt;（batch_size, model_size_info[0]）</li>
+<li>flow2 = dropout(relu(flow1 * W2 + b2 ))  —&gt; （batch_size, model_size_info[1]）</li>
+<li>flow3 = dropout(relu(flow2 * W2 + b2 ))  —&gt; （batch_size, model_size_info[2] </li>
+<li>logits = flow3 * weights + bias  —&gt; （batch_size, label_count）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>conv: create_conv_model  参考【2】<ul>
+<li>参数：<ul>
+<li>first_weights：（first_filter_height=20, first_filter_width=8, 1, first_filter_count=64）注：卷积核</li>
+<li>first_bias：（first_filter_count,）</li>
+<li>second_weights: （second_filter_height=10, second_filter_width=4, first_filter_count=64, second_filter_count=64）</li>
+<li>second_bias： （second_filter_count,）</li>
+<li>final_fc_weights：（13 <em> 5 </em> 64=4160, label_count）</li>
+<li>final_fc_bias：（label_count,）</li>
+</ul>
+</li>
+<li>前向计算过程：<ul>
+<li>flow  —&gt;（batch_size, fingerprint_size）</li>
+<li>fingerprint_4d = reshape(flow) —&gt; (batch_size, spectrogram_length=25, dct_coefficient_count=10, 1) 注：类似图像的[batch_size, in_height, in_width, in_channels]</li>
+<li>first_conv = dropout(relu(conv2d(fingerprint_4d, first_weights, [1, 1, 1, 1], ‘SAME’) + first_bias)) —&gt; （batch_size, spectrogram_length=25, dct_coefficient_count=10, first_filter_count=64）卷积</li>
+<li>max_pool = max_pool(first_conv, [1, 2, 2, 1], [1, 2, 2, 1], ‘SAME’) —&gt; (batch_size, (25-2 + 2 <em> 1)/2 + 1=13, (10 - 2 + 2</em>1)/2 = 5, first_filter_count=64)</li>
+<li>second_conv = dropout(relu(conv2d(max_pool, second_weights, [1,1,1,1], ‘SAME’) + second_bias)) —&gt; （batch_size, 13, 5, 64）</li>
+<li>flattened_second_conv = reshape(second_conv) —&gt; (batch_size, 13 <em> 5 </em> 64=4160)</li>
+<li>final_fc = flattened_second_conv * final_fc_weights + final_fc_bias —&gt; (batch_size, label_count)</li>
+<li>总参数个数：224140 = 20 <em> 8 </em> 64 + 64 + 10 <em> 4 </em> 64 <em> 64 + 64 + 4160 </em> 12 + 12</li>
+<li>总操作个数</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>low_latency_conv：create_low_latency_conv_model 参考【2】相比于conv有更少的参数，但是有准确度的损失<ul>
+<li>参数<ul>
+<li>first_weights：（spectrogram_length=25, first_filter_width=8, 1, first_filter_count=186）</li>
+<li>first_bias：（first_filter_count,）</li>
+<li>first_fc_weights：（first_conv_element_count=558, first_fc_output_channels = 128）</li>
+<li>first_fc_bias：（first_fc_output_channels, ）</li>
+<li>second_fc_weights：（first_fc_output_channels=128, second_fc_output_channels=128）</li>
+<li>second_fc_bias：（second_fc_output_channels=128, ）</li>
+<li>final_fc_weights：（second_fc_output_channels=128, label_count=12）</li>
+<li>final_fc_bias：（label_count,）</li>
+<li>总参数个数：126998</li>
+<li>总操作个数</li>
+</ul>
+</li>
+<li>前向计算过程<ul>
+<li>flow  —&gt;（batch_size, fingerprint_size）</li>
+<li>fingerprint_4d = reshape(flow) —&gt; (batch_size, spectrogram_length=25, dct_coefficient_count=10, 1)</li>
+<li>first_conv = dropout(relu(conv2d(fingerprint_4d, first_weights, [1, 1, 1, 1], ‘VALID’ )+ first_bias)) —&gt; （batch_size, 1, 3, 186）</li>
+<li>flattened_first_conv = reshape(first_conv) —&gt; （batch_size, 3 * 186=558）</li>
+<li>first_fc = dropout(flattened_first_conv * first_fc_weights + first_fc_bias) —&gt; （batch_size, first_fc_output_channels = 128）</li>
+<li>second_fc = dropout(first_fc * second_fc_weights + second_fc_bias) —&gt; （batch_size, second_fc_output_channels = 128）</li>
+<li>final_fc = second_fc * final_fc_weights + final_fc_bias —&gt; (batch_size, label_count)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>basic-lstm: 和lstm差了use_peepholes和num_proj，参数个数为43916 = 10 <em> 98 </em> 4 + 98 <em> 98 </em> 4 + 98 <em> 4 + 98 </em> 12 + 12</li>
+<li>lstm: model_size_info [0]对应projection size，model_size_info[1]对应memory cells in LSTM<ul>
+<li>参数 ?加peephole之后参数也不太对<ul>
+<li>lstm_cell: （隐藏层使用了全链接，peephole connections）<ul>
+<li>W_f、W_i、W_o、W_c：（dct_coefficient_count,  model_size_info[1]）</li>
+<li>U_f、U_i、U_o、U_c: （model_size_info [0], model_size_info[1]）</li>
+<li>bias_f、bias_i、bias_o、bias_c: (model_size_info[1])</li>
+<li>W_h: （model_size_info[1], model_size_info[0]）</li>
+<li>bias_h: （model_size_info[0]）</li>
+</ul>
+</li>
+<li>W_o：（model_size_info[0]=98, label_count=12）</li>
+<li>b_o: （label_count=12,）</li>
+<li>参数总个数：? 78516 = <strong>5760 + 56448 + 576 + 14112 + 98 + 1176 + 12 = 78182</strong></li>
+<li>总操作个数</li>
+</ul>
+</li>
+<li>前向计算过程 * 是矩阵乘法，∘是元素乘<ul>
+<li>flow  —&gt;（batch_size, fingerprint_size）</li>
+<li>fingerprint_4d = reshape(flow) —&gt; (batch_size, spectrogram_length=25, dct_coefficient_count=10)<ul>
+<li>一个时间步的输入<ul>
+<li>隐状态h_t-1：（batch_size，model_size_info[0]）</li>
+<li>x_t：（batch_size, dct_coefficient_count=10）</li>
+<li>c_t-1: （batch_size, model_size_info[1]）</li>
+</ul>
+</li>
+<li>f_t = sigmoid(x_t <em> W_f + h_t-1 </em> U_f + bias_f) —&gt;（batch_size，model_size_info[1]）</li>
+<li>i_t = sigmoid(x_t <em> W_i + h_t-1 </em> U_i + bias_i) —&gt; （batch_size，model_size_info[1]）</li>
+<li>o_t = sigmoid(x_t <em> W_o + h_t-1 </em> U_o + bias_o ) —&gt; （batch_size，model_size_info[1]）</li>
+<li>c’ = tanh(x_t <em> W_c + h_t-1 </em> U_c + bias_c) —&gt; （batch_size，model_size_info[1]）</li>
+<li>c_t = f_t ∘ c_t-1 + i_t ∘ c’ —&gt; （batch_size, model_size_info[1]）</li>
+<li>h_t = tanh(o_t ∘ c_t) —&gt; （batch_size, model_size_info[1]）</li>
+<li>h_t = h_t * W_h + bias_h —&gt; （batch_size, model_size_info[0]）</li>
+</ul>
+</li>
+<li>flow = dynamic_rnn(lstm_cell, fingerprint_4d) 的最后一个输出 —&gt; (batch_size, model_size_info[0]=98)</li>
+<li>logits = flow * W_o + b_o —&gt; （batch_size, label_count）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>gru: </p>
+<ul>
+<li>参数 model_size_info[0]对应num_layers，model_size_info[1]对应gru_units<ul>
+<li>使用layer_normalize</li>
+<li>不使用layer_normalize<ul>
+<li>W_rx、W_zx、W_hx: （dct_coefficient_count=10, gru_units=154）</li>
+<li>W_rh、W_zh、W_hh: （gru_units, gru_units）</li>
+<li>bias_r、bias_z、bias_h: （gru_units）</li>
+<li>W_o：（gru_units, label_count）</li>
+<li>b_o：（label_count）</li>
+<li>总参数个数：10 <em> 154 </em> 3 + 154 <em> 154 </em> 3 + 154 <em> 3 + 154 </em> 12 + 12  = 78080 ? 91950</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>前向计算过程 </p>
+<ul>
+<li>flow  —&gt;（batch_size, fingerprint_size）</li>
+<li><p>fingerprint_4d = reshape(flow) —&gt; (batch_size, spectrogram_length=25, dct_coefficient_count=10)</p>
+<ul>
+<li>一个时间步的输入<ul>
+<li>隐状态h_t-1：（batch_size，gru_units）</li>
+<li>x_t：（batch_size, dct_coefficient_count=10）</li>
+</ul>
+</li>
+<li><p>使用layer_normalize</p>
+<ul>
+<li>单向</li>
+<li>双向：前向和后向logits的拼接</li>
+</ul>
+</li>
+<li><p>不使用layer_normalize</p>
+<ul>
+<li>单向<ul>
+<li>r_t = sigmoid(x_t <em> W_rx + h_t-1 </em> W_rh + bias_r) —&gt; (batch_size, gru_units)</li>
+<li>z_t = sigmoid(x_t <em> W_zx + h_t-1 </em> W_zh + bias_z) —&gt; (batch_size, gru_units)</li>
+<li>h’ = tanh(x_t <em> W_hx + (r_t ∘ h_t-1) </em> W_hh + bias_h) —&gt; (batch_size, gru_units)</li>
+<li>h_t = (1 - z_t) ∘ h_t-1 + z_t ∘ h’ —&gt;  (batch_size, gru_units)</li>
+<li>flow = dynamic_rnn(gru_cell, fingerprint_4d) 的最后一个输出 —&gt; (batch_size, gru_units) </li>
+<li>logits = flow * W_o + b_o —&gt; （batch_size, label_count）</li>
+</ul>
+</li>
+<li>双向<ul>
+<li>前向和后向logits的拼接</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>crnn</li>
+<li>ds_cnn</li>
+</ul>
+<h3 id="模型训练"><a href="#模型训练" class="headerlink" title="模型训练"></a>模型训练</h3><ul>
+<li>定义loss：softmax cross entropy<ul>
+<li>定义optimize：Adam</li>
+<li>重点是audio_processor.get_data 随机生成一个batch的训练数据的过程<ul>
+<li>input：<ul>
+<li>how_many ：batch大小，如果是-1则返回所有</li>
+<li>offset： 如果是非随机的生成数据，这个参数指定开始的offset</li>
+<li>background_frequency： 0.0-1.0之间的值，表示需要混入噪音的数据的比例</li>
+<li>background_volume_range ：背景噪音的音量</li>
+<li>time_shift ：平移的范围，为[-time_shift, time_shift]</li>
+<li>sess ：用于执行前面用于产生数据的Operation，参考prepare_processing_graph函数</li>
+</ul>
+</li>
+<li>output：<ul>
+<li>data：</li>
+<li>labels</li>
+<li>过程看代码中注释</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>实验结果：<ul>
+<li>Final test accuracy = 84.68% (N=3081)：python train.py —model_architecture dnn —model_size_info 144 144 144 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —learning_rate 0.0005,0.0001,0.00002 —how_many_training_steps 10000,10000,10000 —data_dir ./data/speech_commands  —summaries_dir work/DNN/DNN1/retrain_logs —train_dir work/DNN/DNN1/training</li>
+<li>python train.py —model_architecture conv —model_size_info 144 144 144 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —learning_rate 0.0005,0.0001,0.00002 —how_many_training_steps 10000,10000,10000 —data_dir ./data/speech_commands  —summaries_dir work/CNN/CNN1/retrain_logs —train_dir work/CNN/CNN1/training</li>
+<li>python train.py —model_architecture low_latency_conv —model_size_info 144 144 144 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —learning_rate 0.0005,0.0001,0.00002 —how_many_training_steps 10000,10000,10000 —data_dir ./data/speech_commands  —summaries_dir work/CNN/CNN2/retrain_logs —train_dir work/CNN/CNN2/training</li>
+<li>python train.py —model_architecture basic_lstm —model_size_info 98 144 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —learning_rate 0.0005,0.0001,0.00002 —how_many_training_steps 10000,10000,10000 —data_dir ./data/speech_commands  —summaries_dir work/LSTM/LSTM1/retrain_logs —train_dir work/LSTM/LSTM1/training</li>
+<li>python train.py —model_architecture lstm —model_size_info 98 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —learning_rate 0.0005,0.0001,0.00002 —how_many_training_steps 10000,10000,10000 —data_dir ./data/speech_commands  —summaries_dir work/LSTM/LSTM2/retrain_logs —train_dir work/LSTM/LSTM2/training</li>
+<li>python train.py —model_architecture gru —model_size_info 1 154 —window_size_ms 40 —window_stride_ms 40 —learning_rate 0.0005,0.0001,0.00002 —how_many_training_steps 10000,10000,10000 —data_dir ./data/speech_commands  —summaries_dir work/GRU/retrain_logs —train_dir work/GRU/training</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="模型测试"><a href="#模型测试" class="headerlink" title="模型测试"></a>模型测试</h3><ul>
+<li>使用checkpoint<ul>
+<li>python test.py —model_architecture dnn —model_size_info 144 144 144 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —checkpoint work/DNN/DNN1/training/best/dnn_8503.ckpt-24000</li>
+<li>使用freeze后的图： 可生成在安卓和IOS上可执行的图<ul>
+<li>python freeze.py —model_architecture dnn —model_size_info 144 144 144 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —data_dir ./data/speech_commands —checkpoint work/DNN/DNN1/training/best/dnn_8503.ckpt-24000 —output_file work/DNN/DNN1/training/best/dnn.pb<ul>
+<li>创建图：create_inference_graph，将wave_data的filepath placeholder经过一系列计算转为reshaped_input，用create_model创建图得到logits, 再用softmax得到输出</li>
+<li>load weights：models.load_variables_from_checkpoint</li>
+<li>将变量替换为inline constant：graph_util.convert_variables_to_constants</li>
+<li>写入目标图文件中：tf.train.write_graph</li>
+</ul>
+</li>
+<li>python test_pb.py —model_architecture dnn —model_size_info 144 144 144 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —data_dir ./data/speech_commands —graph work/DNN/DNN1/training/best/dnn.pb</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>模型单个音频预测（使用pb文件预测）</li>
+<li>python predict_pb.py —model_architecture dnn —model_size_info 144 144 144 —dct_coefficient_count 10 —window_size_ms 40 —window_stride_ms 40 —data_dir ./data/speech_commands —graph work/DNN/DNN1/training/best/dnn.pb —test_wave data/speech_commands/yes/377e916b_nohash_0.wav</li>
+</ul>
+<h2 id="日常思考"><a href="#日常思考" class="headerlink" title="日常思考"></a>日常思考</h2><ul>
+<li><p>KWS是否可以做成两阶段的，小模型先粗检（得到一个probability），再进入语音系统里用稍大一点的模型进行细检（根据上一个probability和声学特征）</p>
+</li>
+<li><ul>
+<li>参考：<a href="https://mp.weixin.qq.com/s?__biz=MzAxMzc2NDAxOQ==&amp;mid=2650364421&amp;idx=1&amp;sn=7d0bb873fc8912919313c7f7f93f11e3&amp;chksm=83906ed9b4e7e7cfd86895b8c988da3f9b9658cbd3e59757f330667195e66ba691a437cade7c&amp;mpshare=1&amp;scene=24&amp;srcid=0420VEnXWAfwQt5bzrWKExbk&amp;key=6deb43fc298651d2d979d26548ea622f8207610665103536b676bc530064991d7785e44ddc7d09213a5dd65cfbf8f7e10de1f77f152a738e362c2ae53d33be353a3e56ad09614fcc3c3e752935aee8f9&amp;ascene=0&amp;uin=NjI1NjAyODg0&amp;devicetype=iMac+MacBookPro12%2C1+OSX+OSX+10.12.6+build(16G29" target="_blank" rel="noopener">苹果发布长文，揭秘「Hey Siri」的语音唤醒触发器和它背后的DNN模型</a></li>
+</ul>
+</li>
+<li><p>KWS的安全性问题，是谁都可以唤醒吗？会不会根据说话人的几句话自己进行调整</p>
+</li>
+<li><ul>
+<li>参考：<a href="https://mp.weixin.qq.com/s?__biz=MjM5NDM4NjQyNA==&amp;mid=2650918986&amp;idx=1&amp;sn=647ef8da86aea7ff4782fec1b2cde2f6&amp;chksm=bd7de8dd8a0a61cb30368d6d81a848e43171ea704de0eeb5bf81a394783d707d5445c2f8656f&amp;mpshare=1&amp;scene=24&amp;srcid=0420XnfffJnnWilAASoO14l1&amp;key=6deb43fc298651d21d2ecf5eb271a88dc4d0986ba4728fe4872d7b2f71f761167d621e2d64797ba83534f1e94cabe22a28e29077744a42bdc22d5a2afd384fd0ea33b9b15f9cf0aa286a9f8473858011&amp;ascene=0&amp;uin=NjI1NjAyODg0&amp;devicetype=iMac+MacBookPro12%2C1+OSX+OSX+10.12.6+build(16G29" target="_blank" rel="noopener">思必驰锁屏语音唤醒</a></li>
+</ul>
+</li>
+<li><p>KWS在联网时可以将误检、漏检、正常唤醒的音频数据传到服务端，服务端进行标注并训练，但是模型能动态更新到硬件上吗？如果不行，这就是个一锤子买卖，是不是可以考虑先放到少儿词典这样的app中去收集一些数据</p>
+</li>
+<li><p>网络的输出：是否要标明开始和结束的位置</p>
+</li>
+</ul>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li>KWS相关资料<ul>
+<li>不变长：<a href="https://github.com/ARM-software/ML-KWS-for-MCU" target="_blank" rel="noopener">代码</a>、<a href="https://arxiv.org/pdf/1711.07128.pdf" target="_blank" rel="noopener">论文</a></li>
+<li>变长：<a href="https://github.com/mindorii/kws" target="_blank" rel="noopener">代码</a>、<a href="https://arxiv.org/pdf/1611.09405.pdf" target="_blank" rel="noopener">论文</a></li>
+</ul>
+</li>
+<li>GRU推导：<a href="https://www.cnblogs.com/YiXiaoZhou/p/6075777.html" target="_blank" rel="noopener">GRU(Gated Recurrent Unit) 更新过程推导及简单代码实现</a></li>
+<li>LSTM和GRU讲解：[<a href="https://www.cnblogs.com/zyly/p/9029591.html" target="_blank" rel="noopener">使用TensorFlow实现LSTM和GRU网络</a>]</li>
+<li>关于卷积的详细讲解：<ul>
+<li>卷积：<a href="https://blog.csdn.net/u011630575/article/details/78062452" target="_blank" rel="noopener">tensorflow：卷积函数——tf.nn.conv2d</a></li>
+<li>卷积：<a href="https://blog.csdn.net/mao_xiao_feng/article/details/78004522" target="_blank" rel="noopener">tf.nn.conv2d是怎样实现卷积的？</a></li>
+<li>池化：<a href="https://blog.csdn.net/u010402786/article/details/51541465" target="_blank" rel="noopener">卷积神经网络中图像池化操作全解析</a></li>
+<li>池化：<a href="https://blog.csdn.net/mao_xiao_feng/article/details/53453926" target="_blank" rel="noopener">tf.nn.max_pool实现池化操作</a></li>
+</ul>
+</li>
+<li>tensorflow rnn源码解读：<a href="https://panxiaoxie.cn/2018/09/01/tensorflow-rnn-api-源码阅读/" target="_blank" rel="noopener">Tensorflow RNN API 源码阅读</a></li>
+<li><a href="https://flashgene.com/archives/25812.html" target="_blank" rel="noopener">使用Tensorflow识别语音关键词</a></li>
+<li><a href="http://www.isca-speech.org/archive/interspeech_2015/papers/i15_1478.pdf" target="_blank" rel="noopener">Convolutional Neural Networks for Small-footprint Keyword Spotting</a></li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2019/04/23/Hello-Edge-Keyword-spotting-on-Microcontrollers%E8%AE%BA%E6%96%87%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%8F%8A%E5%AE%9E%E9%AA%8C%E7%BB%93%E8%AE%BA/" data-id="ckix939am0007kdwv4ae618p3"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/KWS/" rel="tag">KWS</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+      <a href="/2020/02/01/%E5%90%84%E7%B1%BB%E8%B5%84%E6%BA%90%E5%AE%9A%E6%9C%9F%E6%B1%87%E6%80%BB/" class="article-nav-link">
+        <strong class="article-nav-caption">前一篇</strong>
+        <div class="article-nav-title">
+          
+            各类资源定期汇总
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2019/02/07/%E7%94%A8GitHub-Hexo%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">用GitHub+Hexo搭建个人网站</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
