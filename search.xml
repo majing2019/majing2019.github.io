@@ -1,6 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Rasa框架解读</title>
+    <url>/2020/12/22/Rasa%E6%A1%86%E6%9E%B6%E8%A7%A3%E8%AF%BB/</url>
+    <content><![CDATA[<p>Rasa是一个很活跃的开源对话框架，笔者在做语音助手时调研了很多对话框架，个人比较喜欢Rasa，今天就来讲讲它。</p>
+<a id="more"></a>
+<h1 id="Rasa的组成"><a href="#Rasa的组成" class="headerlink" title="Rasa的组成"></a>Rasa的组成</h1><h2 id="Rasa-NLU"><a href="#Rasa-NLU" class="headerlink" title="Rasa-NLU"></a>Rasa-NLU</h2><p>主要实现自然语言理解（即NLU）功能，本质上就是识别句子的意图和实体。如“买一张去北京的票”，我们可以定义一个意图是“购票”，实体是“北京”和“一张”。</p>
+<p>意图识别本质是短文本分类任务（当然在学术界可能称为Intent Detection来和Text Classification分开）。 单纯短文本分类任务的SOTA基本上就是BERT了。</p>
+<p>抽取本质是信息抽取任务。 抽取的SOTA现在一般还是BiLSTM-CRF的各种变型，或BERT之类。现在学术界的主要研究方向是多种工作结合，例如同一模型同时做意图识别和信息抽取，互相配合增加总体准确率。</p>
+<p>Rasa的NLU，主要是当前的社区版，主要还是使用了各种开源技术，并没有追求学术上的SOTA。 它使用的工具包括Spacy、sklearn-crfsuite</p>
+<h2 id="Rasa-Core"><a href="#Rasa-Core" class="headerlink" title="Rasa Core"></a>Rasa Core</h2><p>Rasa的核心部分，NLU有各种实现，开源的也有snips nlu等，但是core却独一无二。</p>
+<p>Rasa Core主要完成了基于故事的对话管理，包括解析故事并生成对话系统中的对话管理模型（Dialog Management），输出系统决策（System Action/System Policy）。</p>
+<p>学术上一般认为这部分会包含两个模型：</p>
+<ul>
+<li>对话状态跟踪（Dialog State Tracking / Belief Tracking）</li>
+<li>对话策略（Dialog Policy / Policy Optimization）</li>
+</ul>
+<p>对于1，其实Rasa实现很简单，具体在它的论文 Few-Shot Generalization Across Dialogue Tasks, Vlasov et at., 2018 中说的比较具体。就是简单的基于策略的槽状态替换。</p>
+<p>对于2，Rasa使用基于LSTM的Learn to Rank方法，大体上是将当前轮用户意图、上一轮系统行为、当前槽值状态向量化，然后与所有系统行为做相似度学习，以此决定当前轮次的一个或多个系统行为。</p>
+<p><img src="https://uploader.shimo.im/f/m5MliMSDjPuV7q1e.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<h2 id="Rasa-X"><a href="#Rasa-X" class="headerlink" title="Rasa-X"></a>Rasa-X</h2><p>Rasa的可视化编辑工具，更方便NLU、NLG数据的管理，故事的编写。Rasa X可能暂时还不能让所有非开发人员也能快速方便的使用。不过它本质上可以方便开发人员快速开发，快速训练模型验证。</p>
+<h1 id="Rasa的PipeLine"><a href="#Rasa的PipeLine" class="headerlink" title="Rasa的PipeLine"></a>Rasa的PipeLine</h1><p><img src="https://uploader.shimo.im/f/Gml5qyuefePTthMN.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<ul>
+<li>用户输入文字，送入解释器，即Rasa NLU</li>
+<li>NLU给出结果，如图</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/CfVtDjI9fJwiEqeK.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<ul>
+<li>从Tracker到Policy，Tracker用于跟踪对话状态，Tracker输出的是Embedding<ul>
+<li>用户意图的Embedding</li>
+<li>系统动作（上一步）的Embedding</li>
+<li>实体（槽值/Slot）的Embedding</li>
+</ul>
+</li>
+<li>Policy给出系统行为</li>
+<li>Tracker记录系统行为，下一次会提供给Policy使用</li>
+<li>返回消息给用户</li>
+</ul>
+<h1 id="Rasa-NLU-1"><a href="#Rasa-NLU-1" class="headerlink" title="Rasa-NLU"></a>Rasa-NLU</h1><h2 id="基本组成"><a href="#基本组成" class="headerlink" title="基本组成"></a>基本组成</h2><h3 id="component"><a href="#component" class="headerlink" title="component"></a>component</h3><p>在我们做任何自然语言处理的任务时，不止是用单纯模型去做一些分类或者标注任务，在此之前，有相当一部分工作是对文本做一些预处理工作，包括但不限于：分词（尤其是中文文本），词性标注，特征提取（传统ML或者统计型方法），词库构建等等。在rasa中，这些不同的预处理工作以及后续的意图分类和实体识别都是通过单独的组件来完成，因此component在NLU中承担着完成NLU不同阶段任务的责任。component类型大致有以下几种：tokenizer、featurizer、extractor、classifier，当然还有emulators，这个主要用于进行对话仿真测试，我目前还没使用过，就不多描述这个组件了。</p>
+<h3 id="pipeline"><a href="#pipeline" class="headerlink" title="pipeline"></a>pipeline</h3><p>有了组件之后，如何将组件按部就班，井然有序地拼装起来，并正常工作呢？因此就有了pipeline这个概念，其实在机器学习领域，pipeline这个概念已经存在很长时间了，它在很多框架中都有，比如大名鼎鼎的sklearn。使用pipeline的好处在于可以合理有序管理不同任务阶段的不同组件工具，当组件数量较多时，pipeline的好处就非常明显了。而在rasa中，pipeline的使用更为便捷，是通过yml配置文件实现。即开发者只需要定义好自己的组件，然后将组件配置在配置文件中就可以，即插即用。下图是一个简单的pipeline配置实例：</p>
+<p><img src="https://uploader.shimo.im/f/D4AVlWvATEPclpc7.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<h3 id="message"><a href="#message" class="headerlink" title="message"></a>message</h3><p>在rasa中，用户发送到chatbot的所有对话内容，都需要被封装在一个对象中，这个对象就是Message.而在整个rasa工作流中，存在两个不同的message封装对象，一个是UserMessage，另一个是Message。其中UserMessage是最上层的封装对象，即直接接收用户从某个平台接口传送过来的消息。而Message则是当用户消息流到NLU模块时，将用户消息进行封装。关于UserMessage的内容在后面代码详解时会涉及到，这里先解释一下Message对象。看一下它的类部分定义，其实很简单，就是将用户的对话文本，以及时间进行封装，由于这个Message是贯穿整个NLU工作流的统一数据对象，因此还承载着记忆各个组件临时生成的中间结果（比如分词和词性标注的结果）以及最终得到的意图和实体信息。其中data存放的是意图和实体信息，在后续组件处理时，还会再Message中增加一些变量存储中间结果，即set成员方法的职责。</p>
+<p>在Rasa-Core中UserMessage定义如下：</p>
+<p><img src="https://uploader.shimo.im/f/nJYXcKewulgGkY3T.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>可以看到作为贯穿整个rasa_core处理流程的用户消息对象，它的成员结构还是比较清晰的，包括了用户发送的文本，定义的OutputChannel类型，用户的id，parse_data(主要存放用户自己定义的实体键值对，开发调试用)，inputChannel类型，以及message的id。</p>
+<h2 id="技术细节"><a href="#技术细节" class="headerlink" title="技术细节"></a>技术细节</h2><h3 id="Embedding-方法"><a href="#Embedding-方法" class="headerlink" title="Embedding 方法"></a>Embedding 方法</h3><p>用户意图和系统行为会通过bag-of-word的方法分词，然后向量化，很有趣的结果。在官方论文没有仔细探讨为什么，笔者猜测是为了增加不同的意图、行为之间的语义关联。论文原文：“A bag-of-words representations for the user and the system labels are then created using token counts inside each label.”  例如:action_search_restaurant = {action, search, restaurant} 实体/槽值（Slot）的向量化就非常简单了，只是走了是否存在的binary向量</p>
+<h3 id="Learn-to-Rank方法"><a href="#Learn-to-Rank方法" class="headerlink" title="Learn to Rank方法"></a>Learn to Rank方法</h3><p>很多对话系统的系统决策都采用的是分类（Classification）方法，也就是每次总是在多个系统行为中选择唯一一个。</p>
+<p>而Rasa选择了排序方法，即判断当前对话状态和系统行为的相似度，这有两个可能的好处：</p>
+<ul>
+<li>可以更容易实现多个系统行为的同时输出。能让一个对话状态输出多个系统行为是Rasa的特色。至于为什么如此，可能有工程上的一些考虑，例如这样更方便，例如两个系统行为，一个是机器人说“请等待”，一个是真的去查询数据。</li>
+<li>更方便扩展系统行为。如果是分类模型，增加一个分类，那必须重新训练整个分类器。如果是Ranking模型，如果只是增加或减少分类，可以考虑只训练新增的系统行为相关的和不相关的部分数据集，可能增加总体的训练速度。更方便快速实验、迭代。</li>
+</ul>
+<h2 id="给Rasa-NLU添加组件"><a href="#给Rasa-NLU添加组件" class="headerlink" title="给Rasa-NLU添加组件"></a>给Rasa-NLU添加组件</h2><p>以CRFEntityExtractor为例，讲解一下Component的主要核心要素。</p>
+<p><img src="https://uploader.shimo.im/f/6kzsP0JMqFIHIDe2.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>首先看到，该类继承了一个EntityExtractor，这是一个二级组件抽象类（我自己定义的说法），这个二层抽象类继承自Component这个一级抽象类。因为不同组件承担的任务不同，有些组件任务比较单一，可以直接继承Component比如tokenizer,classifier，而有些组件的任务比较复杂，则需要制定这一类型的二级接口，方便扩展，如featurizer,extractor。</p>
+<p>其次，每个component需要定义一个类变量provides和requires,分别表示这个组件所提供的中间成果和依赖的上游任务。对于CRFEntityExtractor来说，它提供了实体的抽取，同时为了进行实体抽取，需要先对文本进行分词，因此需要上游任务先完成tokenizer任务，提供tokens的中间成果。</p>
+<p><img src="https://uploader.shimo.im/f/HdsywcZpNPzSe9ly.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>既然是使用条件随机场来进行实体抽取，那么就需要进行模型训练。因此需要定义train方法，来训练模型。关注train方法的两个参数training_data和config。其中，config就是之前提到的配置pipeline的配置文件的读取对象。training_data是TrainingData类型的对象。你可以将其类比于pytorch中的data_loader功能，它的主要作用是对训练数据进行封装，拆分训练集验证集，做数据校验等工作。说到这里，提一下rasa支持的原始训练数据的存放格式，主要支持markdown，wit，luis等文件格式，当然也可以提供json格式的数据。rasa如何读取这些格式的训练数据则是在training_data中定义。</p>
+<p><img src="https://uploader.shimo.im/f/51JQbndhDVvb3Zd3.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>当模型训练完成后，需要保存和加载模型，对生产环境上的实时业务流进行处理，因此需要定义persist和load方法加载模型。</p>
+<p><img src="https://uploader.shimo.im/f/RXNVPf8kSYa5csT0.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>process方法，这个可以说是组件里面最重要的一个方法。当前面一通操作之后，只得到了模型，如何调用这个模型并处理文本，就是process方法的工作了。最后在message中增加一个dict，名为entities，用来存放提取的实体信息，包括实体的类型，实体的在文本中的start和end的位置信息等。</p>
+<h1 id="Rasa-Core-1"><a href="#Rasa-Core-1" class="headerlink" title="Rasa-Core"></a>Rasa-Core</h1><p>Rasa-Core的基本流程图如下：</p>
+<p><img src="https://uploader.shimo.im/f/r5s6gqbcJHTpKryp.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<h2 id="基本组成-1"><a href="#基本组成-1" class="headerlink" title="基本组成"></a>基本组成</h2><h3 id="actions"><a href="#actions" class="headerlink" title="actions"></a>actions</h3><p>该包下面主要存放的是action具体的实现类。关于action的具体定义和描述在后面会有详细讲解，简单说就是chatbot执行的一些动作。Event对象是rasa中定义的chatbot能执行的最小粒度的动作。而Action则是比event更高层次的对象，会根据用户发送过来的消息，执行一些操作，这些操作可以是自定义的一些逻辑，也可以是系统预置的events。rasa中，action可以分为三大类。</p>
+<h4 id="utterance-actions"><a href="#utterance-actions" class="headerlink" title="utterance actions"></a>utterance actions</h4><p>直接发送文本给用户，action文本模板是在domain.yml中进行定义。</p>
+<h4 id="custom-actions"><a href="#custom-actions" class="headerlink" title="custom actions"></a>custom actions</h4><p>自定义action，由开发者自定义功能的action。个人认为这个是功能最强大的action，因为开发自由度很大，支持使用任何开发语言进行开发。最后只需要将其打包成一个restful服务接口暴露出来即可。因此这种action是可以和对话主系统分离部署的。下面给出自定义action server与bot agent和用户的交互流程图：</p>
+<p><img src="https://uploader.shimo.im/f/Pfft9UET4KizYMJN.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>Rasa action支持node.js, .NET, java等开发语言，当然也支持Python。但是对于Python来说，需要安装rasa-sdk工具包。这个工具包里预置了一些有用的action模板，例如form action。</p>
+<p>当然，form action以及其他预置的action模板只能实现最简单的场景，如果要实现复杂的场景，需要根据不同场景，自定义action，可以选择继承这些模板，在上面进行功能的添加和完善。</p>
+<h4 id="default-action"><a href="#default-action" class="headerlink" title="default action"></a>default action</h4><p>Rasa系统内置的粒度较小的action。与rasa_sdk中的action不同，这个是直接在rasa_core/actions下面的。相对于上面的form action来说，这里的action功能更单一，与events比较像，但是还是略有不同，下面举个实例ActionRestart：</p>
+<p><img src="https://uploader.shimo.im/f/D4HXcEwS8uITGsco.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>可以看到它使用了一个Restarted()的event，这个event的功能是重启整个对话流程，重置对话状态。除此之外，该action需要先执行读取话术模板组装bot message，并将其发送给用户后，才去重启整个会话。</p>
+<h3 id="channels"><a href="#channels" class="headerlink" title="channels"></a>channels</h3><p>该包下面主要存放的是rasa与前端平台进行对接的接口。因为rasa本身只提供对话系统的功能服务，具体还需要与用户在前端界面进行交互，这个包里定义了不同的接口和不同平台进行对接。例如，console.py，定义了最简单的直接在shell命令行中进行对话交互的接口。</p>
+<p>在流程图中的OutputChannel封装了chatbot需要返回给用户的信息，需要注意，chatbot返回的消息不一定是纯文本，还可能是html，json，文件附件等等，因此需要OutputChannel这个统一接口进行封装处理，因此chatbot可以支持让用户进行点选功能（当然，前提是前端界面支持点选的适配），关于如何实现用户点选功能后续会单独开一个功能小讲。</p>
+<p>在流程图中的InputChannel主要负责将用户输入连同用户的身份信息封装成UserMessage对象，方便后面的Processor处理。对应的，如果在上一轮对话中，OutputChannel是点选或者其他非单纯文本输出，那么本轮对话中的InputChannel也需要接受用户点选或者其他非单纯文本的输入，封装成最终的UserMessage。</p>
+<h3 id="events"><a href="#events" class="headerlink" title="events"></a>events</h3><p>这个是rasa中定义的chatbot能执行的最小粒度的动作。与action有一些关系，我们可以通过action调用不同的events来实现不同的操作。events的实例有“SlotSet”(槽位填充)，”Restarted”（重启对话，将所有状态重置）等等。</p>
+<h3 id="nlg"><a href="#nlg" class="headerlink" title="nlg"></a>nlg</h3><p>rasa的response生成模块，即生产chatbot返回给用户的消息。目前，rasa支持通过模板生成话术，也支持通过machine learning的方式做NLG。nlg模块中定义了方法读取domain.yml中的预定义的话术模板，然后生成具体的消息。</p>
+<h3 id="policies"><a href="#policies" class="headerlink" title="policies"></a>policies</h3><p>此模块是rasa_core最上层的对话管理控制模块。该包中，定义了不同类型的对话管理策略，rasa将依据这些策略，执行不同actions，完成多轮对话任务。这些策略包括人工规则策略如form_policy、memoization等，也包括通过机器学习、深度学习进行训练得到策略模型，如sklearn_policy、keras_policy等。</p>
+<p>对话管理策略是多轮对话系统的核心功能，相当于对话系统的大脑，它负责根据当前用户的反馈，告诉Processor当前轮对话中需要采取的后续action，以及如何更新对话状态信息等。rasa支持人工规则的策略，也支持机器学习、深度学习得到的数据驱动策略。</p>
+<p>以Form_policy为例，这个策略是一种表单策略，对应的rasa预置了一种类型的action，叫form的action。这种action会将所有槽位作为表单的属性column，每一轮对话，都会去主动询问用户，引导用户将这些表单的属性填充，直到所有属性填充完成。而form_policy的核心就是检索当前是否配置了form类型的action，如果是，则将下一步的action置为form。有关action的描述将在后面详细给出。可以看出这是一个典型的人工规则策略。</p>
+<p>在一次对话任务中，可以使用多个policy的组合来帮助bot完成既定的任务。比如策略A是一个使用深度学习训练得到的一个策略模型，但是一般使用data-driven得到的模型不会达到100%的准确率，总会有bad case的情况，此时如果只是用该策略，那么会话极有可能会陷入到bad case中，因此需要一个兜底的策略在策略A的bad case发生时，让对话能够平稳进行下去。rasa就预置了这样一个策略，叫fall_back，将fall_back与策略A进行组合，就能得到一个更加鲁棒的一个对话策略。</p>
+<p>在实际项目生产中，如果在项目初期，领域数据比较少的情况下，通常会选择form policy或者其他规则型策略。当产品上线，在积累到一定的数据后，可以使用一些data-driven的模型来做策略。</p>
+<h3 id="schemas-domain"><a href="#schemas-domain" class="headerlink" title="schemas/domain"></a>schemas/domain</h3><p>这里主要放置rasa_core的配置文件domain.yml，这个配置文件主要配置槽位定义，实体定义，话术模板，使用的actions的名称定义以及其他系统配置。开发者在开发自己的对话系统时，需要自定义这个配置文件来覆盖源码中预定义的配置。</p>
+<p>Domain对象的数据来自于前述章节提到的配置文件domain.yml。该对象定义不同的方法，从配置文件domain.yml读取槽位模板，话术模板，定义的action名称，自定义的policy名称等信息，并封装到domain对象中。domain对象可以在action执行时为其提供槽位信息以及话术模板等字段。</p>
+<p>设计domain的好处在哪儿呢？个人认为主要是方便管理对话系统需要使用的模板信息。这里的模板信息包含定义的槽位，意图、实体、话术模板、自定义action、自定义policy。如果需要添加或者修改这些信息，只需要修改domain.yml里面的信息就可以了，不需要去修改任何代码，让配置和代码解耦。</p>
+<h3 id="agent"><a href="#agent" class="headerlink" title="agent"></a>agent</h3><p>这是rasa_core专门设计的一个接口，可以将其视作bot主体，主要作用是封装和调用rasa中最重要的一些功能方法，包括上述提到的几个包里的功能模块。</p>
+<h3 id="training"><a href="#training" class="headerlink" title="training"></a>training</h3><p>这里主要存放的是如何将准备的数据转化为对话系统可训练的转化方法以及可视化方法。</p>
+<h3 id="interpreter"><a href="#interpreter" class="headerlink" title="interpreter"></a>interpreter</h3><p>这个方法是rasa_core与rasa_nlu的一个纽带，rasa管理模块通过定义interpreter类方法，调用rasa_nlu中的parser方法来对用户的发送到bot的消息文本进行实体抽取、意图识别等操作。</p>
+<h3 id="processor"><a href="#processor" class="headerlink" title="processor"></a>processor</h3><p>定义了MessageProcess类，供agent调用，功能是有序得调用不同对话功能组件，例如调用interpreter解析用户文本、调用本轮对话的action完成一些操作、根据policy得到下一步的action、记录对话状态等。</p>
+<p>Processor是对话系统的核心处理模块。它通过execute_action完成bot处理对话的流程。这里需要注意一点，在processor执行action之前，agent将会调用processor的log_message方法，使用nlu_interpreter来对用户发送的文本做实体识别和意图识别，然后将信息保存在tracker中。execute_action方法核心内容如下：</p>
+<p><img src="https://uploader.shimo.im/f/NtaZ2VxnkfLIjD0v.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<h3 id="trackers"><a href="#trackers" class="headerlink" title="trackers"></a>trackers</h3><p>这个也是rasa中比较重要的一个对象，它的作用是rasa对话系统中的状态记录器，每一轮对话中，对话的状态信息都会进行更新并保存在这个对象中。例如当前已填充的槽位、用户最后一次发送的文本、当前用户的意图等等。</p>
+<h4 id="DialogueStateTracker"><a href="#DialogueStateTracker" class="headerlink" title="DialogueStateTracker"></a>DialogueStateTracker</h4><p>从名字上就可以看到这个对象的功能：在多轮对话过程中全程记录对话状态信息。这个对象在开发自己的对话系统时，作用可是非常大的。很多对话状态信息，都可以从它这里得到。当然， 我们并不能直接去读写其定义的成员变量信息，需要通过其成员方法来操作成员变量，例如current_sate()，其核心内容如下：</p>
+<p><img src="https://uploader.shimo.im/f/1MLXml1bdOxbxLOH.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>注意该方法的返回对象是一个字典，其包含了丰富的对话信息，例如用户的id、当前所有的槽位键值对（包括已填充和未被填充的）、用户最近一次发送的消息等等。</p>
+<h1 id="其他参考"><a href="#其他参考" class="headerlink" title="其他参考"></a>其他参考</h1><ul>
+<li><a href="https://wechaty.js.org/" target="_blank" rel="noopener">wechaty</a></li>
+<li><a href="https://github.com/paschmann/rasa-ui" target="_blank" rel="noopener">rasa-ui</a></li>
+<li><a href="https://juejin.cn/post/6844903921060839431" target="_blank" rel="noopener">Rasa 聊天机器人框架开发使用</a></li>
+</ul>
+]]></content>
+      <tags>
+        <tag>对话系统</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>CRF学习——基础学习</title>
     <url>/2020/05/17/CRF%E5%AD%A6%E4%B9%A0%E2%80%94%E2%80%94%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<p>CRF是NLP中很常用且经典的模型，今天就复习一下CRF模型。</p>
@@ -2963,8 +3068,8 @@
 </ul>
 ]]></content>
       <tags>
-        <tag>论文阅读</tag>
         <tag>Transformer</tag>
+        <tag>论文阅读</tag>
       </tags>
   </entry>
   <entry>
@@ -3601,6 +3706,282 @@
       </categories>
       <tags>
         <tag>KWS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Transformer细节思考</title>
+    <url>/2019/02/20/Transformer%E7%BB%86%E8%8A%82%E6%80%9D%E8%80%83/</url>
+    <content><![CDATA[<h1 id="Transformer图解"><a href="#Transformer图解" class="headerlink" title="Transformer图解"></a>Transformer图解</h1><p>Transformer使用self-attention和position-encoding替代原始的RNN。</p>
+<p><img src="https://uploader.shimo.im/f/WVDQjP11Yteuyi8D.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>每一层encoder</p>
+<p><img src="https://uploader.shimo.im/f/bpxADrZe0G5t4yKl.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>每一层decoder</p>
+<p><img src="https://uploader.shimo.im/f/TCRzJC0pMGDm5MJz.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h1 id="Transformer具体结构"><a href="#Transformer具体结构" class="headerlink" title="Transformer具体结构"></a>Transformer具体结构</h1><p><img src="https://uploader.shimo.im/f/uXqNpDFaou7fzJlo.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h2 id="加入Tensor"><a href="#加入Tensor" class="headerlink" title="加入Tensor"></a>加入Tensor</h2><p>输入的句子是一个词(ID)的序列，我们首先通过Embedding把它变成一个连续稠密的向量，如下图所示。</p>
+<p><img src="https://uploader.shimo.im/f/7cQDKKuf7RJsUD3D.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>Embedding之后的序列会输入Encoder，首先经过Self-Attention层然后再经过全连接层，如下图所示。</p>
+<p><img src="https://uploader.shimo.im/f/QCmk9C9Ee0OH3T6l.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>我们在计算𝑧𝑖时需要依赖所有时刻的输入𝑥1,…,𝑥𝑛，不过我们可以用矩阵运算一下子把所有的𝑧𝑖计算出来。而全连接网络的计算则完全是独立的，计算i时刻的输出只需要输入𝑧𝑖就足够了，因此很容易并行计算。下图更加明确的表达了这一点（注意全连接层每一个时刻的参数共享）。</p>
+<p><img src="https://uploader.shimo.im/f/JA9x4GiSygcDqMiU.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h2 id="Self-Attention"><a href="#Self-Attention" class="headerlink" title="Self-Attention"></a>Self-Attention</h2><p>对于输入的每一个向量(第一层是词的Embedding，其它层是前一层的输出)，我们首先需要生成3个新的向量Q、K和V，分别代表查询(Query)向量、Key向量和Value向量。Q表示为了编码当前词，需要去注意(attend to)其它(其实也包括它自己)的词，我们需要有一个查询向量。而Key向量可以认为是这个词的关键的用于被检索的信息，而Value向量是真正的内容。</p>
+<p>对于普通的Attention机制，其计算过程如下：</p>
+<p><img src="https://uploader.shimo.im/f/EVMl6DTRHZFNfBj1.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>每个向量的Key和Value向量都是它本身，而Q是当前隐状态ℎ𝑡，计算energy的时候我们计算Q(ℎ𝑡)和Key(ℎ¯𝑗)。然后用softmax变成概率，最后把所有的ℎ¯𝑗加权平均得到context向量。</p>
+<p>而Transformer使用的self-attention的计算，以t1时刻为例，如下图：</p>
+<p><img src="https://uploader.shimo.im/f/OWcXBG6iT4eJlB1M.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>Self-Attention里的Query不是隐状态，并且来自当前输入向量本身，因此叫作Self-Attention。另外Key和Value都不是输入向量，而是输入向量做了一下线性变换。当然理论上这个线性变换矩阵可以是Identity矩阵，也就是使得Key=Value=输入向量。因此可以认为普通的Attention是这里的特例。这样做的好处是模型可以根据数据从输入向量中提取最适合作为Key(可以看成一种索引)和Value的部分。类似的，Query也是对输入向量做一下线性变换，它让系统可以根据任务学习出最适合的Query，从而可以注意到(attend to)特定的内容。</p>
+<p>具体的计算过程：比如图中的输入是两个词”thinking”和”machines”，我们对它们进行Embedding(这是第一层，如果是后面的层，直接输入就是向量了)，得到向量𝑥1,𝑥2。接着我们用3个矩阵分别对它们进行变换，得到向量𝑞1,𝑘1,𝑣1和𝑞2,𝑘2,𝑣2。比如𝑞1=𝑥1𝑊𝑄。图中𝑥1的shape是1x4，𝑊𝑄是4x3，得到的𝑞1是1x3。其它的计算也是类似的，为了能够使得Key和Query可以内积，我们要求𝑊𝐾和𝑊𝑄的shape是一样的，但是并不要求𝑊𝑉和它们一定一样(虽然实际论文实现是一样的)。</p>
+<p>每个时刻t都计算出𝑄𝑡,𝐾𝑡,𝑉𝑡之后，我们就可以来计算Self-Attention了。以第一个时刻为例，我们首先计算𝑞1和𝑘1,𝑘2的内积，得到score。接下来使用softmax把得分变成概率，注意这里把得分除以8, 即sqrt(𝑑𝑘)之后再计算的softmax，根据论文的说法，这样计算梯度时会更加稳定(stable)。接下来用softmax得到的概率对所有时刻的V求加权平均，这样就可以认为得到的向量根据Self-Attention的概率综合考虑了所有时刻的输入信息</p>
+<h3 id="Self-Attention的矩阵运算"><a href="#Self-Attention的矩阵运算" class="headerlink" title="Self-Attention的矩阵运算"></a>Self-Attention的矩阵运算</h3><p>第一步还是计算Q、K和V，不过不是计算某个时刻的𝑞𝑡,𝑘𝑡,𝑣𝑡了，而是一次计算所有时刻的Q、K和V。计算过程如下图所示。这里的输入是一个矩阵，矩阵的第i行表示第i个时刻的输入𝑥𝑖。</p>
+<p><img src="https://uploader.shimo.im/f/wAyzetkWzdIE6WcA.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>接下来就是计算Q和K得到score，然后除以sqrt(dk)，然后再softmax，最后加权平均得到输出。全过程如下图所示。</p>
+<p><img src="https://uploader.shimo.im/f/7jg3ECgtzDcFQee7.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h3 id="Multi-Head-Attention"><a href="#Multi-Head-Attention" class="headerlink" title="Multi-Head-Attention"></a>Multi-Head-Attention</h3><p><img src="https://uploader.shimo.im/f/Gvl4v25HaKoSjmaW.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>对于输入矩阵(time_step, num_input)，每一组Q、K和V都可以得到一个输出矩阵Z(time_step, num_features):</p>
+<p><img src="https://uploader.shimo.im/f/K4i3L8oDT17I4zq1.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>但是后面的全连接网络需要的输入是一个矩阵而不是多个矩阵，因此我们可以把多个head输出的Z按照第二个维度拼接起来，但是这样的特征有一些多，因此Transformer又用了一个线性变换(矩阵𝑊𝑂)对它进行了压缩:</p>
+<p><img src="https://uploader.shimo.im/f/SxjNbR105DKJ0XLE.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>整体过程：</p>
+<p><img src="https://uploader.shimo.im/f/5ybvl5baeI1eC0L5.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>可以Q、K、V在维度上比词嵌入向量更低。他们的维度是64，而词嵌入和编码器的输入/输出向量的维度是512. 但实际上不强求维度更小，这只是一种基于架构上的选择，它可以使多头注意力（multiheaded attention）的大部分计算保持不变。</p>
+<h3 id="使用self-attention的好处"><a href="#使用self-attention的好处" class="headerlink" title="使用self-attention的好处"></a>使用self-attention的好处</h3><p>比如我们要翻译如下句子”The animal didn’t cross the street because it was too tired”(这个动物无法穿越马路，因为它太累了)。这里的it到底指代什么呢，是animal还是street？要知道具体的指代，我们需要在理解it的时候同时关注所有的单词，重点是animal、street和tired，然后根据知识(常识)我们知道只有animal才能tired，而street是不能tired的。Self-Attention用Encoder在编码一个词的时候会考虑句子中所有其它的词，从而确定怎么编码当前词。如果把tired换成narrow，那么it就指代的是street了。</p>
+<p>而LSTM(即使是双向的)是无法实现上面的逻辑的。为什么呢？比如前向的LSTM，我们在编码it的时候根本没有看到后面是tired还是narrow，所有它无法把it编码成哪个词。而后向的LSTM呢？当然它看到了tired，但是到it的时候它还没有看到animal和street这两个单词，当然就更无法编码it的内容了。</p>
+<p>当然多层的LSTM理论上是可以编码这个语义的，它需要下层的LSTM同时编码了animal和street以及tired三个词的语义，然后由更高层的LSTM来把it编码成animal的语义。但是这样模型更加复杂。</p>
+<p>但如果使用multo-head的attention，在编码it的时候有一个Attention Head(后面会讲到)注意到了Animal，因此编码后的it有Animal的语义。</p>
+<h2 id="位置编码"><a href="#位置编码" class="headerlink" title="位置编码"></a>位置编码</h2><p>位置编码有很多方法，其中需要考虑的一个重要因素就是需要它编码的是相对位置的关系。比如两个句子：”北京到上海的机票”和”你好，我们要一张北京到上海的机票”。显然加入位置编码之后，两个北京的向量是不同的了，两个上海的向量也是不同的了，但是我们期望Query(北京1)Key(上海1)却是等于Query(北京2)Key(上海2)的。具体的编码算法我们在代码部分再介绍。位置编码加入后的模型如下图所示：</p>
+<p><img src="https://uploader.shimo.im/f/SRIZ4VF3sKXfDYIP.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h2 id="Layer-Normalization"><a href="#Layer-Normalization" class="headerlink" title="Layer Normalization"></a>Layer Normalization</h2><p>几乎所有的归一化方法都能起到平滑损失平面的作用，LN也一样。前面我们介绍过Batch Normalization，这个技巧能够让模型收敛的更快。但是Batch Normalization有一个问题——它需要一个minibatch的数据，而且这个minibatch不能太小(比如1)。另外一个问题就是它不能用于RNN，因为同样一个节点在不同时刻的分布是明显不同的。</p>
+<p>假设我们的输入是一个minibatch的数据，我们再假设每一个数据都是一个向量，则输入是一个矩阵，每一行是一个训练数据，每一列都是一个特征。BatchNorm是对每个特征进行Normalization，而LayerNorm是对每个样本的不同特征进行Normalization，因此LayerNorm的输入可以是一行(一个样本)。</p>
+<p>如下图所示，输入是(3,6)的矩阵，minibatch的大小是3，每个样本有6个特征。BatchNorm会对6个特征维度分别计算出6个均值和方差，然后用这两个均值和方差来分别对6个特征进行Normalization。而LayerNorm是分别对3个样本的6个特征求均值和方差，因此可以得到3个均值和方差，然后用这3个均值和方差对3个样本来做Normalization。</p>
+<p><img src="https://uploader.shimo.im/f/TOvA2LPKMM1fykBk.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>BatchNorm看起来比较直观，我们在数据预处理也经常会把输入Normalize成均值为0，方差为1的数据，只不过它引入了可以学习的参数使得模型可以更加需要重新缓慢(不能剧烈)的调整均值和方差。而LayerNorm似乎有效奇怪，比如第一个特征是年龄，第二个特征是身高，把一个人的这两个特征求均值和方差似乎没有什么意义。论文里有一些讨论，都比较抽象。当然把身高和年龄平均并没有什么意义，但是对于其它层的特征，我们通过平均”期望”它们的取值范围大体一致，也可能使得神经网络调整参数更加容易，如果这两个特征实在有很大的差异，模型也可以学习出合适的参数让它来把取值范围缩放到更合适的区间。</p>
+<h3 id="LN原理详解"><a href="#LN原理详解" class="headerlink" title="LN原理详解"></a>LN原理详解</h3><p>在Transformer中，LN被一笔带过，但却是不可或缺的一部分。每个子层的输出值为$\text { Layer } N o r m(x+\text { Sublayer }(x))$，这在网络结构图上非常明显（Norm即LN）。基本上所有的规范化技术，都可以概括为如下的公式：</p>
+<ul>
+<li>调整前：$h_{i}=f\left(a_{i}\right)$</li>
+<li>调整后：$h_{i}^{\prime}=f\left(\frac{g_{i}}{\sigma_{i}}\left(a_{i}-u_{i}\right)+b_{i}\right)$</li>
+</ul>
+<p>对于隐层中某个节点的输出为对激活值 a_i 进行非线性变换 f() 后的h_i ，先使用均值$u$和方差$\sigma_{i}$对 $a_i$ 进行分布调整。如果将其理解成正态分布，就是把“高瘦”和“矮胖”的都调整回正常体型（深粉色），把偏离x=0的拉回中间来（淡紫色）。</p>
+<p><img src="https://uploader.shimo.im/f/KOXOhpHIVBFM7fWl.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>这样做的第一个好处（平移）是，可以让激活值落入f()的梯度敏感区间（红色虚线的中间段）。梯度更新幅度变大，模型训练加快。第二个好处是，可以将每一次迭代的数据调整为相同分布（相当于“白化”），消除极端值，提升训练稳定性。</p>
+<p>然而，在梯度敏感区内，隐层的输出接近于“线性”，模型表达能力会大幅度下降。引入 gain 因子g_i和 bias 因子b_i，为规范化后的分布再加入一点“个性”。需要注意的是， g_i和 b_i作为模型参数训练得到，$u_i$和$\sigma_{i}$在限定的数据范围内统计得到。BN 和 LN 的差别就在这里，前者在某一个 Batch 内统计某特定神经元节点的输出分布（跨样本），后者在某一次迭代更新中统计同一层内的所有神经元节点的输出分布（同一样本下）。</p>
+<p>那么，为什么要舍弃 BN 改用 LN 呢？朴素版的 BN 是为 CNN 任务提出的，需要较大的 BatchSize 来保证统计量的可靠性，并在训练阶段记录全局的$u$和$\sigma$供预测任务使用。对于天然变长的 RNN 任务，需要对每个神经元进行在每个时序的状态进行统计。这不仅把原本非常简单的 BN 流程变复杂，更导致偏长的序列位置统计量不足。相比之下，LN 的使用限制就小很多，不需要在预测中使用训练阶段的统计量，即使 BatchSize = 1 也毫无影响。</p>
+<p>个人理解，对于 CNN 图像类任务，每个卷积核可以看做特定的特征抽取器，对其输出做统计是有理可循的；对于 RNN 序列类任务，统计特定时序每个隐层的输出，毫无道理可言——序列中的绝对位置并没有什么显著的相关性。相反，同一样本同一时序同一层内，不同神经元节点处理的是相同的输入，在它们的输出间做统计合理得多。</p>
+<p>从上面的分析可以看出，Normalization 通常被放在非线性化函数之前。以 GRU 为例，来看看 LN 是怎么设置的：</p>
+<ul>
+<li>$\left(\begin{array}{l}<br>\mathbf{z}_{t} \\<br>\mathbf{r}_{t}<br>\end{array}\right)=\mathbf{W}_{h} \mathbf{h}_{t-1}+\mathbf{W}_{x} \mathbf{x}_{t}$</li>
+<li>$\hat{\mathbf{h}}_{t}=\tanh \left(\mathbf{W}_{\mathbf{x}_{t}}+\sigma\left(\mathbf{r}_{t}\right) \odot\left(\mathbf{U} \mathbf{h}_{t-1}\right) \mathbf{h}\right.$</li>
+<li>$\mathbf{h}_{t}=\left(1-\sigma\left(\mathbf{z}_{t}\right)\right) \mathbf{h}_{t-1}+\sigma\left(\mathbf{z}_{t}\right) \hat{\mathbf{h}}_{\mathbf{t}}$</li>
+</ul>
+<p>可以看到，总体的原则是在“非线性之前单独处理各个矩阵”。对于 Transformer，主要的非线性部分在 FFN（ReLU） 和 Self-Attention（Softmax） 的内部，已经没有了显式的循环，但这些逐个叠加的同构子层像极了 GRU 和 LSTM 等 RNN 单元。信息的流动由沿着时序变成了穿过子层，把 LN 设置在每个子层的输出位置，意义上已经不再是“落入sigmoid 的梯度敏感空间来加速训练”了，个人认为更重要的是前文提到的“白化”—— 让每个词的向量化数值更加均衡，以消除极端情况对模型的影响，获得更稳定的深层网络结构 —— 就像这些词从 Embdding 层出来时候那样，彼此只有信息的不同，没有能量的多少。在和之前的 TWWT 实验一样的配置中，删除了全部的 LN 层后模型不再收敛。LN 正如 LSTM 中的tanh，它为模型提供非线性以增强表达能力，同时将输出限制在一定范围内。 因此，对于 Transformer 来说，LN 的效果已经不是“有多好“的范畴了，而是“不能没有”。</p>
+<h3 id="MLP中的LN"><a href="#MLP中的LN" class="headerlink" title="MLP中的LN"></a>MLP中的LN</h3><p>设H是一层中隐层节点的数量，l是MLP的层数，我们可以计算LN的归一化统计量$u$和$\sigma$：</p>
+<ul>
+<li>$\mu^{l}=\frac{1}{H} \sum_{i=1}^{H} a_{i}^{l}$</li>
+<li>$\sigma^{l}=\sqrt{\frac{1}{H} \sum_{i=1}^{H}\left(a_{i}^{l}-\mu^{l}\right)^{2}}$</li>
+</ul>
+<p>注意上面统计量的计算是和样本数量没有关系的，它的数量只取决于隐层节点的数量，所以只要隐层节点的数量足够多，我们就能保证LN的归一化统计量足够具有代表性。通过$u^l$和$\sigma^l$可以得到归一化后的值$\hat{\mathbf{a}}^{l}=\frac{\mathbf{a}^{l}-\mu^{l}}{\sqrt{\left(\sigma^{l}\right)^{2}+\epsilon}}$（其中$\epsilon$是一个很小的小数，防止除0）。</p>
+<p>在LN中我们也需要一组参数来保证归一化操作不会破坏之前的信息，在LN中这组参数叫做增益（gain）g和偏置（bias) b（等同于BN中的$\gamma$和）$\beta$。假设激活函数为f，最终LN的输出为：$\mathbf{h}^{l}=f\left(\mathbf{g}^{l} \odot \hat{\mathbf{a}}^{l}+\mathbf{b}^{l}\right)$。合并公式并忽略参数l可以得到：$\mathbf{h}=f\left(\frac{\mathbf{g}}{\sqrt{\sigma^{2}+\epsilon}} \odot(\mathbf{a}-\mu)+\mathbf{b}\right)$</p>
+<h3 id="RNN中的LN"><a href="#RNN中的LN" class="headerlink" title="RNN中的LN"></a>RNN中的LN</h3><p>在RNN中，我们可以非常简单的在每个时间片中使用LN，而且在任何时间片我们都能保证归一化统计量统计的是H个节点的信息。对于RNN时刻 t 时的节点，其输入是 t-1 时刻的隐层状态 h^{t-1}和 t 时刻的输入数据x_t，可以表示为：$\mathbf{a}^{t}=W_{h h} h^{t-1}+W_{x h} \mathbf{x}^{t}$。</p>
+<p>接着我们便可以在$\mathbf{a}^{t}$上采取归一化过程：</p>
+<ul>
+<li>$\mu^{t}=\frac{1}{H} \sum_{i=1}^{H} a_{i}^{t}$</li>
+<li>$\sigma^{t}=\sqrt{\frac{1}{H} \sum_{i=1}^{H}\left(a_{i}^{t}-\mu^{t}\right)^{2}}$</li>
+<li>$\mathbf{h}^{t}=f\left(\frac{\mathbf{g}}{\sqrt{\left(\sigma^{t}\right)^{2}+\epsilon}} \odot\left(\mathbf{a}^{t}-\mu^{t}\right)+\mathbf{b}\right)$</li>
+</ul>
+<h4 id="LSTM中的LN"><a href="#LSTM中的LN" class="headerlink" title="LSTM中的LN"></a>LSTM中的LN</h4><p>LSTM的计算公式为：</p>
+<ul>
+<li>$\left(\begin{array}{c}<br>\mathbf{f}_{t} \\<br>\mathbf{i}_{t} \\<br>\mathbf{o}_{t} \\<br>\mathbf{g}_{t}<br>\end{array}\right)=\mathbf{W}_{h} \mathbf{h}_{t-1}+\mathbf{W}_{x} \mathbf{x}_{t}+b$</li>
+<li>$\mathbf{c}_{t}=\sigma\left(\mathbf{f}_{t}\right) \odot \mathbf{c}_{t-1}+\sigma\left(\mathbf{i}_{t}\right) \odot \tanh \left(\mathbf{g}_{t}\right)$</li>
+<li>$\mathbf{h}_{t}=\sigma\left(\mathbf{o}_{t}\right) \odot \tanh \left(\mathbf{c}_{t}\right)$</li>
+</ul>
+<p>使用了LN后的计算公式为：</p>
+<ul>
+<li>$\left(\begin{array}{c}<br>\mathbf{f}_{t} \\<br>\mathbf{i}_{t} \\<br>\mathbf{o}_{t} \\<br>g_{t}<br>\end{array}\right)=\quad L N\left(\mathbf{W}_{h} \mathbf{h}_{t-1} ; \boldsymbol{\alpha}_{1}, \boldsymbol{\beta}_{1}\right)+L N\left(\mathbf{W}_{x} \mathbf{x}_{t} ; \boldsymbol{\alpha}_{2}, \boldsymbol{\beta}_{2}\right)+b$</li>
+<li>$\mathbf{c}_{t}=\sigma\left(\mathbf{f}_{t}\right) \odot \mathbf{c}_{t-1}+\sigma\left(\mathbf{i}_{t}\right) \odot \tanh \left(\mathbf{g}_{t}\right)$</li>
+<li>$\mathbf{h}_{t}=\sigma\left(\mathbf{o}_{t}\right) \odot \tanh \left(L N\left(\mathbf{c}_{t} ; \boldsymbol{\alpha}_{3}, \boldsymbol{\beta}_{3}\right)\right)$</li>
+</ul>
+<h3 id="对照实验"><a href="#对照实验" class="headerlink" title="对照实验"></a>对照实验</h3><p>这里我们设置了一组对照试验来对比普通网络，BN以及LN在MLP和RNN上的表现。</p>
+<h4 id="MLP上的归一化"><a href="#MLP上的归一化" class="headerlink" title="MLP上的归一化"></a>MLP上的归一化</h4><p>这里使用的是MNIST数据集，但是归一化操作只添加到了后面的MLP部分。Keras官方源码中没有LN的实现，我们可以通过<code>pip install keras-layer-normalization</code>进行安装，使用方法如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from keras_layer_normalization import LayerNormalization</span><br><span class="line"># 构建LN CNN网络</span><br><span class="line">model_ln &#x3D; Sequential()</span><br><span class="line">model_ln.add(Conv2D(input_shape &#x3D; (28,28,1), filters&#x3D;6, kernel_size&#x3D;(5,5), padding&#x3D;&#39;valid&#39;, activation&#x3D;&#39;tanh&#39;))</span><br><span class="line">model_ln.add(MaxPool2D(pool_size&#x3D;(2,2), strides&#x3D;2))</span><br><span class="line">model_ln.add(Conv2D(input_shape&#x3D;(14,14,6), filters&#x3D;16, kernel_size&#x3D;(5,5), padding&#x3D;&#39;valid&#39;, activation&#x3D;&#39;tanh&#39;))</span><br><span class="line">model_ln.add(MaxPool2D(pool_size&#x3D;(2,2), strides&#x3D;2))</span><br><span class="line">model_ln.add(Flatten())</span><br><span class="line">model_ln.add(Dense(120, activation&#x3D;&#39;tanh&#39;))</span><br><span class="line">model_ln.add(LayerNormalization()) # 添加LN运算</span><br><span class="line">model_ln.add(Dense(84, activation&#x3D;&#39;tanh&#39;))</span><br><span class="line">model_ln.add(LayerNormalization())</span><br><span class="line">model_ln.add(Dense(10, activation&#x3D;&#39;softmax&#39;))</span><br></pre></td></tr></table></figure>
+<p>另外两个对照试验也使用了这个网络结构，不同点在于归一化部分。图3左侧是batchsize=128时得到的收敛曲线，从中我们可以看出BN和LN均能取得加速收敛的效果，且BN的效果要优于LN。图3右侧是batchsize=8是得到的收敛曲线，这时BN反而会减慢收敛速度，验证了我们上面的结论，对比之下LN要轻微的优于无归一化的网络，说明了LN在小尺度批量上的有效性：<br><img src="https://uploader.shimo.im/f/8jLUlejv9kLBLD4n.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"><img src="https://uploader.shimo.im/f/hpHSt6yZW9dhXRKY.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h4 id="LSTM上的归一化"><a href="#LSTM上的归一化" class="headerlink" title="LSTM上的归一化"></a>LSTM上的归一化</h4><p>另外一组对照实验是基于imdb的二分类任务，使用了glove作为词嵌入。这里设置了无LN的LSTM和带LN的LSTM的作为对照试验，网络结构如下面代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from lstm_ln import LSTM_LN</span><br><span class="line">model_ln &#x3D; Sequential()</span><br><span class="line">model_ln.add(Embedding(max_features,100))</span><br><span class="line">model_ln.add(LSTM_LN(128))</span><br><span class="line">model_ln.add(Dense(1, activation&#x3D;&#39;sigmoid&#39;))</span><br><span class="line">model_ln.summary()</span><br></pre></td></tr></table></figure>
+<p>LN对于RNN系列动态网络的收敛加速上的效果是略有帮助的。LN的有点主要体现在两个方面：</p>
+<ul>
+<li>LN得到的模型更稳定；</li>
+<li>LN有正则化的作用，得到的模型更不容易过拟合。</li>
+</ul>
+<h2 id="残差连接"><a href="#残差连接" class="headerlink" title="残差连接"></a>残差连接</h2><p>每个Self-Attention层都会加一个残差连接，然后是一个LayerNorm层，如下图所示：</p>
+<p><img src="https://uploader.shimo.im/f/9JnJi8vn7Izidhmp.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>下图展示了更多细节：输入𝑥1、𝑥2经self-attention层之后变成𝑧1、𝑧2，然后和残差连接的输入𝑥1、𝑥2加起来，然后经过LayerNorm层输出给全连接层。全连接层也是有一个残差连接和一个LayerNorm层，最后再输出给上一层：</p>
+<p><img src="https://uploader.shimo.im/f/smiABSb61r8rvfqg.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>这样做的好处不言而喻，避免了梯度消失（求导时多了一个常数项）。</p>
+<h2 id="Decoder层"><a href="#Decoder层" class="headerlink" title="Decoder层"></a>Decoder层</h2><p>Decoder和Encoder是类似的，如下图所示，区别在于它多了一个Encoder-Decoder Attention层，这个层的输入除了来自Self-Attention之外还有Encoder最后一层的所有时刻的输出。Encoder-Decoder Attention层的Query来自下一层，而Key和Value则来自Encoder的输出。</p>
+<p><img src="https://uploader.shimo.im/f/IuBCl1ZxZG9BKh5z.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>在这个框架下，解码器实际上可看成一个神经网络语言模型，预测的时候，target中的每一个单词是逐个生成的，当前词的生成依赖两方面：一是Encoder的输出，二是target的前面的单词。例如，在生成第一个单词是，不仅依赖于Encoder的输出，还依赖于起始标志[CLS]；生成第二个单词是，不仅依赖Encoder的输出，还依赖起始标志和第一个单词…依此类推。这其实是说，在翻译当前词的时候，是看不到后面的要翻译的词。由上可以看出，这里的mask是动态的。</p>
+<h1 id="Transformer细节讨论"><a href="#Transformer细节讨论" class="headerlink" title="Transformer细节讨论"></a>Transformer细节讨论</h1><h2 id="Scaled-Dot-product-Attention"><a href="#Scaled-Dot-product-Attention" class="headerlink" title="Scaled Dot-product Attention"></a>Scaled Dot-product Attention</h2><p><img src="https://uploader.shimo.im/f/wUrUGWRx6fOH6zaP.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>首先， Q 与 K 进行了一个点积操作，这个其实就是我在Attention讲到的 score 操作。然后，有一个 Scale 操作，其实就是为了防止结果过大，除以一个尺度标度 sqrt(dk)（注：主要因为dk比较大时，点乘注意力的表现变差，认为是由于点乘后的值过大，导致softmax函数趋近于边缘，梯度较小）， 其中dk是Q中一个向量的维度。再然后，经过一个Mask操作； Mask操作是将需要隐藏的数据设置为负无穷，这样经过后面的 Softmax 后就接近于 0，这样这些数据就不会对后续结果产生影响了。最后经过一个 Softmax 层， 然后计算 Attention Value。其公式：$\text {Attention}(Q, K, V)=\operatorname{softmax}\left(\frac{Q K^{T}}{\sqrt{d_{k}}}\right) V$</p>
+<p>这里解释一下 Scaled Dot-product Attention 在本文中的应用，也是称为 Self-Attention 的原因所在，这里的Q，K， V 都是一样的，意思就是说，这里是句子对句子自己进行Attention 来查找句子中词之间的关系，这是一件很厉害的事情，回想LSTM是怎么做的，再比较 Self-Attention， 直观的感觉，Self-Attention更能把握住词与词的语义特征，而LSTM对长依赖的句子，往往毫无办法，表征极差。</p>
+<p>常用的attention主要有“Add-相加”和“Mul-相乘”两种：</p>
+<ul>
+<li>$\operatorname{score}\left(h_{j}, s_{i}\right)=<v, \tanh \left(W_{1} h_{j}+W_{2} s_{i}\right)>[A d d]$</li>
+<li>$\operatorname{score}\left(h_{j}, s_{i}\right)=\left\langle W_{1} h_{j}, W_{2} s_{i}&gt;\quad[M u l]\right.$</li>
+</ul>
+<p>矩阵加法的计算更简单，但是外面套着tanh和 v，相当于一个完整的隐层。在整体计算复杂度上两者接近，但考虑到矩阵乘法已经有了非常成熟的加速算法，Transformer采用了Mul形式。</p>
+<p>在模型效果上，《Massive Exploration of Neural Machine Translation Architectures》对不同Attention-Dimension (d_k) 下的Add和Mul进行了对比，如下图：</p>
+<p><img src="https://uploader.shimo.im/f/I3AO3zusDdNUXzMC.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>可以看到，在$d_k$较小的时候，Add和Mul相差不大；随着$d_k$增大，Add明显超越了Mul。Transformer 设置 d_k=64虽然不在表格的范围内，但是可以推测Add仍略优于Mul。作者认为，$d_k$的增大将点积结果推向了softmax函数的梯度平缓区，影响了训练的稳定性。原话是这么说的：</p>
+<blockquote>
+<p>We suspect that for large values of dk, the dot products grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients.</p>
+</blockquote>
+<p>因此，Transformer 为“dot-product attention”加了一个前缀“scaled”，即引入一个温度因子（temperature）$\sqrt{d_{k}}$，中文全称“缩放的点积注意力网络”：$\text {Attention}(Q, K, V)=\operatorname{softmax}\left(Q K^{T} / \sqrt{d_{k}}\right) V$</p>
+<p>等等，Add也离不开softmax，怎么没有这个问题呢？首先，左侧v的导数就是 tanh的输出，后者本身就是 [-1,1]之间的，一定不会超限。然后，右侧 W_1的导数就是隐层h_j ，必然是sigmoid或者其他激活函数的输出，值也不会太大。</p>
+<p>回到Mul。左侧W_1的导数来自于$h_{j}\left(W_{2} s_{i}\right)$。如果s_i分布在(0,1)，那么$W_{2} s_{i}$就会扩展到(0, d_k) ，即点积可能会造成一个非常大的梯度值。</p>
+<h2 id="MultiHeadAttention"><a href="#MultiHeadAttention" class="headerlink" title="MultiHeadAttention"></a>MultiHeadAttention</h2><p>Transformer 中使用 Multi-head Attention要注意以下几点：</p>
+<p>首先， 在Encoder与Decoder中的黑色框中，采用的都是是 Self-Attention ，Q，K，V 同源。</p>
+<p>其次，需要注意的是只有在Decoder中的Muti-head中才有 Mask 操作，而在Encoder中却没有，这是因为我们在预测第t个词时，需要将 t 时刻及以后的词遮住，只对前面的词进行 self-attention。</p>
+<p>最后， 在黄色框中， 采用的是传统的Attention思路，Q 来自Decoder层， 而 K， V来自Encoder的输出 。</p>
+<h2 id="最后的Linear与Softmax"><a href="#最后的Linear与Softmax" class="headerlink" title="最后的Linear与Softmax"></a>最后的Linear与Softmax</h2><p>一般都会在最后一层加一个前馈神经网络来增加泛化能力，最后用一个 softmax 来进行预测。</p>
+<p>线性层的参数个数为d_model vocab_size， 一般来说，vocab_size会比较大，拿20000为例，那么只这层的参数就有51220000个，约为10的8次方，非常惊人。而在词向量那一层，同样也是这个数值，所以，一种比较好的做法是将这两个全连接层的参数共享，会节省不少内存，而且效果也不会差。</p>
+<p>注意：在Encoder的输入embedding、Decoder的输入embedding后，增加了1个scale因子，而生成下一词汇的linear transformation前却未添加scale因子。</p>
+<h2 id="Position-Embedding"><a href="#Position-Embedding" class="headerlink" title="Position Embedding"></a>Position Embedding</h2><p>在下图中，每一行对应一个词向量的位置编码，所以第一行对应着输入序列的第一个词。每行包含512个值，每个值介于1和-1之间。我们已经对它们进行了颜色编码，所以图案是可见的。20字(行)的位置编码实例，词嵌入大小为512(列)。你可以看到它从中间分裂成两半。这是因为左半部分的值由一个函数(使用正弦)生成，而右半部分由另一个函数(使用余弦)生成。然后将它们拼在一起而得到每一个位置编码向量。这种编码的优点是能够扩展到未知的序列长度(例如，当我们训练出的模型需要翻译远比训练集里的句子更长的句子时)。</p>
+<ul>
+<li>$P E_{(p o s, 2 i)}=\sin \left(p o s / 10000^{2 i / d_{\text {mod }}}\right)$</li>
+<li>$P E_{(p o s, 2 i+1)}=\cos \left(p o s / 10000^{2 i / d_{\text {model }}}\right)$</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/Su3SrWtdY1L1R7zr.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>首先，可以证明出每个位置都能获得唯一的编码。其次，i决定了频率的大小，不同的i可以看成是不同的频率空间中的编码，是相互正交的，通过改变i的值，就能得到多维度的编码，类似于词向量的维度。这里2i&lt;=512（$d_{model}$）, 一共512维。想象一下，当2i大于$d_{model}$时会出现什么情况，这时sin函数的周期会变得非常大，函数值会非常接近于0，这显然不是我们希望看到的，因为这样和词向量就不在一个量级了，位置编码的作用被削弱了。另外，值得注意的是，位置编码是不参与训练的，而词向量是参与训练的。作者通过实验发现，位置编码参与训练与否对最终的结果并无影响。</p>
+<p>其次，之所以对奇偶位置分别编码，论文中是这样解释的：</p>
+<blockquote>
+<p>We chose this function because we hypothesized it would allow the model to easily learn to attend by relative positions, since for any fixed offset k, PEpos+k can be represented as a linear function of PEpos.</p>
+</blockquote>
+<p>相隔 k 个词的两个位置 pos 和 pos+k 的位置编码是由 k 的位置编码定义的一个线性变换，推导公式如下：</p>
+<ul>
+<li>$P E(p o s+k, 2 i)=P E(p o s, 2 i) P E(k, 2 i+1)+P E(p o s, 2 i+1) P E(k, 2 i)$</li>
+<li>$P E(p o s+k, 2 i+1)=P E(p o s, 2 i+1) P E(k, 2 i+1)-P E(p o s, 2 i) P E(k, 2 i)$</li>
+</ul>
+<p>或者下面的推导更清晰一些：</p>
+<ul>
+<li>$\begin{aligned}<br>P E_{(p o s+k, 2 i)} &amp;=\sin \left((p o s+k) / 10000^{2 i / d_{\text {model}}}\right) \\<br>&amp;=\sin \left(p o s / 10000^{2 i / d_{\text {model}}}\right) \cos \left(k / 10000^{2 i / d_{\text {model}}}\right)+\cos \left(p o s / 10000^{2 i / d_{\text {model}}}\right) \sin \left(k / 10000^{2 i / d_{\text {model}}}\right) \\<br>&amp;=\cos \left(k / 10000^{2 i / d_{\text {model}}}\right) P E_{(p o s, 2 i)}+\sin \left(k / 10000^{2 i / d_{\text {model}}}\right) P E_{(p o s, 2 i+1)}<br>\end{aligned}$</li>
+<li>$\begin{aligned}<br>P E_{(p o s+k, 2 i+1)} &amp;=\cos \left((p o s+k) / 10000^{2 i / d_{\text {model}}}\right) \\<br>&amp;=\cos \left(\text {pos} / 10000^{2 i / d_{\text {model}}}\right) \cos \left(k / 10000^{2 i / d_{\text {model}}}\right)-\sin \left(p o s / 10000^{2 i / d_{\text {model}}}\right) \sin \left(k / 10000^{2 i / d_{\text {model}}}\right) \\<br>&amp;=\cos \left(k / 10000^{2 i / d_{\text {model}}}\right) P E_{(p o s, 2 i+1)}-\sin \left(k / 10000^{2 i / d_{\text {model}}}\right) P E_{(\text {pos}, 2 i)}<br>\end{aligned}$</li>
+</ul>
+<h2 id="前馈网络"><a href="#前馈网络" class="headerlink" title="前馈网络"></a>前馈网络</h2><p>每个encoderLayer中，多头attention后会接一个前馈网络。这个前馈网络其实是两个全连接层，进行了如下操作：$FFN(x)=max(0,xW1+b1)W2+b2$</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">self.w_1 &#x3D; nn.Linear(d_model, d_ff)</span><br><span class="line"># self.w_1 &#x3D; nn.Conv1d(in_features&#x3D;d_model, out_features&#x3D;d_ff, kenerl_size&#x3D;1)</span><br><span class="line">self.w_2 &#x3D; nn.Linear(d_ff, d_model)</span><br><span class="line"># self.w_2 &#x3D; nn.Conv1d(in_features&#x3D;d_ff, out_features&#x3D;d_model, kenerl_size&#x3D;1)</span><br></pre></td></tr></table></figure>
+<p>这两层的作用等价于两个 kenerl_size=1的一维卷积操作。<br>FFN 相当于将每个位置的Attention结果映射到一个更大维度的特征空间，然后使用ReLU引入非线性进行筛选，最后恢复回原始维度。需要说明的是，在抛弃了 LSTM 结构后，FFN 中的 ReLU成为了一个主要的能提供非线性变换的单元。</p>
+<h2 id="Weight-Tying"><a href="#Weight-Tying" class="headerlink" title="Weight Tying"></a>Weight Tying</h2><p>论文的3.4小节Embeddings and Softmax，有这样一句话：</p>
+<blockquote>
+<p>In our model, we share the same weight matrix between the two embedding layers and the pre-softmax linear transformation, similar to [29].</p>
+</blockquote>
+<p>《Using the Output Embedding to Improve Language Models》这篇文章主要介绍的是RNNLM中的Weight Tying技术，不仅能压缩LM的大小，还能显著改善PPL表现。作者为了证明算法的普适性，在NMT任务上也进行了扩展实验。在seq2seq模型中，decoder可以近似地看作RNNLM，它必不可少地有一个embedding矩阵$U \in R^{C \times H}$和一个pre-softmax矩阵$V \in R^{C \times H}$，来完成词表大小C到隐层大小H的尺度转换：$h_{i n}=U^{T} C, \ldots, h_{p r e_{-} s o f t m a x}=V h_{o u t}$</p>
+<p>。Weight Tying在操作上非常简单，即令U=V 。在OPEN-NMT的Pytorch实现版本中，仅仅一行代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if model_opt.share_decoder_embeddings:</span><br><span class="line">    generator[0].weight &#x3D; decoder.embeddings.word_lut.weight</span><br></pre></td></tr></table></figure>
+<p>Transformer在英法和英德上，混用了源语言和目标语言的词表，因此使用了升级版的TWWT（Three way weight tying），把encoder的embedding层权重，也加入共享：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if model_opt.share_embeddings:</span><br><span class="line">    tgt_emb.word_lut.weight &#x3D; src_emb.word_lut.weight</span><br></pre></td></tr></table></figure>
+<p>虽然weight共享了，但是embedding和pre-softmax仍然是两个不同的层，因为bias是彼此独立的。<br>在我个人的理解中，one-hot向量和对U的操作是“指定抽取”，即取出某个单词的向量行；pre-softmax对U的操作是“逐个点积”，对隐层的输出，依次计算其和每个单词向量行的变换结果。虽然具体的操作不同，但在本质上，U和V都是对任一的单词进行向量化表示（H列），然后按词表序stack起来（C行）。因此，两个权重矩阵在语义上是相通的。</p>
+<p>也是由于上面两种操作方式的不同，U在反向传播中不如V训练得充分。将两者绑定在一起，缓和了这一问题，可以训练得到质量更高的新矩阵。另外，由于词表大小C通常比模型隐层大小H高出一个数量级，Weight Tying 可以显著减小模型的参数量。这个数据在论文中是28%~51%，我使用Transformer-base在非共享词表的英中方向上进行测试，模型参数量从 131,636,930 减小到 102,177,474，足足的22%。模型更小，收敛更快更容易。</p>
+<p>下图是知乎上网友用Transformer-base模型跑的实验结果，绿色是Weight Tying版本，蓝色是基础版本。X轴为step，Y轴为Appromix BLEU。可以看到，两者的收敛速度接近，曲线平稳后绿色明显优于蓝色，峰值相差0.17。</p>
+<p><img src="https://uploader.shimo.im/f/wi59MAoPcUomITKw.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h2 id="Label-Smoothing"><a href="#Label-Smoothing" class="headerlink" title="Label Smoothing"></a>Label Smoothing</h2><p>Label Smoothing是一种正则化技术，核心功能就是防止过拟合，它的全称是 Label Smoothing Regularization（LSR），是 2015 年的经典论文《Rethinking the Inception Architecture for Computer Vision》的一个副产品。作者认为 LSR 可以避免模型 too confident。关于这一点论文里没有详细的解释，不过对于 NMT 任务来说，鼓励模型产生多样化的译文确实会帮助提升 BLEU 值，毕竟标准译文并不是唯一的。</p>
+<p>最著名的正则化技术，dropout，通过随机抹掉一些节点来削弱彼此之间的依赖，通常设置在网络内部隐层。作为 dropout 的配合策略，LSR 考虑的是 softmax 层。</p>
+<p>假设目标类别为y，任意类别为，ground-truth 分布为q(k)，模型预测分布为p(k)。显然，当k=y时，q(k)=1。当k!=y时，q(k)=0。LSR 为了让模型的输出不要过于贴合单点分布，选择在 gound-truth 中加入噪声。即削弱y的概率，并整体叠加一个独立于训练样例的均匀分布u(k)：$q^{\prime}(k)=(1-\epsilon) q(k)+\epsilon u(k)=(1-\epsilon) q(k)+\epsilon / K$。其中K是 softmax 的类别数。拆开来写可以看得清楚一点：</p>
+<ul>
+<li>$q^{\prime}(k)=1-\epsilon+\epsilon / K, \quad k=y$</li>
+<li>$q^{\prime}(k)=\epsilon / K, \quad k \neq y$</li>
+</ul>
+<p>所有类别的概率和仍然是归一的。说白了就是把最高点砍掉一点，多出来的概率平均分给所有人。调整之后，交叉熵（损失函数）也随之变化：$H\left(q^{\prime}, p\right)=(1-\epsilon) H(q, p)+\epsilon H(u \cdot p)$。对于两个完全一致的分布，其交叉熵为0。LSR 可以看作是在优化目标中加入了正则项 H(u, p)，在模型输出偏离均匀分布时施以惩罚。</p>
+<h2 id="Warmup-amp-Noam学习率更新"><a href="#Warmup-amp-Noam学习率更新" class="headerlink" title="Warmup &amp; Noam学习率更新"></a>Warmup &amp; Noam学习率更新</h2><h3 id="warmup"><a href="#warmup" class="headerlink" title="warmup"></a>warmup</h3><p>论文提出了一个全新的学习率更新公式：$\text {lrate}=d_{\text {model}}^{-0.5} \cdot \min \left(\text {step_num}^{-0.5}, \text {step_num} \cdot \text {warmup_steps}^{-1.5}\right)$</p>
+<p>如果把min去掉的话，就变成一个以warmup_steps为分界点的分段函数。在该点之后，$\text { lrate }=d_{\text {model }}^{-0.5} \cdot \text { step_num }^{-0.5}$，是 decay 的部分。常用方法有指数衰减（exponential）、分段常数衰减（piecewise-constant）、反时限衰减（inverse-time）等等。Transformer 采用了负幂的形式，衰减速度先快后慢。</p>
+<p>在该点之前，$\text { lrate }=d_{\text {model}}^{-0.5} \cdot \text { step_num } \cdot \text { warmup_steps}^{-1.5}$，是 warmup 的部分。Transformer 采用了线性函数的形式，warmup_steps 越大，斜率越小。</p>
+<p><img src="https://uploader.shimo.im/f/bxxdHqj3LdOeu2mt.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>画在图上明显很多。Transformer 的学习率更新公式叫作“noam”，它将 warmup 和 decay 两个部分组合在一起，总体趋势是先增加后减小。</p>
+<p>warmup为什么有效? 可参考<a href="https://www.zhihu.com/question/338066667" target="_blank" rel="noopener">https://www.zhihu.com/question/338066667</a>、<a href="https://zhuanlan.zhihu.com/p/45410279" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/45410279</a>。</p>
+<h3 id="weight-decay"><a href="#weight-decay" class="headerlink" title="weight-decay"></a>weight-decay</h3><h4 id="指数衰减"><a href="#指数衰减" class="headerlink" title="指数衰减"></a>指数衰减</h4><p>指数衰减学习率是先使用较大的学习率来快速得到一个较优的解，然后随着迭代的继续,逐步减小学习率，使得模型在训练后期更加稳定。Transfomer使用的是指数衰减。指数衰减学习率的公式：$\text { decayed_learning_rate = learning_rate\cdotdecay_rate }^{(\text {global_step} / \text {decay_steps})}$</p>
+<p>global_step是计数器,从0计数到训练的迭代次数，learning_rate是初始化的学习率，decayed_learning_rate是随着 global_step递增而衰减。显然，当global_step为初值0时， 有下面等式：$\text { decayed_learning_rate = learning_rate }$。</p>
+<p>decay_steps用来控制衰减速度，如果decay_steps大一些, global_step/decay_steps就会增长缓慢一些。从而指数衰减学习率decayed_learning_rate就会衰减得慢一否则学习率很快就会衰减为趋近于0。</p>
+<p>具体代码可参考：<a href="https://zhuanlan.zhihu.com/p/29421235" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/29421235</a></p>
+<h4 id="分段常数衰减"><a href="#分段常数衰减" class="headerlink" title="分段常数衰减"></a>分段常数衰减</h4><pre><code>参考：[https://www.jianshu.com/p/125fe2ab085b](https://www.jianshu.com/p/125fe2ab085b)
+</code></pre><h4 id="自然指数衰减"><a href="#自然指数衰减" class="headerlink" title="自然指数衰减"></a>自然指数衰减</h4><p>它与指数衰减方式相似，不同的在于它的衰减底数是e，故而其收敛的速度更快，一般用于相对比较容易训练的网络，便于较快的收敛，其更新规则如下：$\text { decayed_learning_rate = learning_rate } * e^{\frac{-d e c a y_{r a t e}}{g l b b a_{s t e p}}}$</p>
+<p>下图为为分段常数衰减、指数衰减、自然指数衰减三种方式的对比图，红色的即为分段常数衰减图，阶梯型曲线。蓝色线为指数衰减图，绿色即为自然指数衰减图，很明可以看到自然指数衰减方式下的学习率衰减程度要大于一般指数衰减方式，有助于更快的收敛。</p>
+<p><img src="https://uploader.shimo.im/f/Pw9NQo5Yu503saf7.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h4 id="多项式衰减"><a href="#多项式衰减" class="headerlink" title="多项式衰减"></a>多项式衰减</h4><p>应用多项式衰减的方式进行更新学习率，这里会给定初始学习率和最低学习率取值，然后将会按照给定的衰减方式将学习率从初始值衰减到最低值,其更新规则如下式所示：</p>
+<ul>
+<li>$\text { global_step }=\min (\text {global_step, decay_steps})$</li>
+<li>$\begin{array}{c}<br>\text { decayed_learning_rate }=(\text {learning_rate}-\text {end_learning_rate}) *\left(1-\frac{\text {global_step}}{\text {decay_steps}}\right)^{\text {powe}} \\<br>+\text {end_learning_rate}<br>\end{array}$</li>
+</ul>
+<p>需要注意的是，有两个机制，降到最低学习率后，到训练结束可以一直使用最低学习率进行更新，另一个是再次将学习率调高，使用 decay_steps 的倍数，取第一个大于 global_steps 的结果，它是用来防止神经网络在训练的后期由于学习率过小而导致的网络一直在某个局部最小值附近震荡，这样可以通过在后期增大学习率跳出局部极小值。</p>
+<p>如下图所示，红色线代表学习率降低至最低后，一直保持学习率不变进行更新，绿色线代表学习率衰减到最低后，又会再次循环往复的升高降低。</p>
+<p><img src="https://uploader.shimo.im/f/TWHJqCaUQytQ7SLS.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h4 id="余弦衰减"><a href="#余弦衰减" class="headerlink" title="余弦衰减"></a>余弦衰减</h4><p>余弦衰减就是采用余弦的相关方式进行学习率的衰减，衰减图和余弦函数相似。其更新机制如下式所示：</p>
+<ul>
+<li>$\text { global_step }=\min (\text {global_step, decay_steps})$</li>
+<li>$\text {cosine_decay}=0.5 <em>\left(1+\cos \left(\pi </em> \frac{\text {global_step}}{\text {decay_steps}}\right)\right)$</li>
+<li>$\text { decayed }=(1-\alpha) * \text { cosine_decay }+\alpha$</li>
+<li>$\text { decayed_learning_rate = learning_rate * decayed }$</li>
+</ul>
+<p>如下图所示，红色即为标准的余弦衰减曲线，学习率从初始值下降到最低学习率后保持不变。蓝色的线是线性余弦衰减方式曲线，它是学习率从初始学习率以线性的方式下降到最低学习率值。绿色噪声线性余弦衰减方式：</p>
+<p><img src="https://uploader.shimo.im/f/B2zQIXMV8trD31KQ.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h2 id="Masking"><a href="#Masking" class="headerlink" title="Masking"></a>Masking</h2><h3 id="pad-mask"><a href="#pad-mask" class="headerlink" title="pad mask"></a>pad mask</h3><p>通常也是编码端的mask</p>
+<p><img src="https://uploader.shimo.im/f/n9R8KVx3vwWbU3Wu.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h3 id="sequence-mask"><a href="#sequence-mask" class="headerlink" title="sequence mask"></a>sequence mask</h3><p><img src="https://uploader.shimo.im/f/UcgsvQ46WN33NjqJ.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h3 id="解码端的mask要同时考虑pad-mask和sequece-mask"><a href="#解码端的mask要同时考虑pad-mask和sequece-mask" class="headerlink" title="解码端的mask要同时考虑pad mask和sequece mask"></a>解码端的mask要同时考虑pad mask和sequece mask</h3><p><img src="https://uploader.shimo.im/f/D2Nwlz6tyDopu7un.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<h2 id=""><a href="#" class="headerlink" title=" "></a> </h2><h2 id="Word-Piece"><a href="#Word-Piece" class="headerlink" title="Word Piece"></a>Word Piece</h2><h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>现在基本性能好一些的NLP模型，例如OpenAI GPT，google的BERT，在数据预处理的时候都会有WordPiece的过程。WordPiece字面理解是把word拆成piece一片一片，其实就是这个意思。</p>
+<p>WordPiece的一种主要的实现方式叫做BPE（Byte-Pair Encoding）双字节编码。</p>
+<p>BPE的过程可以理解为把一个单词再拆分，使得我们的此表会变得精简，并且寓意更加清晰。</p>
+<p>比如”loved”,”loving”,”loves”这三个单词。其实本身的语义都是“爱”的意思，但是如果我们以单词为单位，那它们就算不一样的词，在英语中不同后缀的词非常的多，就会使得词表变的很大，训练速度变慢，训练的效果也不是太好。</p>
+<p>BPE算法通过训练，能够把上面的3个单词拆分成”lov”,”ed”,”ing”,”es”几部分，这样可以把词的本身的意思和时态分开，有效的减少了词表的数量。</p>
+<h3 id="BPE算法"><a href="#BPE算法" class="headerlink" title="BPE算法"></a>BPE算法</h3><blockquote>
+<p>参考：<a href="https://plmsmile.github.io/2017/10/19/subword-units/" target="_blank" rel="noopener">https://plmsmile.github.io/2017/10/19/subword-units/</a></p>
+</blockquote>
+<p>BPE的大概训练过程：首先将词分成一个一个的字符，然后在词的范围内统计字符对出现的次数，每次将次数最多的字符对保存起来，直到循环次数结束。</p>
+<p>我们模拟一下BPE算法。</p>
+<ul>
+<li>我们原始词表如下：{‘l o w e r ‘: 2, ‘n e w e s t ‘: 6, ‘w i d e s t ‘: 3, ‘l o w ‘: 5}</li>
+<li>其中的key是词表的单词拆分层字母，再加代表结尾，value代表词出现的频率。</li>
+<li>下面我们每一步在整张词表中找出频率最高相邻序列，并把它合并，依次循环。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">原始词表 &#123;&#39;l o w e r &lt;&#x2F;w&gt;&#39;: 2, &#39;n e w e s t &lt;&#x2F;w&gt;&#39;: 6, &#39;w i d e s t &lt;&#x2F;w&gt;&#39;: 3, &#39;l o w &lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;s&#39;, &#39;t&#39;) 9</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;n e w e st &lt;&#x2F;w&gt;&#39;: 6, &#39;l o w e r &lt;&#x2F;w&gt;&#39;: 2, &#39;w i d e st &lt;&#x2F;w&gt;&#39;: 3, &#39;l o w &lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;e&#39;, &#39;st&#39;) 9</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;l o w e r &lt;&#x2F;w&gt;&#39;: 2, &#39;l o w &lt;&#x2F;w&gt;&#39;: 5, &#39;w i d est &lt;&#x2F;w&gt;&#39;: 3, &#39;n e w est &lt;&#x2F;w&gt;&#39;: 6&#125;</span><br><span class="line">出现最频繁的序列 (&#39;est&#39;, &#39;&lt;&#x2F;w&gt;&#39;) 9</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;w i d est&lt;&#x2F;w&gt;&#39;: 3, &#39;l o w e r &lt;&#x2F;w&gt;&#39;: 2, &#39;n e w est&lt;&#x2F;w&gt;&#39;: 6, &#39;l o w &lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;l&#39;, &#39;o&#39;) 7</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;w i d est&lt;&#x2F;w&gt;&#39;: 3, &#39;lo w e r &lt;&#x2F;w&gt;&#39;: 2, &#39;n e w est&lt;&#x2F;w&gt;&#39;: 6, &#39;lo w &lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;lo&#39;, &#39;w&#39;) 7</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;w i d est&lt;&#x2F;w&gt;&#39;: 3, &#39;low e r &lt;&#x2F;w&gt;&#39;: 2, &#39;n e w est&lt;&#x2F;w&gt;&#39;: 6, &#39;low &lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;n&#39;, &#39;e&#39;) 6</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;w i d est&lt;&#x2F;w&gt;&#39;: 3, &#39;low e r &lt;&#x2F;w&gt;&#39;: 2, &#39;ne w est&lt;&#x2F;w&gt;&#39;: 6, &#39;low &lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;w&#39;, &#39;est&lt;&#x2F;w&gt;&#39;) 6</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;w i d est&lt;&#x2F;w&gt;&#39;: 3, &#39;low e r &lt;&#x2F;w&gt;&#39;: 2, &#39;ne west&lt;&#x2F;w&gt;&#39;: 6, &#39;low &lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;ne&#39;, &#39;west&lt;&#x2F;w&gt;&#39;) 6</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;w i d est&lt;&#x2F;w&gt;&#39;: 3, &#39;low e r &lt;&#x2F;w&gt;&#39;: 2, &#39;newest&lt;&#x2F;w&gt;&#39;: 6, &#39;low &lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;low&#39;, &#39;&lt;&#x2F;w&gt;&#39;) 5</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;w i d est&lt;&#x2F;w&gt;&#39;: 3, &#39;low e r &lt;&#x2F;w&gt;&#39;: 2, &#39;newest&lt;&#x2F;w&gt;&#39;: 6, &#39;low&lt;&#x2F;w&gt;&#39;: 5&#125;</span><br><span class="line">出现最频繁的序列 (&#39;i&#39;, &#39;d&#39;) 3</span><br><span class="line">合并最频繁的序列后的词表 &#123;&#39;w id est&lt;&#x2F;w&gt;&#39;: 3, &#39;newest&lt;&#x2F;w&gt;&#39;: 6, &#39;low&lt;&#x2F;w&gt;&#39;: 5, &#39;low e r &lt;&#x2F;w&gt;&#39;: 2&#125;</span><br></pre></td></tr></table></figure>
+<p>这样我们通过BPE得到了更加合适的词表了，这个词表可能会出现一些不是单词的组合，但是这个本身是有意义的一种形式，加速NLP的学习，提升不同词之间的语义的区分度。</p>
+<h3 id="join-BPE"><a href="#join-BPE" class="headerlink" title="join BPE"></a>join BPE</h3><p>为目标语言和原语言一起使用BPE，即联合两种语言的词典去做BPE。提高了源语言和目标语言的分割一致性。训练中一般concat两种语言。</p>
+<p>机器翻译时，编码与解码共享wordpiece model，可以处理翻译时目标语言和当前语言直接拷贝的词情况。</p>
+<h2 id="阻止训练发散的方法"><a href="#阻止训练发散的方法" class="headerlink" title="阻止训练发散的方法"></a>阻止训练发散的方法</h2><p>降低学习速率、增加warmup_steps以及引入梯度截断。</p>
+<h2 id="Dropout使用"><a href="#Dropout使用" class="headerlink" title="Dropout使用"></a>Dropout使用</h2><p>dropout设置在word embedding与position embedding相加之后，以及add+layernorm之前。</p>
+<h2 id="Checkpoint-average"><a href="#Checkpoint-average" class="headerlink" title="Checkpoint average"></a>Checkpoint average</h2><p>指将训练一段时间的存储的checkpoint（文中选择为5个或20个），将这些checkpoint的所有模型的参数求平均。</p>
+<h2 id="Xavier-初始化"><a href="#Xavier-初始化" class="headerlink" title="Xavier 初始化"></a>Xavier 初始化</h2><p>在官方 tensor2tensor 代码中，可以看到关于 weight 参数初始化的时候，采用了一种叫作xavier_uniform 的方法。也可以简称为 Xavier（读作 [ˈzeɪvjər]） 或者 Glorot，来自于作者 Xavier Glorot 在 2010 年和 Bengio 大神一起发表的《Understanding the difficulty of training deep feedforward neural networks》。</p>
+<p>Xavier 是一种均匀初始化。其基线是朴素版本，即对于包含 n_i 个输入单元的网络层 layer_i ，其 weight 的初始值均匀采样自$\left[-1 / \sqrt{\left.\left.\left(n_{i}\right), 1 / \sqrt{(} n_{i}\right)\right]}\right.$。作者发现，在深层神经网络中，朴素版本的均匀初始化和激活函数（sigmoid 与 tanh）配合得不好。具体说来，就是不仅收敛得慢，训练平稳后的模型效果还差。如果使用预训练的模型来初始化网络，则能够明显改善训练过程。因此，作者认为，更换初始化方式是可取的。</p>
+<p><img src="https://uploader.shimo.im/f/jhBiphXgghzG5p9R.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>首先来看看 sigmoid。它的线性区在 0.5 附近，偏向 1 或 0 表示则表示饱和。在理想情况下，激活值应当落在表达能力最强的非线性区间，远离线性区与饱和区。然而，在实际训练中，输出层 layer-4 在很长一段时间内都接近下饱和（黑）；其他层由上往下离线性区越来越近（蓝绿红）。虽然从 epoch-100 开始慢慢正常了，但这显然拖慢了收敛过程。</p>
+<p><img src="https://uploader.shimo.im/f/kv4jPjIkXP58VeD1.png!thumbnail?fileGuid=vTCtKG6hgHqVrCJD" alt="图片"></p>
+<p>然后是正负对称的 tanh。随着训练进行，自下而上（红绿蓝黑青），各层慢慢地都落入了饱和区。明明验证集的效果还达不到预期，模型却“训不动”了。</p>
+<p>那么，我们需要什么样的激活值分布呢？一个标准的第 i 层可以分为线性$s^{i}=z^{i} W^{i}+b^{i}$和非线性$z^{i+1}=f\left(s^{i}\right)$两部分。在深层网络中，激活值的方差会自下而上逐层累积， 链式推导可得：$\operatorname{Var}\left[z^{i}\right]=\operatorname{Var}[x] \prod_{j=0}^{i-1} n_{j} \operatorname{Var}\left[W^{j}\right]$</p>
+<p>对于反向传播，假定输出落在激活函数的线性区，即$f^{\prime}\left(s_{k}^{i}\right) \approx 1$。同样应用链式法则，各参数的梯度为（d 为总层数）：</p>
+<ul>
+<li>$\operatorname{Var}\left[\frac{\partial \text { cost }}{s^{i}}\right]=\operatorname{Var}\left[\frac{\partial \text { cost }}{s^{d}}\right] \prod_{j=i}^{d} n_{j+1} \operatorname{Var}\left[W^{j}\right]$</li>
+<li>$\operatorname{Var}\left[\frac{\partial \operatorname{cost}}{w^{i}}\right]=\operatorname{Var}\left[\frac{\partial \operatorname{cost}}{s^{i}}\right] \operatorname{Var}\left[z^{i}\right]$</li>
+</ul>
+<p>现在要回到正题上了。一个稳定的深层网络，要求$\operatorname{Var}\left[z^{i}\right]$和$\operatorname{Var}\left[\partial \operatorname{cost} / s^{i}\right]$在各层保持一致，这样可以让激活值（forward）始终远离饱和区，并且梯度（backward）不会消失或爆炸。根据上面的公式，可以得到约束目标：$\forall i, n_{i} \operatorname{Var}\left[W^{i}\right]=1=n^{i+1} \operatorname{Var}\left[W^{i}\right]$</p>
+<p>于方差是和输入单元的个数有关的，所以正向和反向分别使用了$n_i$和$n_{i+1}$。这两个等式显然不能同时成立，只好折中一下，让$\operatorname{Var}\left[W^{i}\right]=2 /\left(n_{i}+n_{i+1}\right)$。补充一条基础知识，对于均匀分布U[a,b] ，其方差为$(b-a)^{2} / 12$。现在开始解方程，让 a=b 并且$(b-a)^{2} / 12=2 /\left(n_{i}+n_{i+1}\right)$，得到 Xavier 均匀分布的最终形式：$U\left[-\sqrt{\frac{6}{n_{i}+n_{i+1}}}, \quad \sqrt{\frac{6}{n_{i}+n_{i+1}}}\right]$</p>
+<h2 id="Transformer有哪些缺点"><a href="#Transformer有哪些缺点" class="headerlink" title="Transformer有哪些缺点"></a>Transformer有哪些缺点</h2><ul>
+<li>评价不同模型需要考虑的是：<ul>
+<li>句法特征提取能力</li>
+<li>语义特征提取能力：Transformer &gt;&gt; 原生CNN == 原生RNN</li>
+<li>长距离特征捕获能力：Transformer &gt; 原生RNN &gt;&gt; 原生CNN</li>
+<li>任务综合特征抽取能力：Transformer最强</li>
+<li>并行计算能力及运行效率：Transformer = 原生CNN &gt;&gt; 原生RNN</li>
+</ul>
+</li>
+<li>超长文本：Transformer-XL</li>
+<li>计算简化：ALBert</li>
+</ul>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://state-of-art.top/2019/01/17/Transformer%E5%8E%9F%E7%90%86%E5%92%8C%E5%AE%9E%E7%8E%B0-%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E7%B2%BE%E9%80%9A/" target="_blank" rel="noopener">Transformer原理和实现-从入门到精通</a></li>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MjM5MzY4NzE3MA==&amp;mid=2247484632&amp;idx=2&amp;sn=9170e3f036098b5d428123abc1ac1520&amp;source=41#wechat_redirect" target="_blank" rel="noopener">绝对干货！NLP预训练模型：从transformer到albert</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>Transformer</tag>
       </tags>
   </entry>
   <entry>

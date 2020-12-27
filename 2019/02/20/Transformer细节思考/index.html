@@ -9,6 +9,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <title>
+    Transformer细节思考 |
     
     大嘴怪的小世界</title>
   
@@ -29,373 +30,8 @@
 
 <body>
 <main class="content">
-  <section class="jumbotron">
-  <div class="video">
-    
-      <div class="video-frame">
-        <img src="/images/ocean/overlay-hero.png" alt="Decorative image frame">
-      </div>
-    
-    <div class="video-media">
-      <video playsinline="" autoplay="" loop="" muted="" data-autoplay=""
-             poster="/images/ocean/ocean.png" x5-video-player-type="h5">
-        <source src="/images/ocean/ocean.mp4" type="video/mp4">
-        <source src="/images/ocean/ocean.ogv" type="video/ogg">
-        <source src="/images/ocean/ocean.webm" type="video/webm">
-        <p>Your user agent does not support the HTML5 Video element.</p>
-      </video>
-      <div class="video-overlay"></div>
-    </div>
-    <div class="video-inner text-center text-white">
-      <h1><a href="/">大嘴怪的小世界</a></h1>
-      <p>爱睡觉 | 爱吃肉 | 爱学习 | 爱生活</p>
-      <div><img src="/images/shark-inverted.svg" class="brand" alt="大嘴怪的小世界"></div>
-    </div>
-    <div class="video-learn-more">
-      <a class="anchor" href="#landingpage"><i class="fe fe-mouse"></i></a>
-    </div>
-  </div>
-</section>
-
-<div id="landingpage">
   <section class="outer">
-    <article class="articles">
-      
-      <h1 class="page-type-title"></h1>
-      
-        
-          
-
-<article id="post-论文阅读——《Generating-Sentences-by-Editing-Prototypes》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
   
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h2 itemprop="name">
-      <a class="article-title" href="/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/">论文粗读:《Generating Sentences by Editing Prototypes》</a>
-    </h2>
-  
-  
-
-
-
-
-      </header>
-    
-
-    
-      <div class="article-meta">
-        <a href="/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/" class="article-date">
-  <time datetime="2020-02-11T05:50:59.000Z" itemprop="datePublished">2020-02-11</time>
-</a>
-        
-      </div>
-    
-
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-
-
-      
-
-      
-        <p>因为想做一个根据不同年龄段的人生成不同故事内容的demo，所以阅读了这篇文本风格转换的论文。</p>
-        
-          <a class="article-more-link" href="/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/">阅读全文...</a>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/02/11/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AGenerating-Sentences-by-Editing-Prototypes%E3%80%8B/" data-id="ckj754a90000z4vwv12f671ho"
-         class="article-share-link">分享</a>
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%96%87%E6%9C%AC%E9%A3%8E%E6%A0%BC%E8%BF%81%E7%A7%BB/" rel="tag">文本风格迁移</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
-
-    </footer>
-
-  </div>
-
-  
-
-  
-
-</article>
-
-
-
-        
-          
-
-<article id="post-Separable-Convolution" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h2 itemprop="name">
-      <a class="article-title" href="/2020/02/06/Separable-Convolution/">Separable Convolution</a>
-    </h2>
-  
-  
-
-
-
-
-      </header>
-    
-
-    
-      <div class="article-meta">
-        <a href="/2020/02/06/Separable-Convolution/" class="article-date">
-  <time datetime="2020-02-06T00:48:50.000Z" itemprop="datePublished">2020-02-06</time>
-</a>
-        
-      </div>
-    
-
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-
-
-      
-
-      
-        <p>阅读论文《The Evolved Transformer》时遇到了separable convolution的概念，因此找了相关资料学习了一下。</p>
-<blockquote>
-<p>参考：<br><a href="https://towardsdatascience.com/a-basic-introduction-to-separable-convolutions-al" target="_blank" rel="noopener">https://towardsdatascience.com/a-basic-introduction-to-separable-convolutions-al</a></p>
-</blockquote>
-        
-          <a class="article-more-link" href="/2020/02/06/Separable-Convolution/">阅读全文...</a>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/02/06/Separable-Convolution/" data-id="ckj754a8c00094vwv48tfcpo3"
-         class="article-share-link">分享</a>
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Convolution/" rel="tag">Convolution</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%BD%91%E7%BB%9C/" rel="tag">卷积网络</a></li></ul>
-
-    </footer>
-
-  </div>
-
-  
-
-  
-
-</article>
-
-
-
-        
-          
-
-<article id="post-论文粗读——《The-Evolved-Transformer》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h2 itemprop="name">
-      <a class="article-title" href="/2020/02/05/%E8%AE%BA%E6%96%87%E7%B2%97%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AThe-Evolved-Transformer%E3%80%8B/">论文粗读:《The Evolved Transformer》</a>
-    </h2>
-  
-  
-
-
-
-
-      </header>
-    
-
-    
-      <div class="article-meta">
-        <a href="/2020/02/05/%E8%AE%BA%E6%96%87%E7%B2%97%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AThe-Evolved-Transformer%E3%80%8B/" class="article-date">
-  <time datetime="2020-02-05T07:44:27.000Z" itemprop="datePublished">2020-02-05</time>
-</a>
-        
-      </div>
-    
-
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-
-
-      
-
-      
-        <p>今天阅读了论文《The Evolved Transformer》，该论文使用了神经架构搜索方法找到了一个更优的transformer结构。下面是阅读过程中的笔记。</p>
-        
-          <a class="article-more-link" href="/2020/02/05/%E8%AE%BA%E6%96%87%E7%B2%97%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AThe-Evolved-Transformer%E3%80%8B/">阅读全文...</a>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/02/05/%E8%AE%BA%E6%96%87%E7%B2%97%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8AThe-Evolved-Transformer%E3%80%8B/" data-id="ckj754a8v000s4vwvd7na1qws"
-         class="article-share-link">分享</a>
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Transformer/" rel="tag">Transformer</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
-
-    </footer>
-
-  </div>
-
-  
-
-  
-
-</article>
-
-
-
-        
-          
-
-<article id="post-论文阅读——《Towards-a-Human-like-Open-Domain-Chatbot》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h2 itemprop="name">
-      <a class="article-title" href="/2020/02/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8ATowards-a-Human-like-Open-Domain-Chatbot%E3%80%8B/">论文阅读:《Towards a Human-like Open-Domain Chatbot》</a>
-    </h2>
-  
-  
-
-
-
-
-      </header>
-    
-
-    
-      <div class="article-meta">
-        <a href="/2020/02/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8ATowards-a-Human-like-Open-Domain-Chatbot%E3%80%8B/" class="article-date">
-  <time datetime="2020-02-04T13:17:57.000Z" itemprop="datePublished">2020-02-04</time>
-</a>
-        
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
-  </div>
-
-      </div>
-    
-
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-
-
-      
-
-      
-        <p>今天阅读了谷歌最新出的一篇论文，《Towards a Human-like Open-Domain Chatbot》，主要提出了端到端对话机器人的一种评测方法和模型框架。下面是阅读过程中的笔记。</p>
-        
-          <a class="article-more-link" href="/2020/02/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8ATowards-a-Human-like-Open-Domain-Chatbot%E3%80%8B/">阅读全文...</a>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/02/04/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E2%80%94%E2%80%94%E3%80%8ATowards-a-Human-like-Open-Domain-Chatbot%E3%80%8B/" data-id="ckj754a8x000x4vwv9g6r356w"
-         class="article-share-link">分享</a>
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Chatbot/" rel="tag">Chatbot</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
-
-    </footer>
-
-  </div>
-
-  
-
-  
-
-</article>
-
-
-
-        
-          
-
-<article id="post-Hello-Edge-Keyword-spotting-on-Microcontrollers论文源码阅读及实验结论" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h2 itemprop="name">
-      <a class="article-title" href="/2019/04/23/Hello-Edge-Keyword-spotting-on-Microcontrollers%E8%AE%BA%E6%96%87%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%8F%8A%E5%AE%9E%E9%AA%8C%E7%BB%93%E8%AE%BA/">Hello Edge: Keyword spotting on Microcontrollers论文源码阅读及实验结论</a>
-    </h2>
-  
-  
-
-
-
-
-      </header>
-    
-
-    
-      <div class="article-meta">
-        <a href="/2019/04/23/Hello-Edge-Keyword-spotting-on-Microcontrollers%E8%AE%BA%E6%96%87%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%8F%8A%E5%AE%9E%E9%AA%8C%E7%BB%93%E8%AE%BA/" class="article-date">
-  <time datetime="2019-04-23T13:49:25.000Z" itemprop="datePublished">2019-04-23</time>
-</a>
-        
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
-  </div>
-
-      </div>
-    
-
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-
-
-      
-
-      
-        <p>高通的大哥想做语音唤醒实验，我自己对这个也很感兴趣，所以阅读了一下相关论文，并做了一次实验。本篇主要对源码进行解读。</p>
-        
-          <a class="article-more-link" href="/2019/04/23/Hello-Edge-Keyword-spotting-on-Microcontrollers%E8%AE%BA%E6%96%87%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%8F%8A%E5%AE%9E%E9%AA%8C%E7%BB%93%E8%AE%BA/">阅读全文...</a>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="majsunflower.cn/2019/04/23/Hello-Edge-Keyword-spotting-on-Microcontrollers%E8%AE%BA%E6%96%87%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%8F%8A%E5%AE%9E%E9%AA%8C%E7%BB%93%E8%AE%BA/" data-id="ckj754a7z00004vwvedme4nxr"
-         class="article-share-link">分享</a>
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/KWS/" rel="tag">KWS</a></li></ul>
-
-    </footer>
-
-  </div>
-
-  
-
-  
-
-</article>
-
-
-
-        
-          
 
 <article id="post-Transformer细节思考" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
   
@@ -404,9 +40,9 @@
       <header class="article-header">
         
   
-    <h2 itemprop="name">
-      <a class="article-title" href="/2019/02/20/Transformer%E7%BB%86%E8%8A%82%E6%80%9D%E8%80%83/">Transformer细节思考</a>
-    </h2>
+    <h1 class="article-title" itemprop="name">
+      Transformer细节思考
+    </h1>
   
   
 
@@ -428,6 +64,14 @@
 
       </div>
     
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
 
     
 
@@ -717,74 +361,56 @@
   </div>
 
   
-
-  
-
-</article>
-
-
-
-        
+    
+  <nav class="article-nav">
+    
+      <a href="/2019/04/23/Hello-Edge-Keyword-spotting-on-Microcontrollers%E8%AE%BA%E6%96%87%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%8F%8A%E5%AE%9E%E9%AA%8C%E7%BB%93%E8%AE%BA/" class="article-nav-link">
+        <strong class="article-nav-caption">前一篇</strong>
+        <div class="article-nav-title">
           
-
-<article id="post-用GitHub-Hexo搭建个人网站" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
-  
-  <div class="article-inner">
+            Hello Edge: Keyword spotting on Microcontrollers论文源码阅读及实验结论
+          
+        </div>
+      </a>
     
-      <header class="article-header">
-        
-  
-    <h2 itemprop="name">
-      <a class="article-title" href="/2019/02/07/%E7%94%A8GitHub-Hexo%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99/">用GitHub+Hexo搭建个人网站</a>
-    </h2>
-  
-  
-
-
-
-
-      </header>
     
-
+      <a href="/2019/02/07/%E7%94%A8GitHub-Hexo%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">用GitHub+Hexo搭建个人网站</div>
+      </a>
     
-      <div class="article-meta">
-        <a href="/2019/02/07/%E7%94%A8GitHub-Hexo%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99/" class="article-date">
-  <time datetime="2019-02-07T04:15:55.000Z" itemprop="datePublished">2019-02-07</time>
-</a>
-        
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
-  </div>
+  </nav>
 
-      </div>
-    
-
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-
-
-      
-
-      
-        <p>假期宅在家里，研究了一下用github搭建个人网站，把里面使用到的工具和命令总结一下。相关代码可参考：<a href="https://github.com/majing2019/myblogs" target="_blank" rel="noopener">https://github.com/majing2019/myblogs</a><br>
-        
-          <a class="article-more-link" href="/2019/02/07/%E7%94%A8GitHub-Hexo%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99/">阅读全文...</a>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="majsunflower.cn/2019/02/07/%E7%94%A8GitHub-Hexo%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99/" data-id="ckj754a8t000p4vwv6k8e2qv9"
-         class="article-share-link">分享</a>
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Ocean/" rel="tag">Ocean</a></li></ul>
-
-    </footer>
-
-  </div>
 
   
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
 
   
 
@@ -792,26 +418,15 @@
 
 
 
-        
-    </article>
-    
-  
-    
-      <nav class="page-nav">
-        <a class="extend prev" rel="prev" href="/page/2/">上一页</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span>
-      </nav>
-    
-  </section>
-</div>
-
+</section>
   <footer class="footer">
   <div class="outer">
     <div class="float-right">
       <ul class="list-inline">
   
-    <li><i class="fe fe-bar-chart"></i> <span id="busuanzi_value_site_pv"></span></li>
-  
     <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
   
 </ul>
     </div>
@@ -895,6 +510,23 @@
 
 
 
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
 
 
 

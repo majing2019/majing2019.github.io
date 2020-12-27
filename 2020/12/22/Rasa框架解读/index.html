@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    Rasa框架解读 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-Rasa框架解读" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Rasa框架解读
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/12/22/Rasa%E6%A1%86%E6%9E%B6%E8%A7%A3%E8%AF%BB/" class="article-date">
+  <time datetime="2020-12-22T14:03:44.000Z" itemprop="datePublished">2020-12-22</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>Rasa是一个很活跃的开源对话框架，笔者在做语音助手时调研了很多对话框架，个人比较喜欢Rasa，今天就来讲讲它。</p>
+<a id="more"></a>
+<h1 id="Rasa的组成"><a href="#Rasa的组成" class="headerlink" title="Rasa的组成"></a>Rasa的组成</h1><h2 id="Rasa-NLU"><a href="#Rasa-NLU" class="headerlink" title="Rasa-NLU"></a>Rasa-NLU</h2><p>主要实现自然语言理解（即NLU）功能，本质上就是识别句子的意图和实体。如“买一张去北京的票”，我们可以定义一个意图是“购票”，实体是“北京”和“一张”。</p>
+<p>意图识别本质是短文本分类任务（当然在学术界可能称为Intent Detection来和Text Classification分开）。 单纯短文本分类任务的SOTA基本上就是BERT了。</p>
+<p>抽取本质是信息抽取任务。 抽取的SOTA现在一般还是BiLSTM-CRF的各种变型，或BERT之类。现在学术界的主要研究方向是多种工作结合，例如同一模型同时做意图识别和信息抽取，互相配合增加总体准确率。</p>
+<p>Rasa的NLU，主要是当前的社区版，主要还是使用了各种开源技术，并没有追求学术上的SOTA。 它使用的工具包括Spacy、sklearn-crfsuite</p>
+<h2 id="Rasa-Core"><a href="#Rasa-Core" class="headerlink" title="Rasa Core"></a>Rasa Core</h2><p>Rasa的核心部分，NLU有各种实现，开源的也有snips nlu等，但是core却独一无二。</p>
+<p>Rasa Core主要完成了基于故事的对话管理，包括解析故事并生成对话系统中的对话管理模型（Dialog Management），输出系统决策（System Action/System Policy）。</p>
+<p>学术上一般认为这部分会包含两个模型：</p>
+<ul>
+<li>对话状态跟踪（Dialog State Tracking / Belief Tracking）</li>
+<li>对话策略（Dialog Policy / Policy Optimization）</li>
+</ul>
+<p>对于1，其实Rasa实现很简单，具体在它的论文 Few-Shot Generalization Across Dialogue Tasks, Vlasov et at., 2018 中说的比较具体。就是简单的基于策略的槽状态替换。</p>
+<p>对于2，Rasa使用基于LSTM的Learn to Rank方法，大体上是将当前轮用户意图、上一轮系统行为、当前槽值状态向量化，然后与所有系统行为做相似度学习，以此决定当前轮次的一个或多个系统行为。</p>
+<p><img src="https://uploader.shimo.im/f/m5MliMSDjPuV7q1e.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<h2 id="Rasa-X"><a href="#Rasa-X" class="headerlink" title="Rasa-X"></a>Rasa-X</h2><p>Rasa的可视化编辑工具，更方便NLU、NLG数据的管理，故事的编写。Rasa X可能暂时还不能让所有非开发人员也能快速方便的使用。不过它本质上可以方便开发人员快速开发，快速训练模型验证。</p>
+<h1 id="Rasa的PipeLine"><a href="#Rasa的PipeLine" class="headerlink" title="Rasa的PipeLine"></a>Rasa的PipeLine</h1><p><img src="https://uploader.shimo.im/f/Gml5qyuefePTthMN.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<ul>
+<li>用户输入文字，送入解释器，即Rasa NLU</li>
+<li>NLU给出结果，如图</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/CfVtDjI9fJwiEqeK.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<ul>
+<li>从Tracker到Policy，Tracker用于跟踪对话状态，Tracker输出的是Embedding<ul>
+<li>用户意图的Embedding</li>
+<li>系统动作（上一步）的Embedding</li>
+<li>实体（槽值/Slot）的Embedding</li>
+</ul>
+</li>
+<li>Policy给出系统行为</li>
+<li>Tracker记录系统行为，下一次会提供给Policy使用</li>
+<li>返回消息给用户</li>
+</ul>
+<h1 id="Rasa-NLU-1"><a href="#Rasa-NLU-1" class="headerlink" title="Rasa-NLU"></a>Rasa-NLU</h1><h2 id="基本组成"><a href="#基本组成" class="headerlink" title="基本组成"></a>基本组成</h2><h3 id="component"><a href="#component" class="headerlink" title="component"></a>component</h3><p>在我们做任何自然语言处理的任务时，不止是用单纯模型去做一些分类或者标注任务，在此之前，有相当一部分工作是对文本做一些预处理工作，包括但不限于：分词（尤其是中文文本），词性标注，特征提取（传统ML或者统计型方法），词库构建等等。在rasa中，这些不同的预处理工作以及后续的意图分类和实体识别都是通过单独的组件来完成，因此component在NLU中承担着完成NLU不同阶段任务的责任。component类型大致有以下几种：tokenizer、featurizer、extractor、classifier，当然还有emulators，这个主要用于进行对话仿真测试，我目前还没使用过，就不多描述这个组件了。</p>
+<h3 id="pipeline"><a href="#pipeline" class="headerlink" title="pipeline"></a>pipeline</h3><p>有了组件之后，如何将组件按部就班，井然有序地拼装起来，并正常工作呢？因此就有了pipeline这个概念，其实在机器学习领域，pipeline这个概念已经存在很长时间了，它在很多框架中都有，比如大名鼎鼎的sklearn。使用pipeline的好处在于可以合理有序管理不同任务阶段的不同组件工具，当组件数量较多时，pipeline的好处就非常明显了。而在rasa中，pipeline的使用更为便捷，是通过yml配置文件实现。即开发者只需要定义好自己的组件，然后将组件配置在配置文件中就可以，即插即用。下图是一个简单的pipeline配置实例：</p>
+<p><img src="https://uploader.shimo.im/f/D4AVlWvATEPclpc7.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<h3 id="message"><a href="#message" class="headerlink" title="message"></a>message</h3><p>在rasa中，用户发送到chatbot的所有对话内容，都需要被封装在一个对象中，这个对象就是Message.而在整个rasa工作流中，存在两个不同的message封装对象，一个是UserMessage，另一个是Message。其中UserMessage是最上层的封装对象，即直接接收用户从某个平台接口传送过来的消息。而Message则是当用户消息流到NLU模块时，将用户消息进行封装。关于UserMessage的内容在后面代码详解时会涉及到，这里先解释一下Message对象。看一下它的类部分定义，其实很简单，就是将用户的对话文本，以及时间进行封装，由于这个Message是贯穿整个NLU工作流的统一数据对象，因此还承载着记忆各个组件临时生成的中间结果（比如分词和词性标注的结果）以及最终得到的意图和实体信息。其中data存放的是意图和实体信息，在后续组件处理时，还会再Message中增加一些变量存储中间结果，即set成员方法的职责。</p>
+<p>在Rasa-Core中UserMessage定义如下：</p>
+<p><img src="https://uploader.shimo.im/f/nJYXcKewulgGkY3T.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>可以看到作为贯穿整个rasa_core处理流程的用户消息对象，它的成员结构还是比较清晰的，包括了用户发送的文本，定义的OutputChannel类型，用户的id，parse_data(主要存放用户自己定义的实体键值对，开发调试用)，inputChannel类型，以及message的id。</p>
+<h2 id="技术细节"><a href="#技术细节" class="headerlink" title="技术细节"></a>技术细节</h2><h3 id="Embedding-方法"><a href="#Embedding-方法" class="headerlink" title="Embedding 方法"></a>Embedding 方法</h3><p>用户意图和系统行为会通过bag-of-word的方法分词，然后向量化，很有趣的结果。在官方论文没有仔细探讨为什么，笔者猜测是为了增加不同的意图、行为之间的语义关联。论文原文：“A bag-of-words representations for the user and the system labels are then created using token counts inside each label.”  例如:action_search_restaurant = {action, search, restaurant} 实体/槽值（Slot）的向量化就非常简单了，只是走了是否存在的binary向量</p>
+<h3 id="Learn-to-Rank方法"><a href="#Learn-to-Rank方法" class="headerlink" title="Learn to Rank方法"></a>Learn to Rank方法</h3><p>很多对话系统的系统决策都采用的是分类（Classification）方法，也就是每次总是在多个系统行为中选择唯一一个。</p>
+<p>而Rasa选择了排序方法，即判断当前对话状态和系统行为的相似度，这有两个可能的好处：</p>
+<ul>
+<li>可以更容易实现多个系统行为的同时输出。能让一个对话状态输出多个系统行为是Rasa的特色。至于为什么如此，可能有工程上的一些考虑，例如这样更方便，例如两个系统行为，一个是机器人说“请等待”，一个是真的去查询数据。</li>
+<li>更方便扩展系统行为。如果是分类模型，增加一个分类，那必须重新训练整个分类器。如果是Ranking模型，如果只是增加或减少分类，可以考虑只训练新增的系统行为相关的和不相关的部分数据集，可能增加总体的训练速度。更方便快速实验、迭代。</li>
+</ul>
+<h2 id="给Rasa-NLU添加组件"><a href="#给Rasa-NLU添加组件" class="headerlink" title="给Rasa-NLU添加组件"></a>给Rasa-NLU添加组件</h2><p>以CRFEntityExtractor为例，讲解一下Component的主要核心要素。</p>
+<p><img src="https://uploader.shimo.im/f/6kzsP0JMqFIHIDe2.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>首先看到，该类继承了一个EntityExtractor，这是一个二级组件抽象类（我自己定义的说法），这个二层抽象类继承自Component这个一级抽象类。因为不同组件承担的任务不同，有些组件任务比较单一，可以直接继承Component比如tokenizer,classifier，而有些组件的任务比较复杂，则需要制定这一类型的二级接口，方便扩展，如featurizer,extractor。</p>
+<p>其次，每个component需要定义一个类变量provides和requires,分别表示这个组件所提供的中间成果和依赖的上游任务。对于CRFEntityExtractor来说，它提供了实体的抽取，同时为了进行实体抽取，需要先对文本进行分词，因此需要上游任务先完成tokenizer任务，提供tokens的中间成果。</p>
+<p><img src="https://uploader.shimo.im/f/HdsywcZpNPzSe9ly.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>既然是使用条件随机场来进行实体抽取，那么就需要进行模型训练。因此需要定义train方法，来训练模型。关注train方法的两个参数training_data和config。其中，config就是之前提到的配置pipeline的配置文件的读取对象。training_data是TrainingData类型的对象。你可以将其类比于pytorch中的data_loader功能，它的主要作用是对训练数据进行封装，拆分训练集验证集，做数据校验等工作。说到这里，提一下rasa支持的原始训练数据的存放格式，主要支持markdown，wit，luis等文件格式，当然也可以提供json格式的数据。rasa如何读取这些格式的训练数据则是在training_data中定义。</p>
+<p><img src="https://uploader.shimo.im/f/51JQbndhDVvb3Zd3.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>当模型训练完成后，需要保存和加载模型，对生产环境上的实时业务流进行处理，因此需要定义persist和load方法加载模型。</p>
+<p><img src="https://uploader.shimo.im/f/RXNVPf8kSYa5csT0.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>process方法，这个可以说是组件里面最重要的一个方法。当前面一通操作之后，只得到了模型，如何调用这个模型并处理文本，就是process方法的工作了。最后在message中增加一个dict，名为entities，用来存放提取的实体信息，包括实体的类型，实体的在文本中的start和end的位置信息等。</p>
+<h1 id="Rasa-Core-1"><a href="#Rasa-Core-1" class="headerlink" title="Rasa-Core"></a>Rasa-Core</h1><p>Rasa-Core的基本流程图如下：</p>
+<p><img src="https://uploader.shimo.im/f/r5s6gqbcJHTpKryp.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<h2 id="基本组成-1"><a href="#基本组成-1" class="headerlink" title="基本组成"></a>基本组成</h2><h3 id="actions"><a href="#actions" class="headerlink" title="actions"></a>actions</h3><p>该包下面主要存放的是action具体的实现类。关于action的具体定义和描述在后面会有详细讲解，简单说就是chatbot执行的一些动作。Event对象是rasa中定义的chatbot能执行的最小粒度的动作。而Action则是比event更高层次的对象，会根据用户发送过来的消息，执行一些操作，这些操作可以是自定义的一些逻辑，也可以是系统预置的events。rasa中，action可以分为三大类。</p>
+<h4 id="utterance-actions"><a href="#utterance-actions" class="headerlink" title="utterance actions"></a>utterance actions</h4><p>直接发送文本给用户，action文本模板是在domain.yml中进行定义。</p>
+<h4 id="custom-actions"><a href="#custom-actions" class="headerlink" title="custom actions"></a>custom actions</h4><p>自定义action，由开发者自定义功能的action。个人认为这个是功能最强大的action，因为开发自由度很大，支持使用任何开发语言进行开发。最后只需要将其打包成一个restful服务接口暴露出来即可。因此这种action是可以和对话主系统分离部署的。下面给出自定义action server与bot agent和用户的交互流程图：</p>
+<p><img src="https://uploader.shimo.im/f/Pfft9UET4KizYMJN.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>Rasa action支持node.js, .NET, java等开发语言，当然也支持Python。但是对于Python来说，需要安装rasa-sdk工具包。这个工具包里预置了一些有用的action模板，例如form action。</p>
+<p>当然，form action以及其他预置的action模板只能实现最简单的场景，如果要实现复杂的场景，需要根据不同场景，自定义action，可以选择继承这些模板，在上面进行功能的添加和完善。</p>
+<h4 id="default-action"><a href="#default-action" class="headerlink" title="default action"></a>default action</h4><p>Rasa系统内置的粒度较小的action。与rasa_sdk中的action不同，这个是直接在rasa_core/actions下面的。相对于上面的form action来说，这里的action功能更单一，与events比较像，但是还是略有不同，下面举个实例ActionRestart：</p>
+<p><img src="https://uploader.shimo.im/f/D4HXcEwS8uITGsco.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>可以看到它使用了一个Restarted()的event，这个event的功能是重启整个对话流程，重置对话状态。除此之外，该action需要先执行读取话术模板组装bot message，并将其发送给用户后，才去重启整个会话。</p>
+<h3 id="channels"><a href="#channels" class="headerlink" title="channels"></a>channels</h3><p>该包下面主要存放的是rasa与前端平台进行对接的接口。因为rasa本身只提供对话系统的功能服务，具体还需要与用户在前端界面进行交互，这个包里定义了不同的接口和不同平台进行对接。例如，console.py，定义了最简单的直接在shell命令行中进行对话交互的接口。</p>
+<p>在流程图中的OutputChannel封装了chatbot需要返回给用户的信息，需要注意，chatbot返回的消息不一定是纯文本，还可能是html，json，文件附件等等，因此需要OutputChannel这个统一接口进行封装处理，因此chatbot可以支持让用户进行点选功能（当然，前提是前端界面支持点选的适配），关于如何实现用户点选功能后续会单独开一个功能小讲。</p>
+<p>在流程图中的InputChannel主要负责将用户输入连同用户的身份信息封装成UserMessage对象，方便后面的Processor处理。对应的，如果在上一轮对话中，OutputChannel是点选或者其他非单纯文本输出，那么本轮对话中的InputChannel也需要接受用户点选或者其他非单纯文本的输入，封装成最终的UserMessage。</p>
+<h3 id="events"><a href="#events" class="headerlink" title="events"></a>events</h3><p>这个是rasa中定义的chatbot能执行的最小粒度的动作。与action有一些关系，我们可以通过action调用不同的events来实现不同的操作。events的实例有“SlotSet”(槽位填充)，”Restarted”（重启对话，将所有状态重置）等等。</p>
+<h3 id="nlg"><a href="#nlg" class="headerlink" title="nlg"></a>nlg</h3><p>rasa的response生成模块，即生产chatbot返回给用户的消息。目前，rasa支持通过模板生成话术，也支持通过machine learning的方式做NLG。nlg模块中定义了方法读取domain.yml中的预定义的话术模板，然后生成具体的消息。</p>
+<h3 id="policies"><a href="#policies" class="headerlink" title="policies"></a>policies</h3><p>此模块是rasa_core最上层的对话管理控制模块。该包中，定义了不同类型的对话管理策略，rasa将依据这些策略，执行不同actions，完成多轮对话任务。这些策略包括人工规则策略如form_policy、memoization等，也包括通过机器学习、深度学习进行训练得到策略模型，如sklearn_policy、keras_policy等。</p>
+<p>对话管理策略是多轮对话系统的核心功能，相当于对话系统的大脑，它负责根据当前用户的反馈，告诉Processor当前轮对话中需要采取的后续action，以及如何更新对话状态信息等。rasa支持人工规则的策略，也支持机器学习、深度学习得到的数据驱动策略。</p>
+<p>以Form_policy为例，这个策略是一种表单策略，对应的rasa预置了一种类型的action，叫form的action。这种action会将所有槽位作为表单的属性column，每一轮对话，都会去主动询问用户，引导用户将这些表单的属性填充，直到所有属性填充完成。而form_policy的核心就是检索当前是否配置了form类型的action，如果是，则将下一步的action置为form。有关action的描述将在后面详细给出。可以看出这是一个典型的人工规则策略。</p>
+<p>在一次对话任务中，可以使用多个policy的组合来帮助bot完成既定的任务。比如策略A是一个使用深度学习训练得到的一个策略模型，但是一般使用data-driven得到的模型不会达到100%的准确率，总会有bad case的情况，此时如果只是用该策略，那么会话极有可能会陷入到bad case中，因此需要一个兜底的策略在策略A的bad case发生时，让对话能够平稳进行下去。rasa就预置了这样一个策略，叫fall_back，将fall_back与策略A进行组合，就能得到一个更加鲁棒的一个对话策略。</p>
+<p>在实际项目生产中，如果在项目初期，领域数据比较少的情况下，通常会选择form policy或者其他规则型策略。当产品上线，在积累到一定的数据后，可以使用一些data-driven的模型来做策略。</p>
+<h3 id="schemas-domain"><a href="#schemas-domain" class="headerlink" title="schemas/domain"></a>schemas/domain</h3><p>这里主要放置rasa_core的配置文件domain.yml，这个配置文件主要配置槽位定义，实体定义，话术模板，使用的actions的名称定义以及其他系统配置。开发者在开发自己的对话系统时，需要自定义这个配置文件来覆盖源码中预定义的配置。</p>
+<p>Domain对象的数据来自于前述章节提到的配置文件domain.yml。该对象定义不同的方法，从配置文件domain.yml读取槽位模板，话术模板，定义的action名称，自定义的policy名称等信息，并封装到domain对象中。domain对象可以在action执行时为其提供槽位信息以及话术模板等字段。</p>
+<p>设计domain的好处在哪儿呢？个人认为主要是方便管理对话系统需要使用的模板信息。这里的模板信息包含定义的槽位，意图、实体、话术模板、自定义action、自定义policy。如果需要添加或者修改这些信息，只需要修改domain.yml里面的信息就可以了，不需要去修改任何代码，让配置和代码解耦。</p>
+<h3 id="agent"><a href="#agent" class="headerlink" title="agent"></a>agent</h3><p>这是rasa_core专门设计的一个接口，可以将其视作bot主体，主要作用是封装和调用rasa中最重要的一些功能方法，包括上述提到的几个包里的功能模块。</p>
+<h3 id="training"><a href="#training" class="headerlink" title="training"></a>training</h3><p>这里主要存放的是如何将准备的数据转化为对话系统可训练的转化方法以及可视化方法。</p>
+<h3 id="interpreter"><a href="#interpreter" class="headerlink" title="interpreter"></a>interpreter</h3><p>这个方法是rasa_core与rasa_nlu的一个纽带，rasa管理模块通过定义interpreter类方法，调用rasa_nlu中的parser方法来对用户的发送到bot的消息文本进行实体抽取、意图识别等操作。</p>
+<h3 id="processor"><a href="#processor" class="headerlink" title="processor"></a>processor</h3><p>定义了MessageProcess类，供agent调用，功能是有序得调用不同对话功能组件，例如调用interpreter解析用户文本、调用本轮对话的action完成一些操作、根据policy得到下一步的action、记录对话状态等。</p>
+<p>Processor是对话系统的核心处理模块。它通过execute_action完成bot处理对话的流程。这里需要注意一点，在processor执行action之前，agent将会调用processor的log_message方法，使用nlu_interpreter来对用户发送的文本做实体识别和意图识别，然后将信息保存在tracker中。execute_action方法核心内容如下：</p>
+<p><img src="https://uploader.shimo.im/f/NtaZ2VxnkfLIjD0v.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<h3 id="trackers"><a href="#trackers" class="headerlink" title="trackers"></a>trackers</h3><p>这个也是rasa中比较重要的一个对象，它的作用是rasa对话系统中的状态记录器，每一轮对话中，对话的状态信息都会进行更新并保存在这个对象中。例如当前已填充的槽位、用户最后一次发送的文本、当前用户的意图等等。</p>
+<h4 id="DialogueStateTracker"><a href="#DialogueStateTracker" class="headerlink" title="DialogueStateTracker"></a>DialogueStateTracker</h4><p>从名字上就可以看到这个对象的功能：在多轮对话过程中全程记录对话状态信息。这个对象在开发自己的对话系统时，作用可是非常大的。很多对话状态信息，都可以从它这里得到。当然， 我们并不能直接去读写其定义的成员变量信息，需要通过其成员方法来操作成员变量，例如current_sate()，其核心内容如下：</p>
+<p><img src="https://uploader.shimo.im/f/1MLXml1bdOxbxLOH.png!thumbnail?fileGuid=yhpTXq3xXjJcVQR6" alt="图片"></p>
+<p>注意该方法的返回对象是一个字典，其包含了丰富的对话信息，例如用户的id、当前所有的槽位键值对（包括已填充和未被填充的）、用户最近一次发送的消息等等。</p>
+<h1 id="其他参考"><a href="#其他参考" class="headerlink" title="其他参考"></a>其他参考</h1><ul>
+<li><a href="https://wechaty.js.org/" target="_blank" rel="noopener">wechaty</a></li>
+<li><a href="https://github.com/paschmann/rasa-ui" target="_blank" rel="noopener">rasa-ui</a></li>
+<li><a href="https://juejin.cn/post/6844903921060839431" target="_blank" rel="noopener">Rasa 聊天机器人框架开发使用</a></li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/12/22/Rasa%E6%A1%86%E6%9E%B6%E8%A7%A3%E8%AF%BB/" data-id="ckj754a8f000d4vwvcktjfmxs"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F/" rel="tag">对话系统</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/05/17/CRF%E5%AD%A6%E4%B9%A0%E2%80%94%E2%80%94%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">CRF学习——基础学习</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+</body>
+</html>
