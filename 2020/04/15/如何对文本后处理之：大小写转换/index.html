@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    如何对文本后处理之：大小写转换 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-如何对文本后处理之：大小写转换" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      如何对文本后处理之：大小写转换
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/04/15/%E5%A6%82%E4%BD%95%E5%AF%B9%E6%96%87%E6%9C%AC%E5%90%8E%E5%A4%84%E7%90%86%E4%B9%8B%EF%BC%9A%E5%A4%A7%E5%B0%8F%E5%86%99%E8%BD%AC%E6%8D%A2/" class="article-date">
+  <time datetime="2020-04-15T14:41:46.000Z" itemprop="datePublished">2020-04-15</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>最近工作中文本处理任务特别多，今天特地看一下大小写转换。大小写转换对于文本的后处理很重要，如果做不好，句子看起来很ugly。一开始想通过端到端的方法做，后来想一想感觉不需要上神经网络模型。大小写本身就是跟“是否句子开头”、“是否命名实体”、“是否缩略词”等有关系。因此认为大小写转换过程应该走一个pipeline的流程，看了一些资料发现确实如此。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://www.cs.cmu.edu/~llita/papers/lita.truecasing-acl2003.pdf" target="_blank" rel="noopener">https://www.cs.cmu.edu/~llita/papers/lita.truecasing-acl2003.pdf</a><br><a href="https://towardsdatascience.com/truecasing-in-natural-language-processing-12c4df086c21" target="_blank" rel="noopener">https://towardsdatascience.com/truecasing-in-natural-language-processing-12c4df086c21</a></p>
+</blockquote>
+<h1 id="论文tRuEcasIng"><a href="#论文tRuEcasIng" class="headerlink" title="论文tRuEcasIng"></a>论文tRuEcasIng</h1><p>大小写对于NER、ASR后处理等任务很重要，比如“the president”和“the President”表达的是不同的含义。大小写跟文本的来源、作者的写作风格都有关系，为了对不同语料库中的文本进行统一归一化，可以使用Truecasing将大小写变为统一规范形式。</p>
+<p>在以往相关工作中，关注到的是句首、引号后面和命名实体的大写。论文将词的大小写分为4类：全部小写（LC）、首字母大写（UC）、全部字母大写（CA）、混合大小写（MC）。论文中使用的方法可以关注到word的上下文信息。因此即便遇到UNK（如lenon），也会因为跟lenon有相同上下文的词常采用UC，而把lenon也记为UC类别。</p>
+<p>如果我们使用Unigram语言模型的话，可能发现这样的问题：只有12%的词是有多种大小写表示的，那对于new这个词，new后面跟着的词中只有少部分（York、Zealand）是需要大写的，那么new这个词就很容易改写为小写的，使得后面是York时出错了（可以使用贪心法解码Unigram Model）。</p>
+<p>为了避免Unigram模型的缺点，需要不仅仅考虑local context，还要考虑整个句子的语义。因此论文使用了HMM对整个句子进行建模和推理：</p>
+<p><img src="https://uploader.shimo.im/f/WkXQLosdM2oIwB7j.png!thumbnail?fileGuid=Xvd3pwtQ6jRtjhWH" alt="图片"></p>
+<p>其中每个节点包含了如下信息：词的可能的truecase、词的语法信息、词在句子中位置信息、前面两个词的语法信息、前面两个词的truecase信息。也就是说，HMM的隐藏状态$\left(q_{1}, q_{2}, \cdots, q_{n}\right)$是词的大小写和上下文信息组合，观察状态$O_{1} O_{2} \cdots O_{t}$是词的lexical item，使用维特比进行求解：$q_{\tau}^{*}=\operatorname{argmax}_{q_{i 1} q_{i 2} \cdots q_{i t}} P\left(q_{i 1} q_{i 2} \cdots q_{i t} \mid O_{1} O_{2} \cdots O_{t}, \lambda\right)$转移概率lambda是语言模型特征的打分：</p>
+<p>$\begin{aligned}<br>P_{\text {model}}\left(w_{3} \mid w_{2}, w_{1}\right) &amp;=\lambda_{\text {trigram}} P\left(w_{3} \mid w_{2}, w_{1}\right) \\<br>&amp;+\lambda_{\text {bigram}} P\left(w_{3} \mid w_{2}\right) \\<br>&amp;+\lambda_{\text {unigram}} P\left(w_{3}\right) \\<br>&amp;+\lambda_{\text {uniform}} P_{0}<br>\end{aligned}$</p>
+<p>对于UNK单词，比如‘mispeling’，在训练时被替换为UNKNOWN LC，‘Lenon’被替换为UNKNOWN_UC，这样做的目的是当一个unknown word出现同样上下文的context时，就知道怎样大小写了。</p>
+<p>这篇论文有一个简单版的实现：<a href="https://github.com/daltonfury42/truecase" target="_blank" rel="noopener">https://github.com/daltonfury42/truecase</a>，我们也阅读一下这个代码。下面是它的训练过程的主函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">def train(self, corpus):</span><br><span class="line">  for sentence in corpus:</span><br><span class="line">      # 首先检查句子合法性，去掉全部是大写的句子</span><br><span class="line">      if not self.check_sentence_sanity(sentence):</span><br><span class="line">          continue</span><br><span class="line">      for word_idx, word in enumerate(sentence):</span><br><span class="line">          self.uni_dist[word] +&#x3D; 1</span><br><span class="line">          word_lower &#x3D; word.lower()</span><br><span class="line">          # 把单词的所有大小写可能放到word_casing_lookup中</span><br><span class="line">          if word_lower not in self.word_casing_lookup:</span><br><span class="line">              self.word_casing_lookup[word_lower] &#x3D; set()</span><br><span class="line">          self.word_casing_lookup[word_lower].add(word)</span><br><span class="line">          # 将word的上下文加入bi-gram语言模型统计中</span><br><span class="line">          self.__function_one(sentence, word, word_idx, word_lower)</span><br><span class="line">          # 将word的上下文加入tri-gram语言模型统计中</span><br><span class="line">          self.__function_two(sentence, word, word_idx)</span><br></pre></td></tr></table></figure>
+<p>训练好的模型用下面代码存放到pickle中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def save_to_file(self, file_path):</span><br><span class="line">        pickle_dict &#x3D; &#123;</span><br><span class="line">            &quot;uni_dist&quot;: self.uni_dist,</span><br><span class="line">            &quot;backward_bi_dist&quot;: self.backward_bi_dist,</span><br><span class="line">            &quot;forward_bi_dist&quot;: self.forward_bi_dist,</span><br><span class="line">            &quot;trigram_dist&quot;: self.trigram_dist,</span><br><span class="line">            &quot;word_casing_lookup&quot;: self.word_casing_lookup,</span><br><span class="line">        &#125;</span><br><span class="line">        with open(file_path, &quot;wb&quot;) as fp:</span><br><span class="line">            pickle.dump(pickle_dict, fp)</span><br><span class="line">        print(&quot;Model saved to &quot; + file_path)</span><br></pre></td></tr></table></figure>
+<p>模型推理的主函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">def get_true_case(self, sentence, out_of_vocabulary_token_option&#x3D;&quot;title&quot;):</span><br><span class="line"># outOfVocabulariyTokenOption&#x3D;title将OOV词以大写格式输出</span><br><span class="line"># outOfVocabulariyTokenOption&#x3D;lower将OOV词以小写格式输出</span><br><span class="line"># outOfVocabulariyTokenOption&#x3D;as-is将OOV词以原先格式输出</span><br><span class="line">  </span><br><span class="line">  tokens &#x3D; self.tknzr.tokenize(sentence)</span><br><span class="line">  tokens_true_case &#x3D; []</span><br><span class="line">  for token_idx, token in enumerate(tokens):</span><br><span class="line">      # 标点和数字原样输出</span><br><span class="line">      if token in string.punctuation or token.isdigit():</span><br><span class="line">          tokens_true_case.append(token)</span><br><span class="line">      else:</span><br><span class="line">          token &#x3D; token.lower()</span><br><span class="line">          # 在词表中</span><br><span class="line">          if token in self.word_casing_lookup:</span><br><span class="line">              # 只有一种形式的直接返回</span><br><span class="line">              if len(self.word_casing_lookup[token]) &#x3D;&#x3D; 1:</span><br><span class="line">                  tokens_true_case.append(</span><br><span class="line">                      list(self.word_casing_lookup[token])[0])</span><br><span class="line">              else:</span><br><span class="line">                  prev_token &#x3D; (tokens_true_case[token_idx - 1]</span><br><span class="line">                                if token_idx &gt; 0 else None)</span><br><span class="line">                  next_token &#x3D; (tokens[token_idx + 1]</span><br><span class="line">                                if token_idx &lt; len(tokens) - 1 else None)</span><br><span class="line">                  best_token &#x3D; None</span><br><span class="line">                  highest_score &#x3D; float(&quot;-inf&quot;)</span><br><span class="line">                  # 找到语言模型得分最高的得分组合</span><br><span class="line">                  for possible_token in self.word_casing_lookup[token]:</span><br><span class="line">                      score &#x3D; self.get_score(prev_token, possible_token, next_token)</span><br><span class="line">                      if score &gt; highest_score:</span><br><span class="line">                          best_token &#x3D; possible_token</span><br><span class="line">                          highest_score &#x3D; score</span><br><span class="line">                  tokens_true_case.append(best_token)</span><br><span class="line">              if token_idx &#x3D;&#x3D; 0:</span><br><span class="line">                  tokens_true_case[0] &#x3D; tokens_true_case[0].title()</span><br><span class="line">          else:  # OOV</span><br><span class="line">              if out_of_vocabulary_token_option &#x3D;&#x3D; &quot;title&quot;:</span><br><span class="line">                  tokens_true_case.append(token.title())</span><br><span class="line">              elif out_of_vocabulary_token_option &#x3D;&#x3D; &quot;lower&quot;:</span><br><span class="line">                  tokens_true_case.append(token.lower())</span><br><span class="line">              else:</span><br><span class="line">                  tokens_true_case.append(token)</span><br><span class="line">  return &quot;&quot;.join([</span><br><span class="line">      &quot; &quot; +</span><br><span class="line">      i if not i.startswith(&quot;&#39;&quot;) and i not in string.punctuation else i</span><br><span class="line">      for i in tokens_true_case</span><br></pre></td></tr></table></figure>
+<h1 id="一个pipeline的设计"><a href="#一个pipeline的设计" class="headerlink" title="一个pipeline的设计"></a>一个pipeline的设计</h1><p>我们可以设计这样一个pipeline以满足大部分大小写转换的需求：分句 + 命名实体大写 + n-gram语言模型处理其他。分句使用spacy，它利用dependency parse tree和一些规则判断句子的边界。在处理时有一些情况要注意：</p>
+<ul>
+<li>注意句子开始的标志，一些不以字母为开始的句子，它的第一个字母应该大写：”non-digital items(t-shirts, printed posters, mugs, and cd-roms) require physical shipping.”</li>
+<li>注意句子切分，如省略号、双引号后面是否是独立的一句话</li>
+<li>注意缩略词的分词</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/04/15/%E5%A6%82%E4%BD%95%E5%AF%B9%E6%96%87%E6%9C%AC%E5%90%8E%E5%A4%84%E7%90%86%E4%B9%8B%EF%BC%9A%E5%A4%A7%E5%B0%8F%E5%86%99%E8%BD%AC%E6%8D%A2/" data-id="ckj78v8lu000x75wvdhht6s5y"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86/" rel="tag">文本处理</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+      <a href="/2020/04/15/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9AALBert/" class="article-nav-link">
+        <strong class="article-nav-caption">前一篇</strong>
+        <div class="article-nav-title">
+          
+            论文阅读：ALBert
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2020/04/15/%E5%8F%A5%E5%AD%90%E5%AF%B9%E9%BD%90%E5%BC%80%E6%BA%90%E4%BB%A3%E7%A0%81%E8%A7%A3%E8%AF%BB/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">句子对齐开源代码解读</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
