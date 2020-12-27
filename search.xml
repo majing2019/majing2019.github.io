@@ -3,7 +3,147 @@
   <entry>
     <title>YouTube双塔DNN</title>
     <url>/2020/06/15/YouTube%E5%8F%8C%E5%A1%94DNN/</url>
-    <content><![CDATA[]]></content>
+    <content><![CDATA[<p>这篇文章是谷歌的Youtube团队在推荐系统上DNN方面的尝试，发表在16年9月的RecSys会议。YouTube用户数量超19亿日，日观看时长达1.8亿小时，算是世界范围内视频领域的最大的网站。这篇论文从信息检索领域的经典的两阶段——召回、排序——来阐述如何用深度模型做candidate generate 和 rank。文中不但详细介绍了Youtube推荐算法和架构细节，还给了不少实践经验和方法论。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf" target="_blank" rel="noopener">https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf</a><br><a href="https://zhuanlan.zhihu.com/p/25343518" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/25343518</a><br><a href="https://www.ershicimi.com/p/beb197c7bfaee3f6ac9fc53f9230da4d" target="_blank" rel="noopener">https://www.ershicimi.com/p/beb197c7bfaee3f6ac9fc53f9230da4d</a><br><a href="https://www.researchgate.net/publication/307573656_Deep_Neural_Networks_for_YouTube_Recommendations" target="_blank" rel="noopener">https://www.researchgate.net/publication/307573656_Deep_Neural_Networks_for_YouTube_Recommendations</a><br><a href="https://zhuanlan.zhihu.com/p/51440316" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/51440316</a><br><a href="https://zhuanlan.zhihu.com/p/76897076" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/76897076</a><br><a href="https://zhuanlan.zhihu.com/p/61827629" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/61827629</a><br><a href="https://zhuanlan.zhihu.com/p/52504407" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/52504407</a> 这里提出的一些问题也挺好, 评论中提到了用softmax做广义的矩阵分论文地址：<a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf" target="_blank" rel="noopener">https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf</a></p>
+</blockquote>
+<h1 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h1><p><img src="https://uploader.shimo.im/f/cTE0369oRmlrHA0I.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<p>在推荐系统领域，特别是YouTube的所在视频推荐领域，主要面临三个挑战：</p>
+<ul>
+<li>规模大：用户和视频的数量都很大，只能适应小规模数据集的算法就不考虑了。</li>
+<li>更新快：<ul>
+<li>youtube视频更新频率很高，每秒有小时级别的视频上传，需要在新发布视频和已有存量视频间进行balance。</li>
+<li>用户实时行为切换很快，模型需要很好的追踪用户的实时行为。</li>
+</ul>
+</li>
+<li>噪音：<ul>
+<li>用户的历史行为往往是稀疏的并且是不完整的，并且没有一个明确的ground truth的满意度signal，我们面对的都是noisy implicit feedback signals。</li>
+<li>视频本身很多数据都是非结构化的。</li>
+</ul>
+</li>
+</ul>
+<h1 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h1><p>整个推荐系统分为candidate generation (采用的判别模型，因此又称为Matching) 和Ranking两个阶段。</p>
+<p><img src="https://uploader.shimo.im/f/v1xTd4nAWQg9anlE.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<ul>
+<li>Matching阶段通过i2i/u2i/u2u/user profile/hot&amp;new等方式“粗糙”的召回候选商品</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/74H6QXd69EYsVM6m.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<pre><code>* i2i：计算item-item相似度，用于相似推荐、相关推荐、关联推荐；
+* u2i：基于矩阵分解、协同过滤的结果，直接给u推荐i；
+* u2u2i：基于用户的协同过滤，先找相似用户，再推荐相似用户喜欢的item；
+* u2tag2i：基于标签的泛化推荐，先统计用户偏好的tag向量，然后匹配所有的Item，这个tag一般是item的标签、分类、关键词等tag；
+    * 标签召回可以借助用户画像:
+        * 固定属性标签：{&#39;年龄&#39;: &#39;13&#39;, &#39;年级&#39;: &#39;初二&#39;, &#39;性别&#39;: 男, &#39;设备&#39;: &#39;iphone 7&#39;, &#39;地域&#39;: &#39;北京&#39;}
+        * 行为标签：{&#39;王者荣耀&#39;: 0.9, &#39;深度学习&#39;: 0.6, &#39;天线宝宝&#39;: 0.1}
+* 热门召回
+* 新文章召回
+* Matching阶段视频的数量是百级别了
+</code></pre><ul>
+<li>Ranking阶段对Matching后的视频采用更精细的特征计算user-item之间的排序分，作为最终输出推荐结果的依据。</li>
+</ul>
+<p>之所以把推荐系统划分成Matching和Ranking两个阶段，主要是从性能方面考虑的。Matching阶段面临的是百万级视频，单个视频的性能开销必须很小；而Ranking阶段的算法则非常消耗资源，不可能对所有视频都算一遍，实际上即便资源充足也完全没有必要，因为往往来说通不过Matching粗选的视频，大部分在Ranking阶段排名也很低。</p>
+<p>在这个架构中，我们使用precision、recall、ranking loss作为离线的metrics来指导系统的迭代，但是最终会通过A/B test来最终决定算法质量的好坏。在线上环境中，会使用点击率、观看时长、转化率等指标来对推荐系统进行评价。需要注意的是，A/B test的指标结果跟离线实验的结果不一定相关。</p>
+<h1 id="Match模型召回"><a href="#Match模型召回" class="headerlink" title="Match模型召回"></a>Match模型召回</h1><h2 id="前传"><a href="#前传" class="headerlink" title="前传"></a>前传</h2><p>在DNN之前，推荐/广告系统都经历过什么模型？</p>
+<h3 id="LR"><a href="#LR" class="headerlink" title="LR"></a>LR</h3><p>LR模型是CTR预估领域早期最成功的模型，具有简单、易于并行化实现、可解释性强等优点，但是LR模型中的特征是默认相互独立的，遇到具有交叉可能性的特征需进行大量的人工特征工程进行交叉(连续特征的离散化、特征交叉)，不能处理目标和特征之间的非线性关系。大多工业推荐排序系统采取LR这种“线性模型+人工特征组合引入非线性”的模式。但是，LR模型最大的缺陷就是人工特征工程，耗时费力。</p>
+<p>【注】：</p>
+<ul>
+<li>特征组合是指通过将两个或多个输入特征相乘来对特征空间中的非线性规律进行编码的合成特征。“cross”（组合）这一术语来自cross product（向量积）。以下图为例，我们通过将x_1和x_2组合来创建一个名为 x_3的特征组合：$x_3=x_1x_2$，则我们需要求解的线性公式变为$y=b+w_1x_1+w2x_2+w_3x_3$。</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/KnAvbvWfcjG5p65x.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<ul>
+<li>连续特征的离散化就是把原始的连续值划分多个区间，如等频划分或等间距划分。特征离散化相当于把线性函数变成了分段线性函数，引入了非线性结构。离散化还可以使得数据中的噪音有更好的鲁棒性(异常值落在同一区间)；还可以使得模型更加稳定，特征值的微小变化(在同一个区间)不会引起模型预测值变化。</li>
+<li>其实看到这儿你可能想到了带核函数的SVM：</li>
+</ul>
+<p>$\begin{array}{l}<br>\min _{\alpha} \frac{1}{2} \sum_{i=1}^{l} \sum_{j=1}^{l} \alpha_{i} \alpha_{j} y_{i} y_{j} K\left(\mathrm{x}_{i}^{\mathrm{T}} \mathrm{x}_{j}\right)-\sum_{k=1}^{l} \alpha_{k} \\<br>0 \leq \alpha_{i} \leq C \\<br>\sum_{j=1}^{l} \alpha_{j} y_{j}=0<br>\end{array}$</p>
+<p>SVM看上去解决了特征组合的问题，但是要知道推荐算法使用的特征是非常稀疏的，如果在训练数据里两个特征并未同时在训练实例里见到过，也就是说xi和xj一起出现的次数是0，那么SVM是无法学会这个特征组合的权重的。这就会导致模型的泛化性变差。</p>
+<h3 id="GBDT-LR"><a href="#GBDT-LR" class="headerlink" title="GBDT+LR"></a>GBDT+LR</h3><p>后来，Facebook 2014年的论文《Practical Lessons from Predicting Clicks on Ads at Facebook》中介绍了通过GBDT解决LR的特征组合问题，用公式表示是$f(x)=\operatorname{logistics}\left(g b d t_{-} \text {tree}_{1}(X)+g b d t_{-} \operatorname{tree}_{2}(X)+\ldots\right)$。由于GDBT树的分裂算法，它会对特征进行重要性排序，因此具有一定特征组合的能力。GBDT学习到的高阶非线性特征组合，对应树的一条路径。通常将一些连续值特征、值空间不大的categorical特征都丢给GBDT模型；空间很大的ID特征留在LR模型中训练，既能做高阶特征组合又可以利用线性模型易于处理大规模稀疏数据的优势。</p>
+<p>不过GBDT+LR也有它的缺点，比如要调的参数太多；而且只能使用batch的方式训练（而且整体需要串行训练，只能局部并行提高速度），比FTRL的方式慢很多；对于高维的稀疏特征，GBDT容易过拟合。</p>
+<p><img src="https://uploader.shimo.im/f/ODVSSrGK5j8JOfQJ.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<h3 id="MF"><a href="#MF" class="headerlink" title="MF"></a>MF</h3><p>MF（Matrix Factorization，矩阵分解）模型是个在推荐系统领域里资格很深的老前辈协同过滤模型了。核心思想是通过两个低维小矩阵（一个代表用户embedding矩阵，一个代表物品embedding矩阵）的乘积计算，来模拟真实用户点击或评分产生的大的协同信息稀疏矩阵，本质上是编码了用户和物品协同信息的降维模型。当训练完成，每个用户和物品得到对应的低维embedding表达后，如果要预测某个 User_i对 Item_j的评分的时候，只要它们做个内积计算 &lt;$User_i$, $Item_j$&gt;，这个得分就是预测得分。<img src="https://uploader.shimo.im/f/1LI5DESUSdFFNm1t.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<p>MF有什么缺点？基础矩阵分解只用了userId和itemId两个维度的信息，所有学到的知识都蕴含在user向量和item向量中。可解释性差是一个方面，另一个不足的方面在于学习过程中很难融合更多有用的特征，比如用户的人口统计学信息，商品的基础特征信息，如类目、品牌等，用户的长期偏好信息等等。因而，基础矩阵分解的泛化能力受到一定的限制。</p>
+<h3 id="FM"><a href="#FM" class="headerlink" title="FM"></a>FM</h3><p>再后来就有了Factorization Machine。因子分解机（FM）可以看做是基础矩阵分解的推广，它就能够很好地融入更多维度的特征，从而学到的模型泛化能力更强。简单的说FM（Factorization Machine）是一类自动特征组合算法。相比于传统的SVM、LR等模型，FM可以自动的进行特征的组合运算用以替代一部分人工特征工程的工作，并且计算量可控，对于海量输入特征仍然可以尝试使用这个方法。另一方面，对于稀疏特征，SVM等模型相对难以取得特别好的效果，而FM应用分解的方法可以很好的处理稀疏的输入。相比较于其他的分解方法（SVD、PITF、FPMC等等）FM是一个更加通用化的特征组合与分解手段，可以应用在多个场景下。</p>
+<p><img src="https://uploader.shimo.im/f/s2KLZQR8W82VPaqW.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<p>比如上图中的数据，我们可以建立一个FM模型：</p>
+<p><img src="https://uploader.shimo.im/f/bOHAjMgB9s0I9gbQ.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<p>通过SGD优化目标函数，最终会获得每一个特征的embedding表示。对于某个用户，我们可以把属于这个用户子集合的特征，查询离线训练好的FM模型对应的特征embedding向量，然后将n个用户子集合的特征embedding向量累加，形成用户兴趣向量U(如A)。类似的，我们也可以把每个物品，其对应的物品子集合的特征，查询离线训练好的FM模型对应的特征embedding向量，然后将m个物品子集合的特征embedding向量累加，形成物品向量I。</p>
+<p>当用户登陆或者刷新页面时，可以根据用户ID从redis中取出其对应的兴趣向量embedding，然后和Faiss中存储的物料embedding做内积计算，按照得分由高到低返回得分Top K的物料作为召回结果。提交给第二阶段的排序模型进行进一步的排序。</p>
+<h2 id="问题建模"><a href="#问题建模" class="headerlink" title="问题建模"></a>问题建模</h2><p>文章将推荐问题建模成一个“超大规模多分类”问题。即在时刻 t ，为用户U（上下文信息 C ）在视频库 V 中精准的预测出视频 i 的类别（每个具体的视频视为一个类别，i 即为一个类别），用数学公式表达如下：$P\left(w_{t}=i \mid U, C\right)=\frac{e^{v_{i} u}}{\sum_{j \in V} e^{v_{j} u}}$。</p>
+<p>很显然上式为一个softmax多分类器的形式。向量$u \in R^{N}$是<user, context>信息的高维“embedding”，而向量$v_{j} \in R^{N}$则是视频 j 的embedding向量。所以DNN的目标就是在用户信息和上下文信息为输入条件下学习用户的embedding向量 u 。用公式表达DNN就是在拟合函数 $u = f_{DNN}(user_{info}, context_{info})$。而这种超大规模分类问题上，至少要有几百万个类别，实际训练采用的是Negative Sample，类似于word2vec的Skip-Gram方法。</p>
+<p>【注】：对于超大规模的softmax，论文采用的方法是负采样（negative sampling）并用importance weighting的方法对采样进行calibration。文中同样介绍了一种替代方法，hierarchical softmax，但并没有取得更好的效果。</p>
+<h2 id="模型架构"><a href="#模型架构" class="headerlink" title="模型架构"></a>模型架构</h2><p><img src="https://uploader.shimo.im/f/FrP3Xleqi3u1kYIK.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<p>整个模型架构是包含三个隐层的DNN结构。输入是用户浏览历史、搜索历史、人口统计学信息和其余上下文信息concat成的输入向量；输出分线上和离线训练两个部分。离线训练阶段输出层为softmax层，输出2.1公式表达的概率。而线上则直接利用user向量查询相关商品，最重要问题是在性能。我们利用类似局部敏感哈希的算法为用户提供最相关的N个视频。</p>
+<p>可以看出，模型架构很像word2vec的Skip-Gram。每个视频都会被embedding到固定维度的向量中。把推荐问题定义为“超大规模多分类”问题的数学公式和word2vec的Skip-Gram方法的公式基本相同，所不同的是user_vec是通过DNN学习到的，而引入DNN的好处则是任意的连续特征和离散特征可以很容易添加到模型当中。同样的，推荐系统常用的矩阵分解方法虽然也能得到user_vec和item_vec，但同样是不能嵌入更多feature。</p>
+<p>【注】：论文中提到 “our approach can be viewed as a nonlinear generalization of factorization techniques.”</p>
+<h2 id="特征选择"><a href="#特征选择" class="headerlink" title="特征选择"></a>特征选择</h2><h3 id="主要特征"><a href="#主要特征" class="headerlink" title="主要特征"></a>主要特征</h3><ul>
+<li>历史观看视频序列：用户的观看视频历史则是通过变长的视频序列表达，最终通过加权平均（可根据重要性和时间进行加权）得到固定维度的watch vector作为DNN的输入。</li>
+<li>历史搜索query：把历史搜索的query分词后的token的embedding向量进行加权平均，能够反映用户的整体搜索历史状态</li>
+<li>人口统计学信息：性别、年龄、地域等其他上下文信息：设备、登录状态等</li>
+</ul>
+<h3 id="“Example-Age”-（视频上传时间）特征"><a href="#“Example-Age”-（视频上传时间）特征" class="headerlink" title="“Example Age” （视频上传时间）特征"></a>“Example Age” （视频上传时间）特征</h3><p>视频网络的时效性是很重要的，每秒YouTube上都有大量新视频被上传，而对用户来讲，哪怕牺牲相关性代价，用户还是更倾向于更新的视频。当然我们不会单纯的因为一个视频新就直接推荐给用户。</p>
+<p>视频网站视频的分布是高度非静态（non-stationary）的，但我们的推荐系统产生的视频集合在视频的分布，基本上反映的是训练所取时间段的平均的观看喜好的视频。因此我们我们把样本的 “age” 作为一个feature加入模型训练中。从下图可以很清楚的看出，加入“example age” feature后和经验分布更为match。</p>
+<p><img src="https://uploader.shimo.im/f/hQH4IpFIm0W3RqlC.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<p>【注】：问题，在serving阶段这个值怎么设置？</p>
+<h2 id="标签及上下文选择"><a href="#标签及上下文选择" class="headerlink" title="标签及上下文选择"></a>标签及上下文选择</h2><p>在有监督学习问题中，最重要的选择是label了，因为label决定了你做什么，决定了你的上限，而feature和model都是在逼近label。比如说我们假设对电影的评分反应了推荐的效果，那么就会将评分作为预测的目标label。</p>
+<p>YouTube在标签及上下文的选择上有一些建议：</p>
+<ul>
+<li>使用更广的数据源：不仅仅使用推荐场景的数据进行训练，其他场景比如搜索等的数据也要用到，这样也能为推荐场景提供一些explore。</li>
+<li>为每个用户生成固定数量训练样本：我们在实际中发现如果为每个用户固定样本数量上限，平等的对待每个用户，避免loss被少数活跃用户所主导，能明显提升线上效果。</li>
+<li>抛弃序列信息：我们在实现时尝试的是去掉序列信息，对过去观看视频/历史搜索query的embedding向量进行加权平均。这点其实违反直觉。<ul>
+<li>比如一个用户刚刚搜索”taylor swift”，那么我们可能会想当然地把”taylor swift”搜索结果页的视频作为用户home page的推荐项。但是把用户的最后一个搜索词作为特征训练出来的模型，在a/b test中表现很差。</li>
+<li>论文原话：Somewhat counter-intuitively, great care must be taken to withhold information from the classifier in order to prevent the model from exploiting the structure of the site and overfitting the surrogate problem.</li>
+</ul>
+</li>
+<li>不对称的共同浏览（asymmetric co-watch）问题：所谓asymmetric co-watch指的是用户在浏览视频时候，往往都是序列式的，开始看一些比较流行的，逐渐找到细分的视频。下图所示图(a)是held-out方式，利用上下文信息预估中间的一个视频；图(b)是predicting next watch的方式，则是利用上文信息，预估下一次浏览的视频。我们发现图(b)的方式在线上A/B test中表现更佳。而实际上，传统的协同过滤类的算法，都是隐含的采用图(a)的held-out方式，忽略了不对称的浏览模式。<ul>
+<li>Many collaborative filtering systems implicitly choose the labels and context by holding out a random item and predicting it from other items in the user’s history</li>
+<li>图(a)的方式其实泄漏了future information</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/DbrLGhwgDxW5JF01.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<h2 id="不同网络深度和特征的实验"><a href="#不同网络深度和特征的实验" class="headerlink" title="不同网络深度和特征的实验"></a>不同网络深度和特征的实验</h2><p>简单介绍下我们的网络构建过程，采用的经典的“tower”模式搭建网络，基本同2.2所示的网络架构，所有的视频和search token都embedded到256维的向量中，开始input层直接全连接到256维的softmax层，依次增加网络深度（+512—&gt;+1024—&gt;+2048—&gt; …）。</p>
+<p><img src="https://uploader.shimo.im/f/DxkgDnf4oKXHNXiy.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<p>上图反映了不同网络深度（横坐标）下不同特征组合情况下的MAP。可以很明显看出，增加了观看历史之外的特征很明显的提升了预测得准确率；从网络深度看，随着网络深度加大，预测准确率在提升，但继续增加第四层网络已经收益不大了。</p>
+<h1 id="Rank模型精排"><a href="#Rank模型精排" class="headerlink" title="Rank模型精排"></a>Rank模型精排</h1><p>Ranking阶段的最重要任务就是精准的预估用户对视频的喜好程度。不同于Matching阶段面临的是百万级的候选视频集，Ranking阶段面对的只是百级别的商品集，因此我们可以使用更多更精细的feature来刻画视频（item）以及用户与视频（user-item）的关系。比如用户可能很喜欢某个视频，但如果list页的用的“缩略图”选择不当，用户也许不会点击，等等。</p>
+<p>此外，Matching阶段的来源往往很多，没法直接比较。Ranking阶段另一个关键的作用是能够把不同来源的数据进行有效的ensemble。</p>
+<p>在目标的设定方面，单纯CTR指标是有迷惑性的，有些靠关键词吸引用户高点击的视频未必能够被播放。因此设定的目标基本与期望的观看时长相关，具体的目标调整则根据线上的A/B进行调整。s</p>
+<h2 id="模型架构-1"><a href="#模型架构-1" class="headerlink" title="模型架构"></a>模型架构</h2><p>Ranking阶段的模型和Matching基本相似，不同的是training最后一层是一个weighted LR层，而serving阶段激励函数用的是e^x。</p>
+<p><img src="https://uploader.shimo.im/f/gPTZYGEaivnUYC2P.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+<h2 id="特征选择-1"><a href="#特征选择-1" class="headerlink" title="特征选择"></a>特征选择</h2><p>尽管深度学习在图像、语音和NLP等场景都能实现end-to-end的训练，没有了人工特征工程工作。然而在搜索和推荐场景，我们的很难吧原始数据直接作为FNN的输入，特征工程仍然很重要。而特征工程中最难的是如何建模用户时序行为，并且关联这些行为和要rank的item。</p>
+<p>我们发现最重要的Signal是描述用户与商品本身或相似商品之间交互的Signal，这与Facebook在14年提出LR+GBDT模型的paper中得到的结论是一致的。比如我们要度量用户对视频的喜欢，可以考虑用户与视频所在频道间的关系：</p>
+<ul>
+<li>数量特征：浏览该频道的次数</li>
+<li>时间特征：比如最近一次浏览该频道距离现在的时间</li>
+</ul>
+<p>这两个连续特征的最大好处是具备非常强的泛化能力。另外除了这两个偏正向的特征，用户对于视频所在频道的一些PV但不点击的行为，即负反馈Signal同样非常重要。</p>
+<p>另外，我们还发现，把Matching阶段的信息传播到Ranking阶段同样能很好的提升效果，比如推荐来源和所在来源的分数。</p>
+<p>NN更适合处理连续特征，因此稀疏的特别是高基数空间的离散特征需要embedding到稠密的向量中。每个维度（比如query/user_id）都有独立的embedding空间。实际并非为所有的id进行embedding，比如视频id，只需要按照点击排序，选择top N视频进行embedding，其余置为0向量。而对于像“过去点击的视频”这种multivalent特征，与Matching阶段的处理相同，进行加权平均即可。</p>
+<p>另外一个值得注意的是，同维度不同feature采用的相同ID的embedding是共享的（比如“过去浏览的视频id” “seed视频id”），这样可以大大加速训练，但显然输入层仍要分别填充。</p>
+<p>论文中还提到了对特征进行归一化的问题。除了Tree-Based的模型（比如GBDT/RF），机器学习的大多算法大都对输入特征的尺度和分布都是非常敏感。因此建议将特征归一化到[0,1)区间以便于模型收敛。除此之外，我们还把归一化后的x的根号<img src="https://uploader.shimo.im/f/UACoDHHmUBTzMFiP.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片">和平方<img src="https://uploader.shimo.im/f/nESVLZztBv3Oiojh.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片">作为网络输入，以期能使网络能够更容易得到特征的次线性（sub-linear）和（super-linear）超线性函数。</p>
+<h2 id="建模期望观看时长"><a href="#建模期望观看时长" class="headerlink" title="建模期望观看时长"></a>建模期望观看时长</h2><p>我们的目标是预测期望观看时长。有点击的为正样本，有PV无点击的为负样本，正样本需要根据观看时长进行加权。因此，我们训练阶段网络最后一层用的是 weighted logistic regression作为输出层，并在serving阶段使用e^{Wx+b}来预测用户观看时常。</p>
+<p>问题是，为什么要这样做呢？下面来解释一下。</p>
+<p>我们知道sigmoid函数的数学形式：$h_{\theta}(x)=\frac{1}{1+e^{-\theta^{T} x}}$，我们经常用它将值域映射到0~1之间，来表示一件事情发生/不发生的概率。下面我们从一个新的角度去理解sigmoid。</p>
+<p>首先我们需要定义一个新的变量——Odds，中文可以叫发生比或者机会比：$O d d s=\frac{p}{1-p}$，假设一件事情发生的概率是p，那么Odds就是一件事情发生和不发生的比值。</p>
+<p>如果对Odds取自然对数，再让ln(Odds)等于一个线性回归函数，那么就得到了下面的等式：$\operatorname{logit}(p)=\ln \left(\frac{p}{1-p}\right)=\theta_{0}+\theta_{1} x_{1}+\theta_{2} x_{2}$。其中ln(p/(1-p))就是logit函数。上面的式子就是逻辑回归的由来。我们再做进一步运算，就可以转变成我们熟悉的逻辑回归的形式：$\ln \left(\frac{p}{1-p}\right)=\theta^{T} x \Rightarrow \frac{p}{1-p}=e^{\theta^{T} x} \Rightarrow p=\frac{1}{1+e^{-\theta^{T} x}} \Rightarrow p=\operatorname{sigmoid}\left(\theta^{T} x\right)$</p>
+<p>【注】：由上式我们看出，LR模型假设数据服从伯努利分布</p>
+<p>如果在对上式进行小小的转换，就会发现一个神奇的结论：$\ln (O d d s)=\theta^{T} x \Rightarrow O d d s=e^{\theta^{T} x}=\text {YouTubeServingFunction }$</p>
+<p>原来Youtube的Serving函数e^{Wx+b}计算的不是别的，正是Odds！不过这个Odds跟用户观看时长有什么关系呢？</p>
+<p>这就要提到YouTube采用的独特的训练方式Weighted LR，这里的Weight，对于正样本i来说就是观看时长Ti，对于负样本来说，则指定了单位权重1。Weighted LR的特点是，正样本权重w的加入会让正样本发生的几率变成原来的w倍，也就是说样本i的Odds变成了下面的式子：$O d d s(i)=\frac{w_{i} p}{1-w_{i} p}$。由于在视频推荐场景中，用户打开一个视频的概率p往往是一个很小的值，因此上式可以继续简化：$O d d s(i)=\frac{w_{i} p}{1-w_{i} p} \approx w_{i} p=T_{i} p=E\left(T_{i}\right)$。</p>
+<p>而且由于YouTube采用了用户观看时长Ti作为权重，因此式子进一步等于Ti<em>p，这里真相就大白了，由于p就是用户打开视频的概率，Ti是观看时长，因此Ti</em>p就是用户观看某视频的期望时长！</p>
+<p>因此，YouTube采用$e^{Wx+b}$这一指数形式预测的就是曝光这个视频时，用户观看这个视频的时长的期望！利用该指标排序后再进行推荐，是完全符合YouTube的推荐场景和以观看时长为优化目标的设定的。</p>
+<p>【注】：</p>
+<ul>
+<li>为什么不直接预测观看视频的期望时长呢？一个明显的好处就是，分类的问题一般都比回归问题易于求解，且预测准确率更高。</li>
+<li>训练Weighted LR一般来说有两种办法：<ul>
+<li>将正样本按照weight做重复sampling，然后输入模型进行训练；</li>
+<li>在训练的梯度下降过程中，通过改变梯度的weight来得到Weighted LR。</li>
+</ul>
+</li>
+</ul>
+<h2 id="不同隐层的实验"><a href="#不同隐层的实验" class="headerlink" title="不同隐层的实验"></a>不同隐层的实验</h2><p>下表是在不同NN网络结构下的实验结果。如果用户对模型预估高分的反而没有观看，我们认为是预测错误的观看时长。weighted, per-user loss就是预测错误观看时长占总观看时长的比例。</p>
+<p>我们对网络结构中隐层的宽度和深度方面都做了测试，从下图结果看增加隐层网络宽度和深度都能提升模型效果。而对于1024—&gt;512—&gt;256这个网络，测试的不包含归一化后根号和方式的版本，loss增加了0.2%。而如果把weighted LR替换成LR，效果下降达到4.1%。</p>
+<p><img src="https://uploader.shimo.im/f/Gk6n6JZKfrlh75lQ.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片"></p>
+]]></content>
       <tags>
         <tag>推荐系统</tag>
       </tags>
