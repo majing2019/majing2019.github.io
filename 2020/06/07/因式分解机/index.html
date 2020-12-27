@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    因式分解机 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-因式分解机" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      因式分解机
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/06/07/%E5%9B%A0%E5%BC%8F%E5%88%86%E8%A7%A3%E6%9C%BA/" class="article-date">
+  <time datetime="2020-06-07T13:31:34.000Z" itemprop="datePublished">2020-06-07</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>最近在做推荐系统，Factorization Machine是比较经典的特征组合算法。论文原文在：<a href="https://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf" target="_blank" rel="noopener">https://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf</a>。写这篇博客其实借鉴了很多其他人的介绍，记录博客也只是为了自己总结学习使用，在文后参考文献中可以具体看看大佬们的讲解。</p>
+<a id="more"></a>
+<p>简单的说FM（Factorization Machine）是一类自动特征组合算法。相比于传统的SVM、LR等模型，FM可以自动的进行特征的组合运算用以替代一部分人工特征工程的工作，并且计算量可控，对于海量输入特征仍然可以尝试使用这个方法。另一方面，对于稀疏特征，SVM等模型相对难以取得特别好的效果，而FM应用分解的方法可以很好的处理稀疏的输入。</p>
+<p>相比较于其他的分解方法（SVD、PITF、FPMC等等）FM是一个更加通用化的特征组合与分解手段，其可以应用在多个场景下。总的来说FM有如下几个优势：</p>
+<ul>
+<li>适用于极端稀疏的输入</li>
+<li>线性的计算复杂度支持海量数据训练</li>
+<li>适用范围广</li>
+</ul>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在认识因式分解机前，我们需要了解下LR、GBDT和SVD，他们都是算法上的老前辈。实际上因式分解机是LR和SVD的交集。</p>
+<p>LR模型是CTR预估领域早期最成功的模型，大多工业推荐排序系统采取LR这种“线性模型+人工特征组合引入非线性”的模式。但是，LR模型最大的缺陷就是人工特征工程，耗时费力费人力资源，那么能否将特征组合的能力体现在模型层面呢？</p>
+<p><img src="https://uploader.shimo.im/f/Ovj9ILzGLyouwGJI.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>后来，Facebook 2014年的文章介绍了通过GBDT解决LR的特征组合问题，这篇文章可以说红极一时，随后Kaggle竞赛也有实践此思路。为什么GBDT+LR可以做特征组合呢？GBDT是由多棵回归树组成的树林，后一棵树利用前面树林的结果与真实结果的残差做为拟合目标。每棵树生成的过程是一棵标准的回归树生成过程，因此每个节点的分裂是一个自然的特征选择的过程，而多层节点的结构自然进行了有效的特征组合，也就非常高效的解决了过去非常棘手的特征选择和特征组合的问题。</p>
+<p><img src="https://uploader.shimo.im/f/TFyvXZHa6Zynq99Z.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>不过GBDT+LR也有它的缺点，比如要调的参数太多，而且只能使用batch的方式训练，比FTRL的方式慢很多。那么我们能不能在LR上直接增加两两特征组合(如下)呢？</p>
+<p><img src="https://uploader.shimo.im/f/u5FkjwtlMQIfER1s.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>其实上面的模型，跟带核函数的SVM有点像：</p>
+<ul>
+<li>核函数：$K(x, z)=&lt;\phi(x), \phi(z)&gt;=(<x, z>+1)^{2}$</li>
+<li>$\begin{aligned}<br>\phi(x)=&amp;\left(1, \sqrt{2} x_{1}, \cdots, \sqrt{2} x_{n}, x_{1}^{2}, \cdots, x_{n}^{2}\right.\\<br>&amp;\left.\sqrt{2} x_{1} x_{2}, \cdots, \sqrt{2} x_{1} x_{n}, \sqrt{2} x_{2} x_{3}, \cdots, \sqrt{2} x_{n-1} x_{n}\right)<br>\end{aligned}$</li>
+<li>输出：$\begin{aligned}<br>\hat{y}(x) &amp;=\sum_{i=1}^{n} w_{i} \phi\left(x_{i}\right)+w_{0} \\<br>&amp;=w_{0}+\sqrt{2} \sum_{i=1}^{n} w_{i} x_{i}+\sum_{i=1}^{n} w_{i i} x_{i}^{2}+\sqrt{2} \sum_{i=1}^{n-1} \sum_{j=i+1}^{n} w_{i j} x_{i} x_{i}<br>\end{aligned}$</li>
+</ul>
+<p>SVM看上去解决了特征组合的问题，但是要知道推荐算法使用的特征是非常稀疏的，如果在训练数据里两个特征并未同时在训练实例里见到过，也就是说xi和xj一起出现的次数是0，那么SVM是无法学会这个特征组合的权重的。这就会导致模型的泛化性变差。</p>
+<p>换个思路，我们还可以使用Matrix Factorization。MF（Matrix Factorization，矩阵分解）模型是个在推荐系统领域里资格很深的老前辈协同过滤模型了。核心思想是通过两个低维小矩阵（一个代表用户embedding矩阵，一个代表物品embedding矩阵）的乘积计算，来模拟真实用户点击或评分产生的大的协同信息稀疏矩阵，本质上是编码了用户和物品协同信息的降维模型。当训练完成，每个用户和物品得到对应的低维embedding表达后，如果要预测某个 $User_i$对 $Item_j$的评分的时候，只要它们做个内积计算 &lt;$User_i$, $Item_j$&gt;，这个得分就是预测得分。<img src="https://uploader.shimo.im/f/VtyuBcvIv1Rdjg3x.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>在求解SVD时，我们可以经过一些转换把它变成一个经典机器学习问题。比如在SVD++中，用户u对物品i的评分就可以表示为：<img src="https://uploader.shimo.im/f/A46bLMfNX9u3TJPs.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片">，其中x_j是物品向量，N(u)是和用户u有过隐式交互的物品集合。我们可以使用SGD来求解其中的参数。不过SVD++类的模型仅在非常受限的输入数据上工作，通用性不强。</p>
+<h1 id="FM基本原理"><a href="#FM基本原理" class="headerlink" title="FM基本原理"></a>FM基本原理</h1><p>为了很好地解决上面这些问题，FM闪亮登场。</p>
+<p><img src="https://uploader.shimo.im/f/l8dmvJtCSa8L3tzG.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>FM模型也直接引入任意两个特征的二阶特征组合，和SVM模型最大的不同，在于特征组合权重的计算方法。FM对于每个特征，学习一个大小为k的一维向量，于是，两个特征 $x_i$ 和$ x_j$ 的特征组合的权重值，通过特征对应的向量 $v_i$ 和 $v_j$ 的内积 $<v_i, v_j>$ 来表示。这本质上是在对特征进行embedding化表征，和目前非常常见的各种实体embedding本质思想是一脉相承的。</p>
+<p>那么为什么说FM的这种特征embedding模式，在大规模稀疏特征应用环境下比较好用？为什么说它的泛化能力强呢？即使在训练数据里两个特征并未同时在训练实例里见到过，意味着 $x_i$和$x_j $一起出现的次数为0，如果换做SVM的模式，是无法学会这个特征组合的权重的。但是因为FM是学习单个特征的embedding，并不依赖某个特定的特征组合是否出现过，所以只要特征 $x_i$ 和其它任意特征组合出现过，那么就可以学习自己对应的embedding向量。于是，尽管 $x_i$和$x_j$ 这个特征组合没有看到过，但是在预测的时候，如果看到这个新的特征组合，因为 $x_i 和 x_j 都能学会自己对应的embedding，所以可以通过内积算出这个新特征组合的权重。这是为何说FM模型泛化能力强的根本原因。</p>
+<p>其实本质上，这也是目前很多花样的embedding的最核心特点，就是从0/1这种二值硬核匹配，切换为向量软匹配，使得原先匹配不上的，现在能在一定程度上算密切程度了，具备很好的泛化性能。</p>
+<h2 id="FM和MF的关系"><a href="#FM和MF的关系" class="headerlink" title="FM和MF的关系"></a>FM和MF的关系</h2><p>本质上，MF模型是FM模型的特例，MF可以被认为是只有User ID 和Item ID这两个特征Fields的FM模型，MF将这两类特征通过矩阵分解，来达到将这两类特征embedding化表达的目的。而FM则可以看作是MF模型的进一步拓展，除了User ID和Item ID这两类特征外，很多其它类型的特征，都可以进一步融入FM模型里，它将所有这些特征转化为embedding低维向量表达，并计算任意两个特征embedding的内积，就是特征组合的权重，如果FM只使用User ID 和Item ID，你套到FM公式里，看看它的预测过程和MF的预测过程是一样的。</p>
+<h2 id="FM计算公式改进"><a href="#FM计算公式改进" class="headerlink" title="FM计算公式改进"></a>FM计算公式改进</h2><p>从FM的原始数学公式看，因为在进行二阶（2-order）特征组合的时候，假设有n个不同的特征，那么二阶特征组合意味着任意两个特征都要进行交叉组合，所以可以直接推论得出：FM的时间复杂度是n的平方。我们对它进行一些改进，以提升计算效率。改进总共分为4步：<img src="https://uploader.shimo.im/f/J0GT1Eb9pNgtwDAg.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>我们一步一步来看：</p>
+<ul>
+<li>step-1</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/qYQqWwDi3cUzP95S.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<ul>
+<li>step-2</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/PaQDlYN95Wwhai1H.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<ul>
+<li>step-3</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/IKhgTAhY8M3Zkn0B.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>第3步转换不是很直接，我们把它再分成两步：</p>
+<p>** step3-1</p>
+<p><img src="https://uploader.shimo.im/f/Mu6BAs0LZ4lfdmYG.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>** step3-2</p>
+<p><img src="https://uploader.shimo.im/f/vzPXMftsCQiFtYCO.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<ul>
+<li>step-4</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/J1rqEZoyHf8shZc4.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>通过上述四步的公式改写，可以看出在实现FM模型时，时间复杂度就降低到了$O(k*n)$了，而虽说看上去n还有点大，但是其实真实的推荐数据的特征值是极为稀疏的，就是说大量xi其实取值是0，意味着真正需要计算的特征数n是远远小于总特征数目n的，无疑这会进一步极大加快FM的运算效率。【注】：上式中，n是特征总数；$v_{i,f}$是指第i个特征的embedding的第f个元素，k是特征向量的维度，我们最后求解的参数是v_i，也就是第i个特征的k维embedding；x_i是第i个特征值。</p>
+<p>经过改写后，我们发现FM的第一个平方项等价于将FM的所有特征项的embedding的第i个元素进行累加，之后求内积。</p>
+<p>从上面的描述可以知道FM可以在线性的时间内进行预测。因此模型的参数可以通过梯度下降的方法（例如随机梯度下降）来学习，FM模型的梯度如下：$\frac{\partial}{\partial \theta} \hat{y}(x)=\left\{\begin{array}{ll}<br>1, &amp; \text {if } \theta \text { is } w_{0} \\<br>x_{i}, &amp; \text {if } \theta \text { is } w_{i} \\<br>x_{i} \sum_{j=1}^{n} v_{j, f} x_{j}-v_{i, f} x_{i}^{2}, &amp; \text { if } \theta \text { is } v_{i, f}<br>\end{array}\right.$</p>
+<p>由于$\sum_{j=1}^{n} v_{j, f} x_{j}$只与 f 有关，与 i 是独立的，可以提前计算出来，并且每次梯度更新可以在常数时间复杂度内完成，因此FM参数训练的复杂度也是 $O(kn)$。综上可知，FM可以在线性时间训练和预测，是一种非常高效的模型。FM的参数学习可以使用SGD或FTRL。</p>
+<h1 id="FM应用"><a href="#FM应用" class="headerlink" title="FM应用"></a>FM应用</h1><h2 id="如何用FM做召回"><a href="#如何用FM做召回" class="headerlink" title="如何用FM做召回"></a>如何用FM做召回</h2><h3 id="主要步骤"><a href="#主要步骤" class="headerlink" title="主要步骤"></a>主要步骤</h3><p>首先我们离线训练好一个FM模型，我们把每个特征(也就是每一列)对应训练好的embedding向量保存起来。我们其实可以把特征划分为三个子集合: User、Item、Context：</p>
+<p><img src="https://uploader.shimo.im/f/8Fisxk9RYyuYRKaC.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>如果将推荐系统做个很高层级的抽象的话，可以表达成学习如下形式的映射函数：$y=F(\text {User, Item, Context})$，有了这个函数，当以后新碰到一个Item，我们把用户特征，物品特征以及用户碰到这个物品时的上下文特征输入F函数，F函数会告诉我们用户是否对这个物品感兴趣。</p>
+<h3 id="具体实例"><a href="#具体实例" class="headerlink" title="具体实例"></a>具体实例</h3><p>假设一个电影评分系统，根据用户和电影的特征，预测用户对电影的评分。系统记录了用户(U)在特定时间(t)对电影(i)的评分(r)，评分为1，2，3，4，5。给定一个例子：</p>
+<p><img src="https://uploader.shimo.im/f/e7dNjqV307N6WbeX.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>把它转化成Feature Vector如下图：</p>
+<p><img src="https://uploader.shimo.im/f/s2KLZQR8W82VPaqW.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>每行表示目标 y^{(i)}与其对应的特征向量 x^{(i)}，蓝色区域表示了用户变量，红色区域表示了电影变量，黄色区域表示了其他隐含的变量，进行了归一化，绿色区域表示一个月内的投票时间，棕色区域表示了用户上一个评分的电影，最右边的区域是评分。</p>
+<p>通过训练FM，对于某个用户，我们可以把属于这个用户子集合的特征，查询离线训练好的FM模型对应的特征embedding向量，然后将n个用户子集合的特征embedding向量累加，形成用户兴趣向量U(如A)。类似的，我们也可以把每个物品，其对应的物品子集合的特征，查询离线训练好的FM模型对应的特征embedding向量，然后将m个物品子集合的特征embedding向量累加，形成物品向量I(如Movie TI + Other Movies rated TI + Last Movie rated TI)。</p>
+<p>用户兴趣向量U可以离线算好，然后更新线上的对应内容；物品兴趣向量I可以类似离线计算或者近在线计算，问题都不大。</p>
+<p>当用户登陆或者刷新页面时，可以根据用户ID从redis中取出其对应的兴趣向量embedding，然后和Faiss中存储的物料embedding做内积计算，按照得分由高到低返回得分Top K的物料作为召回结果。提交给第二阶段的排序模型进行进一步的排序。</p>
+<p>不过在这里我们要想一想，这种累加用户embedding特征向量以及累加物品embedding特征向量，之后做向量内积。这种算法符合FM模型的原则吗？和常规的FM模型是否等价？我们来分析一下。这种做法其实是在做用户特征集合U和物品特征集合I之间两两特征组合，是符合FM的特征组合原则的，考虑下列公式是否等价就可以明白了：</p>
+<ul>
+<li>$\left\langle\sum_{i} U_{i}, \sum_{j} I_{j}\right\rangle$</li>
+<li>$\sum_{i} \sum_{j}\left\langle U_{i}, I_{j}\right\rangle$</li>
+</ul>
+<p>当然，跟完全版本的FM比，我们没有考虑U和I特征集合内部任意两个特征的组合。也可以这么思考问题：在上文我们说过，FM为了提升计算效率，对公式进行了改写，改写后的高效计算公式的第一个平方项其实等价于：把所有特征embedding向量逐位累加成一个求和向量V，然后自己和自己做个内积操作$<V,V>$。这样等价于根据FM的原则计算了任意两个特征的二阶特征组合了。而上面描述的方法，和标准的FM的做法其实是一样的，区别无非是将特征集合划分为两个子集合U和I，分别代表用户相关特征及物品相关特征。而上述做法其实等价于在用户特征和物品特征之间做两两特征组合，只是少了U内部之间特征，及I内部特征之间的特征组合而已。一般而言，其实我们不需要做U内部特征之间以及I内部特征之间的特征组合，对最终效果影响很小。于是，沿着这个思考路径，我们也可以推导出上述做法基本和FM标准计算过程是等价的。</p>
+<h3 id="增加上下文信息"><a href="#增加上下文信息" class="headerlink" title="增加上下文信息"></a>增加上下文信息</h3><p>之所以把上下文特征单独拎出来，是因为它有自己的特点，有些上下文特征是近乎实时变化的，比如刷新微博的时间，再比如对于美团嘀嘀这种对地理位置特别敏感的应用，用户所处的地点可能随时也在变化，而这种变化在召回阶段就需要体现出来。所以，上下文特征是不太可能像用户特征离线算好存起来直接使用的，而是用户在每一次刷新可能都需要重新捕获当前的特征值。动态性强是它的特点。我们可以通过下面的步骤将上下文信息融入召回模型中。</p>
+<p><img src="https://uploader.shimo.im/f/0HdY0UOSkvyb0vHP.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>首先，由于上下文特征的动态性，所以给定用户UID后，可以在线查询某个上下文特征对应的embedding向量，然后所有上下文向量求和得到综合的上下文向量C。</p>
+<p><img src="https://uploader.shimo.im/f/vPNU5Ju9T6i86Ghs.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>然后，将在线算好的上下文向量C和这个用户的事先算好存起来的用户兴趣向量U进行内积计算Score=<U,C>。这个数值代表用户特征和上下文特征的二阶特征组合得分，算好备用。至于为何这个得分能够代表FM中的两者（U和C）的特征组合，其实道理和上面讲的U和I做特征组合道理是一样的。</p>
+<p><img src="https://uploader.shimo.im/f/HNjVChxiK3UOxIFW.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>再然后，将U和C向量累加求和，利用（U+C）去Faiss通过内积方式取出Top K物品，这个过程和极简版是一样的，无非查询向量由U换成了（U+C）。通过这种方式取出的物品同时考虑到了用户和物品的特征组合<U,I>，以及上下文和物品的特征组合<C,I>。</p>
+<p>假设返回的Top K物品都带有内积的得分Score1，再考虑上一步<U,C>的得分Score，将两者相加对物品重排序（<U,C>因为跟物品无关，所以其实不影响物品排序，但是会影响最终得分，FM最外边的Sigmoid输出可能会因为加入这个得分而发生变化），就得到了最终结果，而这个最终结果考虑了U/I/C两两之间的特征组合。</p>
+<h2 id="FM与多路召回"><a href="#FM与多路召回" class="headerlink" title="FM与多路召回"></a>FM与多路召回</h2><p>目前工业界的推荐系统，在召回阶段，一般都采取多路召回策略，常用的召回策略，基本都会包含，比如兴趣标签，兴趣Topic，兴趣实体，协同过滤，热门，相同地域等，多者几十路召回，少者也有7／8路召回。</p>
+<p><img src="https://uploader.shimo.im/f/74H6QXd69EYsVM6m.png!thumbnail?fileGuid=TtTYVTgdVCdKKXQ6" alt="图片"></p>
+<p>对于每一路召回，会拉回K条相关物料，这个K值是个超参，需要通过线上AB测试来确定合理的取值范围。如果召回路数太多，对应的超参就多，这些超参组合空间很大。另外，如果是多路召回，这个超参往往不太可能是用户个性化的，而是对于所有用户，每一路拉回的数量都是固定的，但是不同用户也许对于每一路内容感兴趣程度是不一样的，更感兴趣的那一路就应该多召回一些，所以如果能把这些超参改为个性化配置是很好的，但是多路召回策略下不是很好做。</p>
+<p>在召回阶段，能否用一个统一的模型把多路召回改造成利用单个模型，单路召回的模式？FM就可以解决这个问题。我们先来说一些多路召回需要解决哪些问题：</p>
+<ul>
+<li>不同路的item召回得分不可比</li>
+<li>每一路召回的item个数k是个超参，需要不断调整</li>
+<li>做recall和ranking的是两拨人，如果新增了一路召回和做ranking的人不知道，导致新增一路的召回特征没能加到ranking特征中，那么即便召回来了，也排不到前面去</li>
+</ul>
+<p>那么用FM就能解决上面这些问题吗？答案是可以的。比如如果有的用户喜欢看热门的内容，那么热门内容在召回阶段返回的比例就高，这样的参数完全用FM进行个性化。在比如新增一路召回时，就是新增了一路特征，对ranking来说也好加进去。</p>
+<h1 id="FM的引申——FFM"><a href="#FM的引申——FFM" class="headerlink" title="FM的引申——FFM"></a>FM的引申——FFM</h1><p>FFM（Field-aware Factorization Machine）最初的概念来自Yu-Chin Juan与其比赛队员，是他们借鉴了来自Michael Jahrer的论文中的field概念提出了FM的升级版模型。通过引入field的概念，FFM把相同性质的特征归于同一个field。以广告分类为例，“Day=26/11/15”、“Day=1/7/14”、“Day=19/2/15”这三个特征都是代表日期的，可以放到同一个field中。同理，商品的末级品类编码生成了550个特征，这550个特征都是说明商品所属的品类，因此它们也可以放到同一个field中。简单来说，同一个categorical特征经过One-Hot编码生成的数值特征都可以放到同一个field，包括用户性别、职业、品类偏好等。在FFM中，每一维特征x_i，针对其它特征的每一种field f_j，都会学习一个隐向量 v_{i,f_j}。因此，隐向量不仅与特征相关，也与field相关。也就是说，“Day=26/11/15”这个特征与“Country”特征和“Ad_type”特征进行关联的时候使用不同的隐向量，这与“Country”和“Ad_type”的内在差异相符，也是FFM中“field-aware”的由来。</p>
+<p>假设样本的n个特征属于f个field，那么FFM的二次项有nf个隐向量。而在FM模型中，每一维特征的隐向量只有一个。FM可以看作FFM的特例，是把所有特征都归属到一个field时的FFM模型。根据FFM的field敏感特性，可以导出其模型方程：$y(\mathbf{x})=w_{0}+\sum_{i=1}^{n} w_{i} x_{i}+\sum_{i=1}^{n} \sum_{j=i+1}^{n}\left\langle\mathbf{v}_{i, f_{j}}, \mathbf{v}_{j, f_{i}}\right\rangle x_{i} x_{j}$</p>
+<p>其中，f_j 是第j个特征所属的field。如果隐向量的长度为k，那么FFM的二次参数有nfk 个，远多于FM模型的nk 个。此外，由于隐向量与field相关，FFM二次项并不能够化简，其预测复杂度是O(kn^2)。</p>
+<p>有关于FFM的具体实现细节，美团的这篇博客写得很好，可以参考：<a href="https://tech.meituan.com/2016/03/03/deep-understanding-of-ffm-principles-and-practices.html" target="_blank" rel="noopener">https://tech.meituan.com/2016/03/03/deep-understanding-of-ffm-principles-and-practices.html</a>。</p>
+<h1 id="代码及参考文献"><a href="#代码及参考文献" class="headerlink" title="代码及参考文献"></a>代码及参考文献</h1><p>可阅读并参考的代码：</p>
+<ul>
+<li><a href="https://github.com/hibayesian/spark-fm/blob/master/src/main/scala/org/apache/spark/ml/fm/FactorizationMachines.scala" target="_blank" rel="noopener">https://github.com/hibayesian/spark-fm/blob/master/src/main/scala/org/apache/spark/ml/fm/FactorizationMachines.scala</a></li>
+<li><a href="https://github.com/shenweichen/DeepMatch/blob/master/deepmatch/models/fm.py" target="_blank" rel="noopener">https://github.com/shenweichen/DeepMatch/blob/master/deepmatch/models/fm.py</a></li>
+</ul>
+<p>参考文献：</p>
+<ul>
+<li>[<a href="https://zhuanlan.zhihu.com/p/58160982](" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/58160982](</a></li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/06/07/%E5%9B%A0%E5%BC%8F%E5%88%86%E8%A7%A3%E6%9C%BA/" data-id="ckj76izau000snywvco8ug517"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" rel="tag">推荐系统</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+      <a href="/2020/06/15/YouTube%E5%8F%8C%E5%A1%94DNN/" class="article-nav-link">
+        <strong class="article-nav-caption">前一篇</strong>
+        <div class="article-nav-title">
+          
+            YouTube双塔DNN
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2020/05/17/CRF%E5%AD%A6%E4%B9%A0%E2%80%94%E2%80%94%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">CRF学习——基础学习</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
