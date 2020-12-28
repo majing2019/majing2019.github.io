@@ -3042,8 +3042,8 @@
 <h3 id="进行分类"><a href="#进行分类" class="headerlink" title="进行分类"></a>进行分类</h3><p>使用SVM分类。</p>
 ]]></content>
       <tags>
-        <tag>论文阅读</tag>
         <tag>机器翻译</tag>
+        <tag>论文阅读</tag>
       </tags>
   </entry>
   <entry>
@@ -3287,8 +3287,8 @@
 </ul>
 ]]></content>
       <tags>
-        <tag>文本风格迁移</tag>
         <tag>论文阅读</tag>
+        <tag>文本风格迁移</tag>
       </tags>
   </entry>
   <entry>
@@ -3712,6 +3712,142 @@
 <li><a href="https://github.com/sebastianruder/NLP-progress" target="_blank" rel="noopener">https://github.com/sebastianruder/NLP-progress</a></li>
 </ul>
 ]]></content>
+  </entry>
+  <entry>
+    <title>论文阅读：《Uniﬁed Language Model Pre-training for Natural Language Understanding and Generation》</title>
+    <url>/2019/07/15/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AUni%EF%AC%81ed-Language-Model-Pre-training-for-Natural-Language-Understanding-and-Generation%E3%80%8B/</url>
+    <content><![CDATA[<p>最近阅读了ULM的论文，在此总结一下。</p>
+<a id="more"></a>
+<h1 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h1><p>本文提出一个能够同时处理自然语言理解和生成任务UNIﬁed pre-trained Language Model (UNILM) 模型。UNILM模型的预训练是基于3个目标：单向LM(包括从左到右和从右到左)、双向LM和sequence-to-sequence LM。该模型采用一个共享参数的Transformer网络的同时还使用了特定的self-attention masks用以控制预测时候所用到的上下文信息。在下游任务微调时候，可以将UNILM模型视为单向的encoder、双向的encoder或者sequence-to-sequence模型，以适应不同的下游任务（自然语言理解和生成任务）。</p>
+<p>在实验过程中，UNILM与BERT模型在在GLUE、SQuAD 2.0和CoQA数据集上进行了综合对比。本文模型在3项自然语言生成任务上刷新了记录，其中包括CNN/DailyMail 摘要生成（ROUGE-L为40.63，提升了2.16）、CoQA的问题生成（F1值为82.5，提升了37.1）、SQuAD的问题生成（BLEU-4为22.88，提升了6.5）。</p>
+<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>预训练语言模型在各个自然语言处理任务上的成果是有目共睹的，在这里就不多说了。预训练语言模型之所以有效是因为在海量语料数据集上学习到能够基于上下文的文本表征信息预测word tokens。在下游的任务中仅需要微调即可。</p>
+<p>一般预训练的语言模型有以下4种预训练目标：</p>
+<p><img src="https://uploader.shimo.im/f/C1rKOEHGKuvOC2hB.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<h2 id="单-双向语言模型"><a href="#单-双向语言模型" class="headerlink" title="单/双向语言模型"></a>单/双向语言模型</h2><p>单向语言模型相当于把训练语料通过下述条件概率分布的方式“记住”了：$p\left(x_{1}, x_{2}, x_{3}, \ldots, x_{n}\right)=p\left(x_{1}\right) p\left(x_{2} \mid x_{1}\right) p\left(x_{3} \mid x_{1}, x_{2}\right) \ldots p\left(x_{n} \mid x_{1}, \ldots, x_{n-1}\right)$</p>
+<p>我们一般说的“语言模型”，就是指单向的（更狭义的只是指正向的）语言模型。语言模型的关键点是要防止看到“未来信息”。如上式，预测x1的时候，是没有任何外部输入的；而预测x2的时候，只能输入x1，预测x3的时候，只能输入x1,x2；依此类推。如下图所示：</p>
+<p><img src="https://uploader.shimo.im/f/LGJnDlIU28GGBk9X.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>比如ELMo是基于LSTM的两个单向语言模型的拼接：</p>
+<p><img src="https://uploader.shimo.im/f/Wl3UF6yI9Jqs1Vcb.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>比如GPT预测文本序列是基于Transformer从左到右逐个word预测：</p>
+<p><img src="https://uploader.shimo.im/f/6FHuHR8GzMbtdcXL.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>BERT使用双向的Transformer encoder，融合双向的上下文信息，从而预测被masked掉的words：</p>
+<p><img src="https://uploader.shimo.im/f/spsgkhvyGXdwzRuX.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>此外，BERT能够确切地对一组文本对的关系进行建模，这已经被证明是对许多成对的自然语言理解任务（如自然语言推理）是有益的。尽管BERT在多个自然语言理解任务上提升显著，但是其双向的天然特性，使其在自然语言生成任务上困难重重。</p>
+<h2 id="乱序语言模型"><a href="#乱序语言模型" class="headerlink" title="乱序语言模型"></a>乱序语言模型</h2><p>乱序语言模型是XLNet提出来的概念，它主要用于XLNet的预训练上。它要建模的是如下概率：</p>
+<p>$\begin{aligned}<br>p\left(x_{1}, x_{2}, x_{3}, \ldots, x_{n}\right) &amp;=p\left(x_{1}\right) p\left(x_{2} \mid x_{1}\right) p\left(x_{3} \mid x_{1}, x_{2}\right) \ldots p\left(x_{n} \mid x_{1}, \ldots, x_{n}\right) \\<br>&amp;=p\left(x_{3}\right) p\left(x_{1} \mid x_{3}\right) p\left(x_{2} \mid x_{1}, x_{3}\right) \ldots p\left(x_{n} \mid x_{1}, \ldots, x_{n}\right) \\<br>&amp;=\ldots \\<br>&amp;=p\left(x_{n-1}\right) p\left(x_{1} \mid x_{n-1}\right) p\left(x_{n} \mid x_{n-1}, x_{1}\right) \ldots p\left(x_{2} \mid x_{n-1}, x_{1}, \ldots, x_{3}\right)<br>\end{aligned}$</p>
+<p>如何做到的呢？假设要生成：<s> → 迎 → 京 → 你 → 欢 → 北 → <e>，则使用如下mask</p>
+<p><img src="https://uploader.shimo.im/f/r1Px7WVZ0bO90Q8G.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>如果是正向语言模型则是：</p>
+<p><img src="https://uploader.shimo.im/f/qiGoUBtlrGy8ANaD.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>这个Mask到底是啥？算Attention的时候，如果Mask==inf对输出就不产生贡献，而Transformer又是完全凭借的Attention计算的，因而可以产生多种灵活的Mask。</p>
+<h2 id="Seq2Seq语言模型"><a href="#Seq2Seq语言模型" class="headerlink" title="Seq2Seq语言模型"></a>Seq2Seq语言模型</h2><p>假如输入是“你想吃啥”，目标句子是“白切鸡”，那UNILM将这两个句子拼成一个：[CLS] 你 想 吃 啥 [SEP] 白 切 鸡 [SEP]。经过这样转化之后，最简单的方案就是训练一个语言模型，然后输入“[CLS] 你 想 吃 啥 [SEP]”来逐字预测“白 切 鸡”，直到出现“[SEP]”为止，即如下图：</p>
+<p><img src="https://uploader.shimo.im/f/4XyL6NGtnzazRzo8.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>模型结构大概如下：</p>
+<p><img src="https://uploader.shimo.im/f/kBCZBTo8Y0vsqS7I.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>本文所提出的的UNILM模型能够同时处理自然语言理解任务也能够处理自然语言生成任务。UNILM是一个深度的Transformer网络，其预训练过程采用3种无监督的语言模型目标：双向LM、单向LM和Sequence-to-Sequence LM：</p>
+<p><img src="https://uploader.shimo.im/f/CKvMASq5OvXhHAQU.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>通过加入seq2seq LM 和 Left-to-right 使得模型可以进行自然语言生成任务。Sequence-to-Sequence LM中第一个sequence称为source，第2个sequence称为target。target sequence的上下文是第1个sequence和其左边的words组成。</p>
+<p>本文提出的UNILM模型有以下3个优点：</p>
+<ul>
+<li>统一的预训练流程，使得仅仅使用一个Transformer语言模型即可。该Transformer模型在不同的LM（上述Table 2中的3个LM）上共享参数，这就无需在多个LM上分别训练和配置。</li>
+<li>多个LM之间的参数共享使得学习到的文本表征具有更强的泛化能力。在不同的语言模型目标上联合优化，使得上下文在不同方式中被使用，也减缓了在单一LM上的过拟合。</li>
+<li>除了可以应用到自然语言理解任务上，本文模型还能够作为一个sequence-to-sequence LM来处理自然语言生成任务，如摘要生成和问题生成。</li>
+</ul>
+<p>UNILM的预训练是基于大量语料，论文用如下实验阐述了其效果：</p>
+<ul>
+<li>UNILM作为一个双向encoder：与BERT在GLUE数据集、SQuAD 2.0和CoQA的抽取式问答对比， 此时的UNILM作为一个双向的encoder。</li>
+<li>UNILM作为一个sequence-to-sequence模型：在摘要生成(CNN/DailyMail)、问题生成(SQuAD)和生成式问答(CoQA)中UNILM作为一个sequence-to-sequence模型</li>
+</ul>
+<h1 id="模型整体框架"><a href="#模型整体框架" class="headerlink" title="模型整体框架"></a>模型整体框架</h1><p>给定输入sequence x=x1 .. x|x|， 通过多层的Transformer网络对每个token得到一个带有上下文信息的向量表征。输入tokens的表征联合word embedding、位置embedding和text segment。再将输入向量输入到多层Transformer网络中，利用其中的self-attention机制联合整个输入sequence计算得到文本的表征。</p>
+<p>如下图所示，统一的语言模型预训练在多个无监督语言模型目标（单向LM、双向LM和Sequence-to-Sequence）中共享Transformer网络参数。为了待预测token的上下文范围，本文在self-attention中使用了不同的masks。换句话说，本文使用mask方式来控制待预测token所考虑到的上下文。</p>
+<p><img src="https://uploader.shimo.im/f/HKJ605Osbn530Nn0.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<ul>
+<li>当训练双向语言模型的时候，前后的单词都可以被看到，</li>
+<li>训练单向语言模型的时候，只有一个方向的可以被看到</li>
+<li>当训练 seq-seq 模型的时候，输入和输出的一个方向可以被看到，</li>
+<li>具体的实现是通过 mask 掉对应位置的 attention 值导致对应位置的信息丢失。</li>
+<li>具体的实现是在 softmax 中加入了 M(i,j)值，表示位置i是否需要被j 关注到。<ul>
+<li>$\mathbf{H}^{l}=\text { Transformer } l\left(\mathbf{H}^{l-1}\right)$</li>
+<li>$\mathbf{Q}=\mathbf{H}^{l-1} \mathbf{W}_{l}^{Q}, \quad \mathbf{K}=\mathbf{H}^{l-1} \mathbf{W}^{K}$</li>
+<li>$\mathbf{M}_{i j}=\left\{\begin{array}{ll}<br>0, &amp; \text { allow to attend } \\<br>-\infty, &amp; \text { prevent from attending }<br>\end{array}\right.$</li>
+<li>$\mathbf{A}_{l}=\operatorname{softmax}\left(\begin{array}{c}<br>\mathrm{QK}^{\top} \\<br>\sqrt{d k}<br>\end{array}+\mathbf{M}\right)\left(\mathbf{H}^{l-1} \mathbf{V}_{l}\right)$</li>
+</ul>
+</li>
+</ul>
+<h1 id="模型输入"><a href="#模型输入" class="headerlink" title="模型输入"></a>模型输入</h1><p>对于输入的词序列xxx，在起始位置添加一个预定义的[SOS] token作为标志符。[SOS] token对应的输出向量可以作为整个输入的表征。此外，在每个segment的末尾添加一个预定义的标志符[EOS]。这个[EOS] token用来表示segments之间的边界。其作用不仅仅是自然语言理解任务中的句子边界，还作为自然语言生成任务中生成word的停止符。</p>
+<p>输入表征与BERT相同，文本通过WordPiece被tokenized为subword。例如，单词”forecasted”被分割为”forecast”和”##ed”，其中”##”表明该部分是属于某个word。每个输入的token，其向量表征是token embedding、position embedding和segment embedding三者之和。本文使用绝对位置embedding。segment embedding是为了区分一对文本中的不同segment。第1个segment和第2个segment分别有不同的segment embedding，即为了区分句子对中的2个句子。由于不同LM目标使用不同的segment embeddings，所以可以作为LM辨识器。</p>
+<h1 id="主要计算过程"><a href="#主要计算过程" class="headerlink" title="主要计算过程"></a>主要计算过程</h1><p>给定输入向量，先将整理为H，再将其输入到一个L层的Transformer网络中对输入进行encode：</p>
+<ul>
+<li>输入向量：$\{\mathbf{x} i\}_{i=1}^{|x|}$</li>
+<li>整理后的向量：$\mathbf{H}^{0}=[\mathbf{x} 1, \cdots, \mathbf{x}|x|]$</li>
+<li>encode后的向量：$\mathbf{H}^{l}=\text { Transformer } l\left(\mathbf{H}^{l-1}\right)$</li>
+</ul>
+<p>在每个Transformer Block中，有多头self-attention以聚合之前的输出向量。对于第l−th层的Transformer，其中一个self-attention head Al的计算过程如下：</p>
+<ul>
+<li>$\mathbf{Q}=\mathbf{H}^{l-1} \mathbf{W}_{l}^{Q}, \quad \mathbf{K}=\mathbf{H}^{l-1} \mathbf{w}_{l}^{K}$</li>
+<li>$\mathbf{M}_{i j}=\left\{\begin{array}{ll}<br>0, &amp; \text { allow to attend } \\<br>-\infty, &amp; \text { prevent from attending }<br>\end{array}\right.$</li>
+<li>$\mathbf{A}_{l}=\operatorname{softmax}\left(\begin{array}{c}<br>\mathrm{QK}^{\top} \\<br>\sqrt{d k}<br>\end{array}+\mathbf{M}\right)\left(\mathbf{H}^{l-1} \mathbf{V}_{l}\right)$</li>
+</ul>
+<p>Mask矩阵控制着tokens之间是否存在被attended。不同的mask 矩阵M控制attent到不同的上下文，具体如整体框架图所示，在双向LM中，mask矩阵的值为0，表示所有的tokens之间都能够相互注意到。</p>
+<ul>
+<li>使用「mask」替换单词，模型拿到对应位置的输出猜测对应单词<ul>
+<li>在对输入进行mask的时候，是选取一个WordPiece tokens随机mask，所谓的mask操作是用预定义的token[MASK]对其进行替换。再将输入到Transformer网络中计算得到输出向量，再将输出向量输入到softmax分类器中以预测被mask掉的token。</li>
+</ul>
+</li>
+<li>交叉熵损失<ul>
+<li>NILM模型的参数是通过最小化预测的tokens和原始真实tokens之间的交叉熵损失学习到的。</li>
+</ul>
+</li>
+<li>单向LM<ul>
+<li>单向LM包括从左到右和从右到左的LM。在单向LM的预训练过程中，输入仅仅使用单个segment。以从左都右的LM为例，每个token都是基于其左边的上文及其自身的encode结果。为预测x1x2[MASK]x4 ，只有x1、x2及其自身[MASK]会被使用到。其具体实现是通过三角矩阵形式的self-attention mask M。从框架图中可以看出上三角矩阵为深灰色，值为无穷大(表示阻塞，token之间没有行方向的token注意不到列方向的token)，其他位置为浅灰色，值为0(表示可以注意到早期，即左边的token)</li>
+</ul>
+</li>
+<li>双向LM<ul>
+<li>Bert</li>
+</ul>
+</li>
+<li>Sequence-to-Sequence LM<ul>
+<li>sequence-to-sequence LM的输入分为2个segments，如框架图所示，第一个segment(即source segment)在整个segment内部能够attend到任何的tokens，第2个segment(target segment)中的tokens只能attend到target segment中上文tokens及其自身，还有source segment。框架图中的sequence-to-sequence LM的self-attention mask可以看出，左边的mask 矩阵设置为全0，对应的source segment，即所有的token之间是可以相互注意到的。右上角被设置为无穷大，使得source segment看不到target segment；往下的右上角值设置为无穷大，其他值为0是实现target segment只能注意到上文，忽略其下文。</li>
+</ul>
+</li>
+<li>24层1024隐藏单元，16 头 attention，总模型参数量 340M</li>
+<li>使用 bert做初始化</li>
+<li>Mask的标准：<ul>
+<li>输入数据中随机选择15%的词用于预测，这15%的词中，<ul>
+<li>80%的词向量输入时被替换为<MASK></li>
+<li>10%的词的词向量在输入时被替换为其他词的词向量</li>
+<li>另外10%保持不动</li>
+</ul>
+</li>
+<li>这样一来就相当于告诉模型，我可能给你答案，也可能不给你答案，也可能给你错误的答案，有<MASK>的地方我会检查你的答案，没<MASK>的地方我也可能检查你的答案，所以<MASK>标签对你来说没有什么特殊意义，所以无论如何，你都要好好预测所有位置的输出。</li>
+</ul>
+</li>
+<li>三种多任务学习，一个batch，比例按照 1：1：1<ul>
+<li>预训练目标函数是多个语言模型的平均似然的求和。在每个训练batch中，1/3的时间使用双向LM目标，1/3的时间使用sequence-to-sequence LM作为目标，从左到右和从右到左的LM目标各自占1/6。</li>
+</ul>
+</li>
+</ul>
+<h1 id="Fine-tunning"><a href="#Fine-tunning" class="headerlink" title="Fine-tunning"></a>Fine-tunning</h1><p>Fine-tunning过程随着下游任务不同而有变化，但是大致的思路是：</p>
+<ul>
+<li>对于序列生成任务， 输入格式为 [SOS] S1 [EOS] S2 [EOS]，按照 15%的概率随机 mask S2 [EOS]这个部分，模型预测对应位置</li>
+<li>其他任务参考 bert</li>
+</ul>
+<h1 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h1><h2 id="摘要生成"><a href="#摘要生成" class="headerlink" title="摘要生成"></a>摘要生成</h2><p>数据集： CNN/日常邮件摘要 该数据集包含带有多句摘要（平均 3.75 个句子或 56 个词）的在线新闻文章（平均 781 个词）。经处理的版本包含 287226 个训练对、13368 个验证对和 11490 个测试对。模型基于 ROUGE-1、ROUGE-2 和 ROUGE-L 进行评估</p>
+<p>按照序列生成任务进行 fine-tunning，在解码期间，使用beam search，并且删除重复的三元组，并在开发集上调整最大的摘要长度。</p>
+<p><img src="https://uploader.shimo.im/f/Govt93RY7PqrC3SC.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<h2 id="阅读理解式QA"><a href="#阅读理解式QA" class="headerlink" title="阅读理解式QA"></a>阅读理解式QA</h2><p>finetuning 的时候，answer每个位置对应的输出，经过一个 softmax 分类器，输出是否是答案的开始或者结尾，梯度下降，测试的时候根据分类器输出得到answer。</p>
+<p><img src="https://uploader.shimo.im/f/XUFQq7f9EwmauEQ4.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>精准匹配度（Exact Match，EM）：计算预测结果与标准答案是否完全匹配。</p>
+<p>模糊匹配度（F1）：计算预测结果与标准答案之间字级别的匹配程度。</p>
+<h2 id="问题生成"><a href="#问题生成" class="headerlink" title="问题生成"></a>问题生成</h2><p>输入形式：[SOS] passage [SEP] answer [EOS] question [EOS] ， question 前面的作为第一个句子，question 作为第二个句子，进行 seq2seq 式训练，生成</p>
+<p><img src="https://uploader.shimo.im/f/iCukrEhKMz7NTGct.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<h2 id="GLUE-任务"><a href="#GLUE-任务" class="headerlink" title="GLUE 任务"></a>GLUE 任务</h2><p><img src="https://uploader.shimo.im/f/4jbWbOQfTBIGQSpW.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+<p>如果不算预训练的时候加入的数据，那么就是在没有使用外部数据的情况下，一些数据集上超过了 bert，是很厉害的。</p>
+<h2 id="生成回复"><a href="#生成回复" class="headerlink" title="生成回复"></a>生成回复</h2><p><img src="https://uploader.shimo.im/f/MaaTFW0WYW1NpdUc.png!thumbnail?fileGuid=WcPg8j9TtWrJjPKw" alt="图片"></p>
+]]></content>
+      <tags>
+        <tag>论文阅读</tag>
+      </tags>
   </entry>
   <entry>
     <title>Hello Edge: Keyword spotting on Microcontrollers论文源码阅读及实验结论</title>
