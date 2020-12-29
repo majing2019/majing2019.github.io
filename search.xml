@@ -15,7 +15,7 @@
 <li>混合相交的线性模型 hybrid LinUCB</li>
 </ul>
 <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>人生中有很多选择问题，当每天中午吃饭的时候，需要选择吃饭的餐馆，那么就面临一个选择，是选择熟悉的好吃的餐馆呢，还是冒风险选择一个没有尝试过的餐馆呢。同样的，推荐系统处处也面临着这样的选择，是推荐一个已经熟悉的点击率很高的物品呢，还是选择一个新的物品呢。这些都可以泛化成一个经典问题，多臂老虎机问题，也是一个研究很广的问题。</p>
-<p><img src="https://uploader.shimo.im/f/DZTIKX87kwnUnXlY.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/DZTIKX87kwnUnXlY.png%21thumbnail%3FfileGuid%3DRR3Vv6gjtQwp9kcW.png" alt="图片"></p>
 <p>下面介绍一些常用的bandit算法。</p>
 <h2 id="Epsilon-Greedy-算法"><a href="#Epsilon-Greedy-算法" class="headerlink" title="Epsilon-Greedy 算法"></a>Epsilon-Greedy 算法</h2><ul>
 <li>选一个 (0,1) 之间较小的数作为 epsilon</li>
@@ -34,7 +34,7 @@
 <li>每个臂都维护一个 beta 分布的参数。每次试验后，选中一个臂，摇一下，有收益则该臂的 wins 增加 1，否则该臂的 lose 增加 1。</li>
 <li>每次选择臂的方式是：用每个臂现有的 beta 分布产生一个随机数 b，选择所有臂产生的随机数中最大的那个臂去摇。</li>
 </ul>
-<p><img src="https://uploader.shimo.im/f/YTaQcWZ7tRyeCOeM.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/YTaQcWZ7tRyeCOeM.png%21thumbnail%3FfileGuid%3DRR3Vv6gjtQwp9kcW.png" alt="图片"></p>
 <ul>
 <li>注：<ul>
 <li>beta分布中的两个参数可以根据先验知识去设置，比如物料平均点击率3%， 那么我可以设置beta分布参数α=3，β=97，这样更贴近真实情况，可能更有效</li>
@@ -101,10 +101,10 @@
 <p>这种回归拟合粗看似乎跟强化学习没有什么关系，因为已经知道了历史数据统计出来的预期收益，直接就能训练出参数$\theta_{a}^{*}$，那么选择下一个动作（推荐哪个新闻），直接就比较预测值就可以了。然而，在采取动作以后，还是要收集反馈（用户点击情况），并纳入历史数据中，以更新预期收益的值，并用于下一次动作的选择。这是强化学习与普通的监督学习最大的区别，即根据环境的反馈进行学习，而没有固定的样本数据和对应的标签值。而（1）式中左边的E作为Label，这个Label其实就是环境的反馈。</p>
 <p>在将线性回归与MAB结合后，没有解决探索/利用问题，即此时选择下一个动作完全是根据历史最优，选择了历史看来收益最好的动作。因此，论文采用了UCB的架构，利用下面的公式（另一篇论文Exploring compact reinforcement-learning representations with linear regression，这里将其作为一个定理使用）：$\left|\mathbf{x}_{t, a}^{\top} \hat{\boldsymbol{\theta}}_{a}-\mathbf{E}\left[r_{t, a} \mid \mathbf{x}_{t, a}\right]\right| \leq \alpha \sqrt{\mathbf{x}_{t, a}^{\top}\left(\mathbf{D}_{a}^{\top} \mathbf{D}_{a}+\mathbf{I}_{d}\right)^{-1} \mathbf{x}_{t, a}}$构造了UCB的置信区间上限。在此基础上，给出了下面的动作选择依据公式：$a_{t} \stackrel{\text { def }}{=} \arg \max _{a \in \mathcal{A}_{t}}\left(\mathbf{x}_{t, a}^{\top} \hat{\boldsymbol{\theta}}_{a}+\alpha \sqrt{\mathbf{x}_{t, a}^{\top} \mathbf{A}_{a}^{-1} \mathbf{x}_{t, a}}\right)$，其中$\alpha=1+\sqrt{\ln (2 / \delta) / 2}$，$\mathbf{A}_{a} \stackrel{\text { def }}{=} \mathbf{D}_{a}^{\top} \mathbf{D}_{a}+\mathbf{I}_{d}$也即是，选择括号内部分得分最大的那个arm进行执行。括号内左边就是回归拟合的预期收益，右边是置信区间的上限。</p>
 <p>在这个基本思想下，算法的伪代码可以写成：</p>
-<p><img src="https://uploader.shimo.im/f/ftbFJydd56deNydl.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/3.png" alt="图片"></p>
 <h2 id="LinUCB-with-Hybrid-Linear-Model"><a href="#LinUCB-with-Hybrid-Linear-Model" class="headerlink" title="LinUCB with Hybrid Linear Model"></a>LinUCB with Hybrid Linear Model</h2><p>前面讲的是LinUCB的一种实现方式，对于每个臂维护theta参数。当我们希望解决共享类context的需求时，即一个用户可能有偏好，只喜欢体育，那么这个参数就应该被所有待推荐给他的文章池（arm池）所共享。即在t时刻为该用户推荐文章时，所有待选文章（arm）都要用到这个context。因此，作者引入了下面的公式：$\mathbf{E}\left[r_{t, a} \mid \mathbf{x}_{t, a}\right]=\mathbf{z}_{t, a}^{\top} \boldsymbol{\beta}^{<em>}+\mathbf{x}_{t, a}^{\top} \boldsymbol{\theta}_{a}^{</em>}$。其中z为共享类context（当前用户和文章的共享类特征的组合向量），而$\beta$为待学习的权重，可以看到它没有下标，即所有arm（所有待选文章）都只学习且采用这一个权重，从而实现共享类context的信息交互。与之相对的是权重$\theta_{a}$，每个arm都会学到一个，各arm之间不会共享context的信息。</p>
 <p>在这个思想下，算法的伪代码可以写成：</p>
-<p><img src="https://uploader.shimo.im/f/srzfEtwkkTst54Ev.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/4.png" alt="图片"></p>
 <h2 id="评估方法"><a href="#评估方法" class="headerlink" title="评估方法"></a>评估方法</h2><p>由于是探测问题，如果不上线，就没办法探到算法希望的内容。有点像鸡生蛋、蛋生鸡的问题。也可以看作强化学习里的“off-policy evaluation problem”问题。一个方式是根据离线数据构造一个模拟器，但是这种模拟器会引入bias。论文提出了一个没有bias的简单实现：</p>
 <ul>
 <li>假设有若干未知的分布D服从独立同分布$\left(x_{1}, \ldots, x_{K}, r_{1}, \ldots, r_{K}\right)$。每个分布包含了所有arm的可观测特征向量、隐含的奖励</li>
@@ -114,12 +114,12 @@
 <li>目标是利用这份数据来评估一个bandit算法$\pi$。形式上$\pi$是从历史t-1个事件$h_{t-1}$以及当前的上下文特征$x_{1}, \ldots, x_{K}$到当前时刻t选择arm at的映射。</li>
 </ul>
 </li>
-<li>论文提出的评估策略如下：<img src="https://uploader.shimo.im/f/CTtECuqbtSpHgZPR.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></li>
+<li>论文提出的评估策略如下：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/5.png" alt="图片"></li>
 <li>把策略$\pi$和一系列事件T作为输入。然后逐一考察日志事件。如果，给定当前历史$h_{t-1}$，如果策略$\pi$和日志策略选择同一个arm，那么保留这个事件，也就是把它加到历史中，更新总体奖励Rt；否则，如果策略$\pi$和日志策略选择的arm不一样，则整个事件被忽略，也不更新状态。</li>
 <li>日志策略选择arm的策略是uniformly at random，所以每个事件被算法保留的概率是$\frac{1}{K}$并且各自是独立的。</li>
 <li>也就是说，被D选择并保留的事件有相同的分布。</li>
 </ul>
-<h1 id="实验细节"><a href="#实验细节" class="headerlink" title="实验细节"></a>实验细节</h1><p><img src="https://uploader.shimo.im/f/2nWVumPUfJL3a4WC.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<h1 id="实验细节"><a href="#实验细节" class="headerlink" title="实验细节"></a>实验细节</h1><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/6.png" alt="图片"></p>
 <h2 id="数据收集"><a href="#数据收集" class="headerlink" title="数据收集"></a>数据收集</h2><ul>
 <li>随机抽取用户</li>
 <li>曝光的文章是从内容池中随机选取的</li>
@@ -168,7 +168,7 @@
 <h2 id="学习桶和部署桶"><a href="#学习桶和部署桶" class="headerlink" title="学习桶和部署桶"></a>学习桶和部署桶</h2><p>在线上执行时，虽然线性拟合和统计等步骤计算量不大，但是用户和待选文章的数量增大后，仍然是比较大的代价。因此，论文给出了学习桶和部署桶的概念，即利用学习桶更新参数，而在部署桶中利用学习桶得到的参数进行推荐（动作的选择）。</p>
 <h2 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h2><p>处于保密原因，使用相对的CTR，也就是算法的CTR除以随机策略的。假设随机策略的CTR等于1。论文中直接用CTR代替“相对CTR”。</p>
 <p>由于部署集的数据量大于训练集，所以，部署集的CTR更重要一些。但是学习集中的高CTR意味着更快的学习率（或者等价的，更小的regret）。所以论文把训练集和部署集中的CTR都列出来了。</p>
-<h3 id="训练集数据"><a href="#训练集数据" class="headerlink" title="训练集数据"></a>训练集数据</h3><p><img src="https://uploader.shimo.im/f/RFgRNTVI7X8bkeZO.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<h3 id="训练集数据"><a href="#训练集数据" class="headerlink" title="训练集数据"></a>训练集数据</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/7.png" alt="图片"></p>
 <ul>
 <li>每个对比的算法（除random和无所不知算法外）都有一个参数：如Epsilon-Greedy中的$\epsilon$和UCB算法中的$\alpha$</li>
 <li>学习集中的CTR都是呈倒U型。当参数较小时，探索不充分，算法不能发现CTR较好的文章，导致点击量较低。同理，当参数很大时，探索过度，导致浪费了流量在CTR较低的文章上。论文为每种算法选择最合适的参数，在下一节的测试数据上跑一遍。</li>
@@ -176,15 +176,15 @@
 <li>在部署集上，Epsilon-Greedy和UCB算法的效果差不多，但是在训练集上的效果差一些，跟上下文无关的算法表现一致。</li>
 <li>为了验证数据稀疏性对模型的影响，论文减少了训练集的样本数量，30%、20%、10%、5%、1%等，部署集样本量不变。</li>
 </ul>
-<h3 id="验证集数据"><a href="#验证集数据" class="headerlink" title="验证集数据"></a>验证集数据</h3><p><img src="https://uploader.shimo.im/f/l0WYphITCPCmvhKf.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<h3 id="验证集数据"><a href="#验证集数据" class="headerlink" title="验证集数据"></a>验证集数据</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/8.png" alt="图片"></p>
 <h4 id="特征对结果的影响"><a href="#特征对结果的影响" class="headerlink" title="特征对结果的影响"></a>特征对结果的影响</h4><p>从上表中明显看出，无论是 Epsilon-Greedy （seg/disjoint/hybrid）还是UCB（ucb（seg）、linucb（disjoint/hybrid））都能使CTR提升10%左右。</p>
-<p><img src="https://uploader.shimo.im/f/2XKUnRr1dqk6zMOu.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/9.png" alt="图片"></p>
 <p>为了更好的可视化特征的效果，上图描述的是对比base CTR是如何提升的。base CTR是描述的文章是否被随机用户感兴趣。提升的比例越高，说明算法把文章推给了潜在感兴趣的用户。</p>
 <ul>
 <li>(a）说明没有用上下文特征的算法也能提升CTR。其他三张图更明显的表明了个性化的效果。极端的例子，3（c）中最高的那个点代表的文章，CTR从1.31到3.03，提升了132%</li>
 </ul>
 <h4 id="样本大小对结果的影响"><a href="#样本大小对结果的影响" class="headerlink" title="样本大小对结果的影响"></a>样本大小对结果的影响</h4><p>论文减少了训练集的样本数量，30%、20%、10%、5%、1%等，来模拟一个较大的内容池，但是流量固定的情况。</p>
-<p><img src="https://uploader.shimo.im/f/HtJLxIPz2ausXQcO.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bandit/10.png" alt="图片"></p>
 <p>上图中描述了不同数据量对CTR的影响：</p>
 <ul>
 <li>在所有数量级中，特征仍然是有作用的。</li>
@@ -3240,8 +3240,8 @@
 <h3 id="进行分类"><a href="#进行分类" class="headerlink" title="进行分类"></a>进行分类</h3><p>使用SVM分类。</p>
 ]]></content>
       <tags>
-        <tag>机器翻译</tag>
         <tag>论文阅读</tag>
+        <tag>机器翻译</tag>
       </tags>
   </entry>
   <entry>
