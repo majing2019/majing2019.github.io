@@ -3714,6 +3714,152 @@
 ]]></content>
   </entry>
   <entry>
+    <title>稀疏序列到序列模型</title>
+    <url>/2019/11/15/%E7%A8%80%E7%96%8F%E5%BA%8F%E5%88%97%E5%88%B0%E5%BA%8F%E5%88%97%E6%A8%A1%E5%9E%8B/</url>
+    <content><![CDATA[<p>ACL 2019论文 <a href="https://arxiv.org/pdf/1905.05702.pdf" target="_blank" rel="noopener">Sparse Sequence-to-Sequence Models</a>，代码实现 <a href="https://github.com/deep-spin/entmax" target="_blank" rel="noopener">entmax</a>。</p>
+<a id="more"></a>
+<h1 id="稀疏序列到序列模型"><a href="#稀疏序列到序列模型" class="headerlink" title="稀疏序列到序列模型"></a>稀疏序列到序列模型</h1><h2 id="论文概述"><a href="#论文概述" class="headerlink" title="论文概述"></a>论文概述</h2><p>（一）直观看论文的工作：修改了softmax计算方式，变成了稀疏的softmax，使得在某一阈值下的数值都变成了0。<br><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/softmax.jpg" alt="softmax"></p>
+<p>（二）本文中稀疏的softmax用在了下面两个地方：</p>
+<ul>
+<li>seq2seq在解码输出层的softmax</li>
+<li>attention中的softmax。</li>
+</ul>
+<p>（三）为什么要用稀疏softmax？</p>
+<ul>
+<li><p>从多标签分类角度：稀疏化Softmax的输出能更适合处理多标签问题。这里首先明确两个概念：多标签分类（multi-label classification）问题和多分类（multi-class classification）问题。多标签分类问题面对的实例可以属于多个标签，例如，一部电影可以是“韩国”、“动作”、“惊悚”。机器翻译的解码阶段，我也认为是个多标签分类问题，因为同一个单词在上下文语境的翻译也可以是多个。而多分类问题指的是一个实例有且仅属于多个分类中的一个。例如，手写数字识别，一张图片对应0～9中唯一一个数字。根据Softmax函数的形式化定义可知，Softmax函数更适合定义多分类问题。那么，为了转换Softmax函数的形式，使之适合多标签分类问题，就产生了sparsemax。</p>
+</li>
+<li><p>从Attention角度：Attention的关键是映射函数，它对输入元素的相对重要性进行编码，将数值映射为概率。而常用的关注机制Softmax会产生密集的注意力。因为softmax的输出都大于0，故其输入的所有元素对最终决策都有或多或少的影响。</p>
+</li>
+<li><p>实际工作中遇到的问题：两个语句的语义对齐，出现不该对齐的部分也对齐了的情况（参考上面图）</p>
+</li>
+</ul>
+<h2 id="前人工作介绍"><a href="#前人工作介绍" class="headerlink" title="前人工作介绍"></a>前人工作介绍</h2><p>为了克服softmax这种缺点，Martins发表的论文 <a href="https://arxiv.org/pdf/1602.02068.pdf" target="_blank" rel="noopener">From Softmax to Sparsemax:A Sparse Model of Attention and Multi-Label Classification</a> 提出了能够输出稀疏概率的Sparsemax，这能为Attention提供更多的解释性。</p>
+<h3 id="sparsemax的定义"><a href="#sparsemax的定义" class="headerlink" title="sparsemax的定义"></a>sparsemax的定义</h3><ul>
+<li><p>假设 $\Delta d :=\{p\in \mathbb{R}^d: p\geqslant 0, ||p||$ 表示维度为d的概率向量，softmax可以看成是从$\mathbb{R}^d$到$\Delta d$的映射中的一个。则sparsemax可以定义成另一种形式的softmax，其特点是产生稀疏的概率分布：$sparsemax(z) := argmin_{p\in \Delta ^d} ||p-z||^2$。可以看到它的预测的分布满足：$p^* := sparsemax(z)$，很容易将低分数的元素置为0。</p>
+<ul>
+<li>对比softmax形式$softmax(z)=exp(z_i)/\sum _j(exp(z_j))$，首先Sparsemax的目标是直接逼近真实的多标签分类分布，另外Sparsemax不再由指数函数对输出z做smooth变换。采用直接将输出z投影到单纯形的方式能够起到输出的稀疏化效果</li>
+</ul>
+</li>
+<li><p>sparsemax的物理意义等价于将输出z投影到单纯形上，投影的方式为通过欧式距离找到距离单纯形上最近的一点，其投影点为p。由于单纯形的限制，导致这个投影点会大概率（相对于d维空间单纯形很小）落在单纯形的边界上，从而导致了稀疏化的效果。例如，在下图的例子中，当2维空间中的投影点落在单纯形的边界上时即形成了稀疏化的输出结果。</p>
+<pre><code>![name](/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/name.png)
+</code></pre></li>
+</ul>
+<h3 id="sparsemax的求解"><a href="#sparsemax的求解" class="headerlink" title="sparsemax的求解"></a>sparsemax的求解</h3><ul>
+<li><p>Sparsemax的函数形式在真实分布未知的情况下并不能直接求解。通过拉格朗日法得到它的对偶形式：$L(z, \mu , \tau ) = \frac{1}{2}||p-z||^2-\mu^Tp+\tau (1^Tp-1)$，求解得：</p>
+<ul>
+<li><p>$Sparsemax(z) = [z_i- \tau(z)], s.t. \sum_j[z_j-\tau(z)]_+=1$</p>
+</li>
+<li><p>$[t]_+=max\{0,t\}$</p>
+</li>
+<li><p>$\tau(z)=(\sum_{j\leq k(z)}z(j)-1)/k(z)$</p>
+</li>
+<li><p>$k(z)=max\{k\in[K]|\sum_{j\leq k}z(j) &lt; 1+kz_{(k)}\}$</p>
+</li>
+<li><p>$z_{(1)} \geq z_{(2)} \geq …\geq z_{(k)}$</p>
+<p>其中[K]表示K个标签对应的下标集合。</p>
+</li>
+</ul>
+</li>
+<li><p>用语言形式描述Sparsemax的求解过程：</p>
+<ul>
+<li>将输出z按值降序排列</li>
+<li>按序比较条件$\sum_{j\leq k}z(j) &lt; 1+kz_{(k)}$，若不满足则退出，求得满足条件的输出数k(z)</li>
+<li><p>计算$\tau(z)$并得到sparsemax</p>
+<p>这里的$\tau(z)$也被称作关于z的阈值函数。通过在2维和3维空间上的示意图可以看到Sparsemax和Softmax的基本性质基本相同，在Sparsemax上基本保持了Softmax上的序关系，不同的是Sparsemax的输出不再平滑，头尾都被“截断”了。</p>
+<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/softmax_sparsemax.jpeg" alt="softmax_sparsemax"></p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="sparsemax的损失函数和梯度"><a href="#sparsemax的损失函数和梯度" class="headerlink" title="sparsemax的损失函数和梯度"></a>sparsemax的损失函数和梯度</h3><p>[注]：以下内容在Martins论文中和本篇论文中公式的形式不一样，下面的公式都是本篇论文中给出的。</p>
+<ul>
+<li><p>sparsemax的损失函数可以定义为：$L_{sparsemax}(y,z):=\frac{1}{2}(||e_y-z||^2-||p^*-z||^2)$，其中$e_y:=[0,…,1,0,…,0]$是真实标签。</p>
+<ul>
+<li>Sparsemax的损失函数是一个处处可导的凸函数。</li>
+<li>对比Softmax，Softmax函数的负对数似然损失为$L_{softmax}=-\sum_{i=1}^My_ilog \frac{e^{zi}}{\sum _ke^{zk}}$</li>
+<li>Sparsemax函数由于存在截断点，由于截断点的梯度不连续，有在截断点处的梯度不连续，被截断部分（值为0）的对数似然无法计算等问题，导致Sparsemax无法计算。因此文章提出了处处可导的凸函数。</li>
+<li>$L_{sparsemax}(y,z)$在z上是连续可微，且存在性质：$L_{sparsemax}$ 为0，当且仅当对任意$y\neq y’$，有$z_y \geqslant z_{y’} +1$。（即有一个margin，可参考：<a href="https://zhuanlan.zhihu.com/p/52108088" target="_blank" rel="noopener">Softmax理解之margin</a>）</li>
+</ul>
+</li>
+<li><p>训练模型使用sparsemax的loss时，其梯度为：$\bigtriangledown _zL_{sparsemax}(y,z)=-e_y+p^*$。</p>
+</li>
+<li><p>对这个梯度公式的直观理解：用到的部分回传梯度,没用到的部分梯度为0</p>
+</li>
+<li><p>将sparsemax运用于attention机制中时，可以发现sparsemax在任意处都是可导的（Martins论文中已证）：</p>
+<p>  $\frac{\partial sparsemax(z)}{\partial z}=diag(s)-\frac{1}{||s||_1}ss^T$，</p>
+<p>  其中当$0 &lt; p^*_j$时,$s_j=1$，否则$s_j=0$。</p>
+</li>
+</ul>
+<h2 id="本文主要贡献"><a href="#本文主要贡献" class="headerlink" title="本文主要贡献"></a>本文主要贡献</h2><h3 id="从熵的角度定义了一簇sparsemax"><a href="#从熵的角度定义了一簇sparsemax" class="headerlink" title="从熵的角度定义了一簇sparsemax"></a>从熵的角度定义了一簇sparsemax</h3><h4 id="从“熵”角度解释sparsemax"><a href="#从“熵”角度解释sparsemax" class="headerlink" title="从“熵”角度解释sparsemax"></a>从“熵”角度解释sparsemax</h4><ul>
+<li><p>为了理解sparsemax，我们可以从另一个角度理解softmax:<br>$softmax(z) = argmax_{p\in \Delta d}(p^Tz) + H^S(p)$</p>
+<p>$H^S (p) :=\sum _jp_jlogp_j$</p>
+<p>后者是著名的Gibbs-Boltzmann-Shannon entropy。</p>
+</li>
+<li><p>同样的去理解sparsemax:</p>
+<p>$sparsemax(z) = argmax_{p\in \Delta d}(p^Tz) + H^G(p)$</p>
+<p>$H^G (p) :=\frac{1}{2}\sum _jp_jlog(1-p_j$</p>
+<p>后者是Gini entropy。</p>
+</li>
+</ul>
+<p>因此，softmax和sparsemax只是在entropy的正则项上不同。</p>
+<h4 id="通过定义的一系列的熵Tsallis"><a href="#通过定义的一系列的熵Tsallis" class="headerlink" title="通过定义的一系列的熵Tsallis"></a>通过<img src="http://latex.codecogs.com/gif.latex?\alpha"/>定义的一系列的熵Tsallis</h4><h5 id="Tsallis-alpha-entropies-："><a href="#Tsallis-alpha-entropies-：" class="headerlink" title="$Tsallis \alpha -entropies$："></a>$Tsallis \alpha -entropies$：</h5><p>$H^T_\alpha (p) := \left\{\begin{matrix}<br>\frac{1}{\alpha (\alpha -1)}\sum _j(p_j-p^\alpha _j) &amp; \alpha \neq 1\ <br>H^S(p) &amp;  \alpha= 1<br>\end{matrix}\right.$</p>
+<p>这个熵家族是连续的：对于任意$p \in \Delta d$，有：</p>
+<p>$lim_{\alpha \rightarrow 1}H^T_\alpha (p)=H^S(p)$，</p>
+<p>$H^T_2\equiv H^G$</p>
+<p>也就是说Tsallis熵在Shannon和Gini之间。</p>
+<h4 id="由Tsallis熵定义entmax"><a href="#由Tsallis熵定义entmax" class="headerlink" title="由Tsallis熵定义entmax"></a>由Tsallis熵定义entmax</h4><ul>
+<li><p>entmax定义：</p>
+<p>$\alpha-entmax(z):=argmax_{p\in\Delta^d}p^Tz + H^T_\alpha (p)$</p>
+<p>$p^* := \alpha-entmax(z)$</p>
+</li>
+<li><p>损失函数：</p>
+<p>$L_\alpha (y,z):=(p^<em>-e_y)^Tz+H^T_\alpha (p^</em>)$</p>
+</li>
+<li><p>其梯度：</p>
+</li>
+</ul>
+<p>$\bigtriangledown _zL_\alpha (y,z)=-e_y+p^*$</p>
+<p>可以知道，$1-entmax \equiv  softmax$，$2-entmax \equiv  sparsemax$，$L_1$是负对数似然，$L_2$是sparsemax loss。对于任意$1 &lt; \alpha$ entmax可以产生稀疏的概率分布，如下图：</p>
+<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/fig3.png" alt="fig3"></p>
+<ul>
+<li>Tsallis熵损失函数是可导的，且有一个性质：当正确分类的得分比其他错误分类的得分多出$\frac{1}{\alpha -1}$以上时，损失变成是0。这对于seq2seq模型来说，解码器在非常容易进行解码的时间步上，会作出非常确定的预测，当有若干个可能的候选时，会有稀疏的不确定性。</li>
+</ul>
+<h3 id="计算-p-alpha-entmax-z"><a href="#计算-p-alpha-entmax-z" class="headerlink" title="计算 $p^* = \alpha -entmax(z)$"></a>计算 $p^* = \alpha -entmax(z)$</h3><ul>
+<li><p>对于$\alpha=1$，有：$softmax(z)_j:=\frac{exp(z_j)}{\sum _iexp(z_i)}$。</p>
+</li>
+<li><p>对于$1&lt;\alpha&lt;2$，有：$\alpha -entmax(z)=[(\alpha -1)z-\tau 1]^{1/\alpha -1}_+$(对于$z_j\leq \tau / \alpha -1$的分数为0)</p>
+</li>
+<li><p>对于$\alpha=2$，则是在$\Delta ^d$上的欧几里得投影。</p>
+<p>  可以使用两种算法计算<img src="http://latex.codecogs.com/gif.latex?\tau"/>：</p>
+<ul>
+<li><p>基于排序</p>
+<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/algo2.png" alt="algo2"></p>
+<p>可参考<a href="https://github.com/deep-spin/entmax/blob/master/entmax/root_finding.py" target="_blank" rel="noopener">root_finding</a>中第79～129行。</p>
+<ul>
+<li>基于分治法</li>
+</ul>
+<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/algo1.png" alt="algo1"></p>
+<p>可参考<a href="https://github.com/deep-spin/entmax/blob/master/entmax/activations.py" target="_blank" rel="noopener">activations</a>中第214～244行</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="实验结论"><a href="#实验结论" class="headerlink" title="实验结论"></a>实验结论</h2><h3 id="单词变形任务上的准确率（多语言）"><a href="#单词变形任务上的准确率（多语言）" class="headerlink" title="单词变形任务上的准确率（多语言）"></a>单词变形任务上的准确率（多语言）</h3><p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp1.png" alt="exp1"></p>
+<h3 id="英德翻译任务上的BLEU"><a href="#英德翻译任务上的BLEU" class="headerlink" title="英德翻译任务上的BLEU"></a>英德翻译任务上的BLEU</h3><p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp2.png" alt="exp2"></p>
+<h3 id="英德翻译任务上不同的产生的稀疏性"><a href="#英德翻译任务上不同的产生的稀疏性" class="headerlink" title="英德翻译任务上不同的产生的稀疏性"></a>英德翻译任务上不同的<img src="http://latex.codecogs.com/gif.latex?\alpha "/>产生的稀疏性</h3><p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp3.png" alt="exp3"></p>
+<p>相比于softmax，1.5-entmax有更少的输出但有更高的BLEU，sparsemax虽然输出更稀疏，但BLEU指标不如1.5-entmax。<img src="http://latex.codecogs.com/gif.latex?\alpha "/>在attention和softmax输出中不同的取值，对于验证集准确率的影响可参考下图：</p>
+<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp4.png" alt="exp4"></p>
+<p>在翻译任务上用1.5-entmax产生的attention可视化如下：</p>
+<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp5.png" alt="exp5"></p>
+<p>在翻译任务上，softmax和1.5-entmax在训练时间上的比较：</p>
+<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp6.png" alt="exp6"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>目前attention受到关注，产生的很多稀疏的attention的计算方法，本文直接改变了softmax的计算方式，使其归一化的结果更为稀疏，对未来的研究有参考价值。</p>
+]]></content>
+      <tags>
+        <tag>论文阅读</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>语言模型之XLNET</title>
     <url>/2019/09/14/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B9%8BXLNET/</url>
     <content><![CDATA[<p>ACL 2019论文 <a href="https://arxiv.org/pdf/1906.08237.pdf" target="_blank" rel="noopener">XLNet: Generalized Autoregressive Pretraining for Language Understanding</a>阅读笔记。</p>
