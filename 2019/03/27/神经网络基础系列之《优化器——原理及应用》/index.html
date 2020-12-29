@@ -80,7 +80,7 @@
       
         <p>神经网络在每次迭代中，梯度下降根据⾃变量当前位置，沿着当前位置的梯度更新⾃变量。然而，如果⾃变量的 迭代⽅向仅仅取决于⾃变量当前位置，这可能会带来⼀些问题。比如下图：</p>
 <a id="more"></a>
-<p><img src="/Users/majing/workspace/learning/my_machine_learning_code/optimizer_learning/fig1.png" alt="fig1"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/optimizer/1.png" alt="fig1"></p>
 <p>给定学习率，梯度下降迭代⾃变量时会使⾃变量在竖直⽅向⽐在⽔平⽅向移动幅度更⼤。那么，我们需要⼀个较小的学习率从而避免⾃变量在竖直⽅向上越过⽬标函数最优解。然而，这会造成⾃变量在⽔平⽅向上朝最优解移动变慢。</p>
 <p>为了解决梯度更新的问题，提出了很多优化器算法，下面一一介绍。</p>
 <p>给定学习率，梯度下降迭代⾃变量时会使⾃变量在竖直⽅向⽐在⽔平⽅向移动幅度更⼤。那么，我们需要⼀个较小的学习率从而避免⾃变量在竖直⽅向上越过⽬标函数最优解。然而，这会造成⾃变量在⽔平⽅向上朝最优解移动变慢。</p>
@@ -117,7 +117,7 @@
 </li>
 </ul>
 <h2 id="Momentum-动量算法"><a href="#Momentum-动量算法" class="headerlink" title="Momentum 动量算法"></a>Momentum 动量算法</h2><p>如果把梯度下降法想象成一个小球从山坡到山谷的过程，那么前面几篇文章的小球是这样移动的：从A点开始，计算当前A点的坡度，沿着坡度最大的方向走一段路，停下到B。在B点再看一看周围坡度最大的地方，沿着这个坡度方向走一段路，再停下。确切的来说，这并不像一个球，更像是一个正在下山的盲人，每走一步都要停下来，用拐杖来来探探四周的路，再走一步停下来，周而复始，直到走到山谷。而一个真正的小球要比这聪明多了，从A点滚动到B点的时候，小球带有一定的初速度，在当前初速度下继续加速下降，小球会越滚越快，更快的奔向谷底。momentum 动量法就是模拟这一过程来加速神经网络的优化的。可以用下图说明：</p>
-<p><img src="/Users/majing/workspace/learning/my_machine_learning_code/optimizer_learning/fig2.png" alt="fig2"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/optimizer/2.png" alt="fig2"></p>
 <p>根据图示，其计算过程如下：</p>
 <ul>
 <li><p>A为起始点，首先计算A点的梯度∇a，然后下降到B点：$\Theta_{new}=\Theta−\alpha∇a$，其中$\Theta$为参数，$\alpha$为学习率。</p>
@@ -156,7 +156,7 @@
 </ul>
 <p>可以这样理解：AdaGrad过程，是一个递推过程，次从𝜏=1，推到𝜏=𝑡，把沿路的𝐺𝑟𝑎𝑑𝑖𝑒𝑛𝑡的平方根，作为Regularizer。由于Regularizer是专门针对Gradient的，所以有利于解决Gradient Vanish/Expoloding问题。</p>
 <p>下图为AdaGrad优化的一个过程：</p>
-<p><img src="/Users/majing/workspace/learning/my_machine_learning_code/optimizer_learning/fig3.png" alt="fig3"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/optimizer/3.png" alt="fig3"></p>
 <p>AdaGrad的缺点是：</p>
 <ul>
 <li><p>由公式可以看出，仍依赖于人工设置一个全局学习率。$\eta$设置过大的话，会使regularizer过于敏感，对梯度的调节太大</p>
@@ -175,7 +175,7 @@
 </ul>
 <p>因为RMSProp算法的状态变量st是对平⽅项$g_t \odot g_t$的指数加权移动平均，所以可以看作是最近$\frac{1}{1-\lambda}$个时间步的小批量随机梯度平⽅项的加权平均。如此⼀来，⾃变量每个元素的学习率在迭代过程中就不再⼀直降低（或不变）。</p>
 <p>下图为RMSProp优化的一个过程：</p>
-<p><img src="/Users/majing/workspace/learning/my_machine_learning_code/optimizer_learning/fig4.png" alt="fig4"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/optimizer/4.png" alt="fig4"></p>
 <p>RMSProp有如下特点：</p>
 <ul>
 <li><p>训练初中期，加速效果不错，很快</p>
@@ -283,15 +283,15 @@
 <p>（2）Weight decay是在每次更新的梯度基础上减去一个梯度（ $\Theta$为模型参数向量，$\bigtriangledown f_t(\theta_t) $为t时刻loss函数的梯度，$\alpha$为学习率）:$\theta_t=(1-\lambda ) \theta_t - \alpha \bigtriangledown f_t(\theta_t)$</p>
 <p>（3）L2 regularization是给参数加上一个L2惩罚($f_t(\theta )$为loss函数)：$f^{reg}_t(\theta )=f_t(\theta )+\frac{\lambda ‘}{2}||\theta ||^2$。(当$\lambda ‘=\frac{\lambda }{\alpha }$时，与weight decay等价，仅在使用标准SGD优化时成立)</p>
 <p>（4）Adam自动调整学习率，大幅提高了训练速度，也很少需要调整学习率，但是有相当多的资料报告Adam优化的最终精度略低于SGD。问题出在哪呢，其实Adam本身没有问题，问题在于目前大多数DL框架的L2 regularization实现用的是weight decay的方式，而weight decay在与Adam共同使用的时候有互相耦合。理由如下图，其中红色是传统的Adam+L2 regularization的方式，绿色是bert使用的接入weight decay的方式，能够完成梯度下降与weight decay的解耦：</p>
-<p><img src="/Users/majing/workspace/learning/my_machine_learning_code/optimizer_learning/fig5.png" alt="fig5"></p>
-<p><img src="/Users/majing/workspace/learning/my_machine_learning_code/optimizer_learning/fig6.png" alt="fig6"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/optimizer/5.png" alt="fig5"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/optimizer/6.png" alt="fig6"></p>
 <p>大部分的模型都会有L2 regularization约束项，因此很有可能出现adam的最终效果没有sgd的好。如果在tf里面要对不同区域的tensor做不同的L2 regularization调整的化可以参考<a href="https://zhuanlan.zhihu.com/p/40814046" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/40814046</a> 先做adam后在手工更新L2 regularization梯度的方法。</p>
 <p>推荐：一个框架看懂优化算法之异同 SGD/AdaGrad/Adam：<a href="https://zhuanlan.zhihu.com/p/32230623" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/32230623</a></p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2019/03/27/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80%E7%B3%BB%E5%88%97%E4%B9%8B%E3%80%8A%E4%BC%98%E5%8C%96%E5%99%A8%E2%80%94%E2%80%94%E5%8E%9F%E7%90%86%E5%8F%8A%E5%BA%94%E7%94%A8%E3%80%8B/" data-id="ckj9fombn0012cwwvbhelejtz"
+      <a data-url="majsunflower.cn/2019/03/27/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80%E7%B3%BB%E5%88%97%E4%B9%8B%E3%80%8A%E4%BC%98%E5%8C%96%E5%99%A8%E2%80%94%E2%80%94%E5%8E%9F%E7%90%86%E5%8F%8A%E5%BA%94%E7%94%A8%E3%80%8B/" data-id="ckj9fvz7a0020gbwv6bk7e3aw"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80%E7%B3%BB%E5%88%97/" rel="tag">基础系列</a></li></ul>
