@@ -80,7 +80,7 @@
       
         <p>ACL 2019论文 <a href="https://arxiv.org/pdf/1905.05702.pdf" target="_blank" rel="noopener">Sparse Sequence-to-Sequence Models</a>，代码实现 <a href="https://github.com/deep-spin/entmax" target="_blank" rel="noopener">entmax</a>。</p>
 <a id="more"></a>
-<h1 id="稀疏序列到序列模型"><a href="#稀疏序列到序列模型" class="headerlink" title="稀疏序列到序列模型"></a>稀疏序列到序列模型</h1><h2 id="论文概述"><a href="#论文概述" class="headerlink" title="论文概述"></a>论文概述</h2><p>（一）直观看论文的工作：修改了softmax计算方式，变成了稀疏的softmax，使得在某一阈值下的数值都变成了0。<br><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/softmax.jpg" alt="softmax"></p>
+<h1 id="稀疏序列到序列模型"><a href="#稀疏序列到序列模型" class="headerlink" title="稀疏序列到序列模型"></a>稀疏序列到序列模型</h1><h2 id="论文概述"><a href="#论文概述" class="headerlink" title="论文概述"></a>论文概述</h2><p>（一）直观看论文的工作：修改了softmax计算方式，变成了稀疏的softmax，使得在某一阈值下的数值都变成了0。<br><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/1.png" alt="softmax"></p>
 <p>（二）本文中稀疏的softmax用在了下面两个地方：</p>
 <ul>
 <li>seq2seq在解码输出层的softmax</li>
@@ -103,7 +103,7 @@
 </ul>
 </li>
 <li><p>sparsemax的物理意义等价于将输出z投影到单纯形上，投影的方式为通过欧式距离找到距离单纯形上最近的一点，其投影点为p。由于单纯形的限制，导致这个投影点会大概率（相对于d维空间单纯形很小）落在单纯形的边界上，从而导致了稀疏化的效果。例如，在下图的例子中，当2维空间中的投影点落在单纯形的边界上时即形成了稀疏化的输出结果。</p>
-<pre><code>![name](/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/name.png)
+<pre><code>![name](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/2.png)
 </code></pre></li>
 </ul>
 <h3 id="sparsemax的求解"><a href="#sparsemax的求解" class="headerlink" title="sparsemax的求解"></a>sparsemax的求解</h3><ul>
@@ -128,7 +128,7 @@
 <li>按序比较条件$\sum_{j\leq k}z(j) &lt; 1+kz_{(k)}$，若不满足则退出，求得满足条件的输出数k(z)</li>
 <li><p>计算$\tau(z)$并得到sparsemax</p>
 <p>这里的$\tau(z)$也被称作关于z的阈值函数。通过在2维和3维空间上的示意图可以看到Sparsemax和Softmax的基本性质基本相同，在Sparsemax上基本保持了Softmax上的序关系，不同的是Sparsemax的输出不再平滑，头尾都被“截断”了。</p>
-<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/softmax_sparsemax.jpeg" alt="softmax_sparsemax"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/3.png" alt="softmax_sparsemax"></p>
 </li>
 </ul>
 </li>
@@ -182,7 +182,7 @@
 </ul>
 <p>$\bigtriangledown _zL_\alpha (y,z)=-e_y+p^*$</p>
 <p>可以知道，$1-entmax \equiv  softmax$，$2-entmax \equiv  sparsemax$，$L_1$是负对数似然，$L_2$是sparsemax loss。对于任意$1 &lt; \alpha$ entmax可以产生稀疏的概率分布，如下图：</p>
-<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/fig3.png" alt="fig3"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/4.png" alt="fig3"></p>
 <ul>
 <li>Tsallis熵损失函数是可导的，且有一个性质：当正确分类的得分比其他错误分类的得分多出$\frac{1}{\alpha -1}$以上时，损失变成是0。这对于seq2seq模型来说，解码器在非常容易进行解码的时间步上，会作出非常确定的预测，当有若干个可能的候选时，会有稀疏的不确定性。</li>
 </ul>
@@ -195,32 +195,32 @@
 <p>  可以使用两种算法计算<img src="http://latex.codecogs.com/gif.latex?\tau"/>：</p>
 <ul>
 <li><p>基于排序</p>
-<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/algo2.png" alt="algo2"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/5.png" alt="algo2"></p>
 <p>可参考<a href="https://github.com/deep-spin/entmax/blob/master/entmax/root_finding.py" target="_blank" rel="noopener">root_finding</a>中第79～129行。</p>
 <ul>
 <li>基于分治法</li>
 </ul>
-<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/algo1.png" alt="algo1"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/6.png" alt="algo1"></p>
 <p>可参考<a href="https://github.com/deep-spin/entmax/blob/master/entmax/activations.py" target="_blank" rel="noopener">activations</a>中第214～244行</p>
 </li>
 </ul>
 </li>
 </ul>
-<h2 id="实验结论"><a href="#实验结论" class="headerlink" title="实验结论"></a>实验结论</h2><h3 id="单词变形任务上的准确率（多语言）"><a href="#单词变形任务上的准确率（多语言）" class="headerlink" title="单词变形任务上的准确率（多语言）"></a>单词变形任务上的准确率（多语言）</h3><p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp1.png" alt="exp1"></p>
-<h3 id="英德翻译任务上的BLEU"><a href="#英德翻译任务上的BLEU" class="headerlink" title="英德翻译任务上的BLEU"></a>英德翻译任务上的BLEU</h3><p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp2.png" alt="exp2"></p>
-<h3 id="英德翻译任务上不同的产生的稀疏性"><a href="#英德翻译任务上不同的产生的稀疏性" class="headerlink" title="英德翻译任务上不同的产生的稀疏性"></a>英德翻译任务上不同的<img src="http://latex.codecogs.com/gif.latex?\alpha "/>产生的稀疏性</h3><p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp3.png" alt="exp3"></p>
+<h2 id="实验结论"><a href="#实验结论" class="headerlink" title="实验结论"></a>实验结论</h2><h3 id="单词变形任务上的准确率（多语言）"><a href="#单词变形任务上的准确率（多语言）" class="headerlink" title="单词变形任务上的准确率（多语言）"></a>单词变形任务上的准确率（多语言）</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/7.png" alt="exp1"></p>
+<h3 id="英德翻译任务上的BLEU"><a href="#英德翻译任务上的BLEU" class="headerlink" title="英德翻译任务上的BLEU"></a>英德翻译任务上的BLEU</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/8.png" alt="exp2"></p>
+<h3 id="英德翻译任务上不同的产生的稀疏性"><a href="#英德翻译任务上不同的产生的稀疏性" class="headerlink" title="英德翻译任务上不同的产生的稀疏性"></a>英德翻译任务上不同的<img src="http://latex.codecogs.com/gif.latex?\alpha "/>产生的稀疏性</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/9.png" alt="exp3"></p>
 <p>相比于softmax，1.5-entmax有更少的输出但有更高的BLEU，sparsemax虽然输出更稀疏，但BLEU指标不如1.5-entmax。<img src="http://latex.codecogs.com/gif.latex?\alpha "/>在attention和softmax输出中不同的取值，对于验证集准确率的影响可参考下图：</p>
-<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp4.png" alt="exp4"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/10.png" alt="exp4"></p>
 <p>在翻译任务上用1.5-entmax产生的attention可视化如下：</p>
-<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp5.png" alt="exp5"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/11.png" alt="exp5"></p>
 <p>在翻译任务上，softmax和1.5-entmax在训练时间上的比较：</p>
-<p><img src="/Users/majing/workspace/learning/paper_reading/sparse_seq2seq_models/exp6.png" alt="exp6"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/12.png" alt="exp6"></p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>目前attention受到关注，产生的很多稀疏的attention的计算方法，本文直接改变了softmax的计算方式，使其归一化的结果更为稀疏，对未来的研究有参考价值。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2019/11/15/%E7%A8%80%E7%96%8F%E5%BA%8F%E5%88%97%E5%88%B0%E5%BA%8F%E5%88%97%E6%A8%A1%E5%9E%8B/" data-id="ckj9f69c100115swv45e76zyi"
+      <a data-url="majsunflower.cn/2019/11/15/%E7%A8%80%E7%96%8F%E5%BA%8F%E5%88%97%E5%88%B0%E5%BA%8F%E5%88%97%E6%A8%A1%E5%9E%8B/" data-id="ckj9fewqz000x98wv6xpveepg"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>

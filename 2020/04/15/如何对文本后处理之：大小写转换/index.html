@@ -87,7 +87,7 @@
 <p>在以往相关工作中，关注到的是句首、引号后面和命名实体的大写。论文将词的大小写分为4类：全部小写（LC）、首字母大写（UC）、全部字母大写（CA）、混合大小写（MC）。论文中使用的方法可以关注到word的上下文信息。因此即便遇到UNK（如lenon），也会因为跟lenon有相同上下文的词常采用UC，而把lenon也记为UC类别。</p>
 <p>如果我们使用Unigram语言模型的话，可能发现这样的问题：只有12%的词是有多种大小写表示的，那对于new这个词，new后面跟着的词中只有少部分（York、Zealand）是需要大写的，那么new这个词就很容易改写为小写的，使得后面是York时出错了（可以使用贪心法解码Unigram Model）。</p>
 <p>为了避免Unigram模型的缺点，需要不仅仅考虑local context，还要考虑整个句子的语义。因此论文使用了HMM对整个句子进行建模和推理：</p>
-<p><img src="https://uploader.shimo.im/f/WkXQLosdM2oIwB7j.png!thumbnail?fileGuid=Xvd3pwtQ6jRtjhWH" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/bigsmall.png" alt="图片"></p>
 <p>其中每个节点包含了如下信息：词的可能的truecase、词的语法信息、词在句子中位置信息、前面两个词的语法信息、前面两个词的truecase信息。也就是说，HMM的隐藏状态$\left(q_{1}, q_{2}, \cdots, q_{n}\right)$是词的大小写和上下文信息组合，观察状态$O_{1} O_{2} \cdots O_{t}$是词的lexical item，使用维特比进行求解：$q_{\tau}^{*}=\operatorname{argmax}_{q_{i 1} q_{i 2} \cdots q_{i t}} P\left(q_{i 1} q_{i 2} \cdots q_{i t} \mid O_{1} O_{2} \cdots O_{t}, \lambda\right)$转移概率lambda是语言模型特征的打分：</p>
 <p>$\begin{aligned}<br>P_{\text {model}}\left(w_{3} \mid w_{2}, w_{1}\right) &amp;=\lambda_{\text {trigram}} P\left(w_{3} \mid w_{2}, w_{1}\right) \\<br>&amp;+\lambda_{\text {bigram}} P\left(w_{3} \mid w_{2}\right) \\<br>&amp;+\lambda_{\text {unigram}} P\left(w_{3}\right) \\<br>&amp;+\lambda_{\text {uniform}} P_{0}<br>\end{aligned}$</p>
 <p>对于UNK单词，比如‘mispeling’，在训练时被替换为UNKNOWN LC，‘Lenon’被替换为UNKNOWN_UC，这样做的目的是当一个unknown word出现同样上下文的context时，就知道怎样大小写了。</p>
@@ -107,7 +107,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2020/04/15/%E5%A6%82%E4%BD%95%E5%AF%B9%E6%96%87%E6%9C%AC%E5%90%8E%E5%A4%84%E7%90%86%E4%B9%8B%EF%BC%9A%E5%A4%A7%E5%B0%8F%E5%86%99%E8%BD%AC%E6%8D%A2/" data-id="ckj9f69by000v5swvfrvhdauc"
+      <a data-url="majsunflower.cn/2020/04/15/%E5%A6%82%E4%BD%95%E5%AF%B9%E6%96%87%E6%9C%AC%E5%90%8E%E5%A4%84%E7%90%86%E4%B9%8B%EF%BC%9A%E5%A4%A7%E5%B0%8F%E5%86%99%E8%BD%AC%E6%8D%A2/" data-id="ckj9fewqv000r98wv0viy3t9y"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86/" rel="tag">文本处理</a></li></ul>
