@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    语言模型之XLNET |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-语言模型之XLNET" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      语言模型之XLNET
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2019/09/14/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B9%8BXLNET/" class="article-date">
+  <time datetime="2019-09-13T23:41:23.000Z" itemprop="datePublished">2019-09-14</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>ACL 2019论文 <a href="https://arxiv.org/pdf/1906.08237.pdf" target="_blank" rel="noopener">XLNet: Generalized Autoregressive Pretraining for Language Understanding</a>阅读笔记。</p>
+<a id="more"></a>
+<h1 id="语言模型之XLNET"><a href="#语言模型之XLNET" class="headerlink" title="语言模型之XLNET"></a>语言模型之XLNET</h1><h2 id="论文概述"><a href="#论文概述" class="headerlink" title="论文概述"></a>论文概述</h2><p>语言模型有两种：自回归语言模型（autoregressive）、自编码语言模型（autoencoding）。自回归语言模型的缺陷是只能是单向的（elmo实现了双向的编码，但只是在token之间建立了浅层的关联）。自编码语言模型（Bert）的缺陷是忽略了Mask的token之间的关联。本文提出的XLNET模型很好的结合了自回归和自编码语言模型，将文本的token按照随机出来的全排列顺序进行生成，在生成过程中使用了两种attention，很好的加入了预测单词的位置信息，弥补了Bert的缺陷。在XLNET模型中借鉴了Transformer-XL的相对位置编码和Memory机制，减少了计算量，提高了速度。</p>
+<h2 id="前人工作介绍"><a href="#前人工作介绍" class="headerlink" title="前人工作介绍"></a>前人工作介绍</h2><h3 id="自回归语言模型"><a href="#自回归语言模型" class="headerlink" title="自回归语言模型"></a>自回归语言模型</h3><p>对于序列$x=(x_1…x_T)$，根据$(x_1…x_{i-1})$预测$x_i$，称为AR语言模型，比如GPT，ELMO等。AR的缺点在于序列要么从前往后，要么从后往前，无法将上文和下文信息完全结合起来。</p>
+<h3 id="自编码语言模型"><a href="#自编码语言模型" class="headerlink" title="自编码语言模型"></a>自编码语言模型</h3><p>对于序列$x=(x_1…x_T)$，编码为$x=(y_1…y_T)$，成为AE语言模型，比如Bert。AE模型的缺点在于Pre-train阶段可能需要引入 [Mask] 标记（Bert模型），而 [Mask] 会带来一系列问题。</p>
+<p>以序列[New, York, is, a, city]为例，Bert如果随机选择了[New]和[York]进行mask并预测，则mask后序列变为: [[Mask], [Mask], is, a, city]。比较好的优化函数应该优化的目标是：J=logp(New York | is a city)，但Bert实际优化的目标是J=logp(New | is a city) + logp(York | is a city)，此时p(New York | is a city)=p(New | is a city) * p(York | is a city)，即New和York相互独立。而实际上如果前面出现了“New”，那么后面出现“York”的概率理应大很多。</p>
+<p>而且对于Bert而言，在在pretrain阶段时需要对语料进行Mask标记，但在finetune阶段没有Mask标记，数据分布不一致会影响finetune的效果 。</p>
+<h2 id="XLNET模型"><a href="#XLNET模型" class="headerlink" title="XLNET模型"></a>XLNET模型</h2><h3 id="基于排序构造的语言模型"><a href="#基于排序构造的语言模型" class="headerlink" title="基于排序构造的语言模型"></a>基于排序构造的语言模型</h3><p><img src="/Users/majing/workspace/learning/paper_reading/xlnet/fig1.png" alt="fig1"></p>
+<p>在训练过程中，XLNET对输入序列进行了排列组合，比如2-&gt;4-&gt;3-&gt;1的排序中，对位置3的预测，能够既考虑前文1，也考虑后文4。在计算时，XLNET使用了矩阵的Mask操作来实现排列组合。因此，XLNET能弥补Bert忽略Mask的词内部关联的问题。</p>
+<p>XLNET在训练时，为了减少开销，对于序列1-&gt;2-&gt;3-&gt;4, 取位置c，只对$\boldsymbol{z}_{&gt;\boldsymbol{c}}$进行训练。c的取值通过一个超参数K设置，满足$|\boldsymbol{z}| /(|\boldsymbol{z}|-c) \approx K$。</p>
+<h3 id="双流注意力"><a href="#双流注意力" class="headerlink" title="双流注意力"></a>双流注意力</h3><p><img src="/Users/majing/workspace/learning/paper_reading/xlnet/fig2.png" alt="fig2"></p>
+<p>（a)表示内容attention(和普通attention一样)，(b)表示Query attention，把目标token的内容信息Mask掉了，(c)表示整个流程。</p>
+<p>h和g的计算公式如下：</p>
+<ul>
+<li>$g_{z_{t}}^{(m)} \leftarrow \text { Attention }\left(\mathbf{Q}=g_{z_{t}}^{(m-1)}, \mathbf{K V}=\mathbf{h}_{\bar{z}_{&lt;t}}^{(m-1)} ; \theta\right)$</li>
+<li>$h_{z_{t}}^{(m)} \leftarrow \text { Attention }\left(\mathrm{Q}=h_{z_{t}}^{(m-1)}, \mathrm{KV}={\mathbf{h}}_{z_{\leq}}^{(m-1)} ; \theta\right)$</li>
+</ul>
+<p>其中$h_{\theta}\left(\boldsymbol{X}_{\boldsymbol{Z}_{\langle t}}\right)$表示$\boldsymbol{X}_{\boldsymbol{Z}_{&lt;t}}$的hidden表示，$g_{\theta}$是为了修改softmax的计算方法：</p>
+<p>$p_{\theta}\left(X_{z_{t}}=x \mid x_{z_{&lt;} t}\right)=\frac{\exp \left(e(x)^{\top} g_{\theta}\left(X_{Z_{&lt;t}}, z_{t}\right)\right)}{\sum_{x^{\prime}} \exp \left(e\left(x^{\prime}\right)^{\top} g_{\theta}\left(\mathbf{X}_{z_{&lt;t}}, z_{t}\right)\right)}$</p>
+<p>可以看到相比于普通softmax，增加了zt，目的是为了区分不同位置的预测。例如有一个序列，[今天，北京，客流量，很大]，产生排列组合 [今天，北京，客流量] 和 [今天，北京，很大]，如果不增加zt，在预测未知3和4时，产生的概率分布是一致的，不符合逻辑。也正因为如此，XLNET使用了双流注意力，来避免这个问题。</p>
+<h3 id="Memory缓存"><a href="#Memory缓存" class="headerlink" title="Memory缓存"></a>Memory缓存</h3><p>对于超长序列，XLNET借鉴了Transformer-XL的缓存机制，并采用相对位置编码。设长序列为[1…T…2T]，会拆分为$\tilde{\boldsymbol{z}}=[1 \ldots T]$和$\boldsymbol{z}=[T \ldots 2 T]$，h的计算公式为：</p>
+<p>$h_{z_{t}}^{(m)} \leftarrow \text { Attention }\left(\mathrm{Q}=h_{z_{t}}^{(m-1)}, \mathrm{KV}=\left[\tilde{\mathrm{h}}^{(m-1)}, \mathrm{h}_{\mathrm{z} \leq t}^{(m-1)}\right] ; \theta\right)$</p>
+<h2 id="实验结论"><a href="#实验结论" class="headerlink" title="实验结论"></a>实验结论</h2><p>XLNET在GLUE数据集上与其他模型的对比，可以看到有很大提升。</p>
+<p><img src="/Users/majing/workspace/learning/paper_reading/xlnet/fig16.png" alt="fig16"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>XLNet使用了排列组合、双流注意力机制很好地解决了BERT的一些天然缺陷。当然还有很多其他语言模型如ERNIE还有待学习。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2019/09/14/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B9%8BXLNET/" data-id="ckj9c237i001o6wwv5ce9defh"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+      <a href="/2020/02/01/%E5%90%84%E7%B1%BB%E8%B5%84%E6%BA%90%E5%AE%9A%E6%9C%9F%E6%B1%87%E6%80%BB/" class="article-nav-link">
+        <strong class="article-nav-caption">前一篇</strong>
+        <div class="article-nav-title">
+          
+            各类资源定期汇总
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2019/07/15/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AUni%EF%AC%81ed-Language-Model-Pre-training-for-Natural-Language-Understanding-and-Generation%E3%80%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">论文阅读：《Uniﬁed Language Model Pre-training for Natural Language Understanding and Generation》</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
