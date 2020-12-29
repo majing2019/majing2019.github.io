@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    论文阅读：《A Contextual-Bandit Approach to Personalized News Article Recommendation》 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-论文阅读：《A-Contextual-Bandit-Approach-to-Personalized-News-Article-Recommendation》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文阅读：《A Contextual-Bandit Approach to Personalized News Article Recommendation》
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2020/11/15/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AA-Contextual-Bandit-Approach-to-Personalized-News-Article-Recommendation%E3%80%8B/" class="article-date">
+  <time datetime="2020-11-15T02:14:38.000Z" itemprop="datePublished">2020-11-15</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>这篇文章属于推荐领域采用强化学习方法的文章。与其他推荐算法相比，基于强化学习的推荐算法更多地关注了explore/exploit问题，即探索/利用问题。也就是强调推荐算法不应该仅仅基于历史数据中用户的偏好进行推荐，而应该给用户更多的新鲜事物，引导和发掘用户的爱好。而强化学习恰恰是基于系统采取的动作所接收到的环境的反馈，来不断训练系统的。因此，在强化学习的过程中适度的选择一些探索性的动作，并观察反馈进一步调整后续的动过选择，天然地具有解决该问题的潜质。</p>
+<a id="more"></a>
+<blockquote>
+<p>参考：<br><a href="https://zhuanlan.zhihu.com/p/34940176" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/34940176</a><br><a href="https://zhuanlan.zhihu.com/p/129336798" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/129336798</a><br><a href="https://www.yuque.com/el1s/paper-reading/vai69h" target="_blank" rel="noopener">https://www.yuque.com/el1s/paper-reading/vai69h</a><br><a href="https://mp.weixin.qq.com/s/boUy1h_SuiMohLBu1Tatkg" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/boUy1h_SuiMohLBu1Tatkg</a><br><a href="https://zhuanlan.zhihu.com/p/162804829" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/162804829</a></p>
+</blockquote>
+<p>论文中把文章推荐看作是多臂老虎机问题，一种有效的做法是根据用户和文章的上下文信息，选择文章推荐给用户，同时基于用户对文章的点击行为动态调整策略，追求点击次数最大化。实验证明加入上下文信息的Bandit算法比传统的Bandit算法CTR提升在12.5%以上，如果是基于稀疏的数据，效果会变得更好。</p>
+<p>论文分析了已有的Bandit算法，包括UCB、E-Greedy、Thompson Smapling，然后提出了LinUCB算法，LinUCB分为两种：</p>
+<ul>
+<li>简单的线性不相交模型 disjoint LinUCB</li>
+<li>混合相交的线性模型 hybrid LinUCB</li>
+</ul>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>人生中有很多选择问题，当每天中午吃饭的时候，需要选择吃饭的餐馆，那么就面临一个选择，是选择熟悉的好吃的餐馆呢，还是冒风险选择一个没有尝试过的餐馆呢。同样的，推荐系统处处也面临着这样的选择，是推荐一个已经熟悉的点击率很高的物品呢，还是选择一个新的物品呢。这些都可以泛化成一个经典问题，多臂老虎机问题，也是一个研究很广的问题。</p>
+<p><img src="https://uploader.shimo.im/f/DZTIKX87kwnUnXlY.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p>下面介绍一些常用的bandit算法。</p>
+<h2 id="Epsilon-Greedy-算法"><a href="#Epsilon-Greedy-算法" class="headerlink" title="Epsilon-Greedy 算法"></a>Epsilon-Greedy 算法</h2><ul>
+<li>选一个 (0,1) 之间较小的数作为 epsilon</li>
+<li>每次以概率 epsilon 做一件事：所有臂中随机选一个</li>
+<li>每次以概率 1-epsilon 选择截止到当前，平均收益最大的那个臂。</li>
+</ul>
+<p>算法存在的缺点：</p>
+<ul>
+<li>算法中需要人工调的参数比较多，比如epsilon控制explore比例，还有对于一个物品探索到那个界限K才会让利用起来比较置信</li>
+<li>没有利用历史的信息，完全有可能探索我们已知的不好的行动</li>
+</ul>
+<h2 id="汤普森采样"><a href="#汤普森采样" class="headerlink" title="汤普森采样"></a>汤普森采样</h2><ul>
+<li>假设每个臂是否产生收益，其背后有一个概率分布，产生收益的概率为 p。</li>
+<li>我们不断地试验，去估计出一个置信度较高的 “概率 p 的概率分布” 就能近似解决这个问题了。</li>
+<li>怎么能估计 “概率 p 的概率分布” 呢？ 答案是假设概率 p 的概率分布符合 beta(wins, lose)分布，它有两个参数: wins, lose。</li>
+<li>每个臂都维护一个 beta 分布的参数。每次试验后，选中一个臂，摇一下，有收益则该臂的 wins 增加 1，否则该臂的 lose 增加 1。</li>
+<li>每次选择臂的方式是：用每个臂现有的 beta 分布产生一个随机数 b，选择所有臂产生的随机数中最大的那个臂去摇。</li>
+</ul>
+<p><img src="https://uploader.shimo.im/f/YTaQcWZ7tRyeCOeM.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<ul>
+<li>注：<ul>
+<li>beta分布中的两个参数可以根据先验知识去设置，比如物料平均点击率3%， 那么我可以设置beta分布参数α=3，β=97，这样更贴近真实情况，可能更有效</li>
+<li>为什么可以这样做的理解：<ul>
+<li>伯努利分布（二项分布）:$P\{X=k\}=\left(\begin{array}{c}<br>n \\<br>k<br>\end{array}\right) p^{k}(1-p)^{n-k}$</li>
+<li>Beta分布：$f(x ; \alpha, \beta)=\frac{x^{\alpha-1}(1-x)^{\beta-1}}{\int_{0}^{1} u^{\alpha-1}(1-u)^{\beta-1} d u}=\frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha) \Gamma(\beta)} x^{\alpha-1}(1-x)^{\beta-1}=\frac{1}{B(\alpha, \beta)} x^{\alpha-1}(1-x)^{\beta-1}$</li>
+<li>贝叶斯更新：$P(\theta \mid x)=\frac{P(x \mid \theta) P(\theta)}{P(x)}$，先验分布 * 最大似然 = 后验分布。<ul>
+<li>对随机变量X，假设服从参数为theta1的分布Xi~P1(theta1)，且theta1~P2(theta2)。</li>
+<li>当对X抽样得到似然概率后，可以用似然和theta1的先验分布计算出theta1的后验分布</li>
+</ul>
+</li>
+<li>如果P1和P2属于同一种分布，则称P2是P1的共轭先验分布</li>
+<li>Beta分布是伯努利分布的共轭先验</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="UCB算法"><a href="#UCB算法" class="headerlink" title="UCB算法"></a>UCB算法</h2><ul>
+<li><p>初始化：先对每一个臂都试一遍</p>
+</li>
+<li><p>按照如下公式计算每个臂的分数，然后选择分数最大的臂作为选择：$U C B_{j}=\bar{x}_{j}(t)+\sqrt{\frac{2 l n t}{T_{j, t}}}$</p>
+</li>
+<li><p>观察选择结果，更新t和Tjt。</p>
+<ul>
+<li>加号前面是这个臂到目前的收益均值，后面的叫做 bonus，本质上是均值的标准差，t 是目前的试验次数，Tj,t是这个臂被试次数。</li>
+</ul>
+</li>
+<li><p>注：</p>
+<ul>
+<li><p>公式前面一项是收益均值，可以理解为点击率</p>
+</li>
+<li><p>核心是第二项，我们知道当x取值大于1时ln函数的作用是平滑，如果实验次数很多，那么后一项就会趋近很小，从而收敛到前一项收益均值，如果是一个新物料或者explore次数很少，那么后一项很大甚至大于1从而优先进行explore，支持探索到这个臂到达置信的次数。</p>
+</li>
+<li><p>UCB其实是一个算法框架，即每次选择动作的时候，采用乐观态度去衡量每个动作的预期收益。即预期收益有一个置信区间，以置信区间的上限作为动作的预期收益进行比较选择。所谓置信区间，其本质就是偏离预期收益(历史上的每次选择该动作的收益的均值)某个范围（例如，95%）的偏差。而这个偏差会随着选择该动作次数的增加，而逐渐收缩，即置信区间的上限会减小。也就是该动作被选择次数很多后，其预期收益会趋于稳定在一个范围（减小了噪音等因素引起的偏差）。可以被视为，该动作没有潜力了。如果该动作稳定在一个高收益，则仍会被选择，而如果该动作稳定在一个低收益，则又没有潜力，则不会再被选择。因此，UCB这种以置信区间上限作为选择动作依据的方式，自然而然地对探索的方向进行调整，使其偏向于高收益或有潜力的动作。</p>
+</li>
+<li><p>公式推导：</p>
+<ul>
+<li><p>观测到行动a的奖励的均值Qt(a)，假设奖励的真实值变化范围在[Qt(a)-delta, Q(t)+Ut(a)]之间，我们乐观的认为行动a的奖励是Qt(a)+Ut(a)，每一次都按这个值来选择行动a，其中Ut(a)是关于Nt(a)的函数，Nt(a)越大，Ut(a)越小：$N_{t}(a)=\sum_{i=1}^{t} 1\left[a_{i}=a\right]$。Ut(a)总是采取最贪心的行动：$a_{t}^{U C B}=\operatorname{argmax}_{a \in \mathcal{A}} \hat{Q}_{t}(a)+\hat{U}_{t}(a)$</p>
+</li>
+<li><p>Hoeffding’s Inequality：不对数据分布进行任何假设，设X1, …, Xt为独立同分布的随机变量，他们的值在[0,1]之间，样本平均值为$\overline{X_{t}}=\frac{1}{t} \sum_{i}^{t} \mathrm{X}_{i}$，对于$\delta&gt;0$以下不等式总是成立：</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<pre><code>  $P\left\{\left|E[X]-\overline{X_{t}}\right| \leq \delta\right\} \geq 1-2 e^{-2 t \delta^{2}}$
+
+  * 当$\delta$的取值为$\sqrt{\frac{2 \ln N_{t}(a)}{t}}$时，$2 e^{-2 t \delta^{2}}=\frac{2}{N_{t}(a)^{4}}$即
+  * $\overline{X_{t}}-\sqrt{\frac{2 \ln N_{t}(a)}{t}} \leq E[X] \leq \overline{X_{t}}+\sqrt{\frac{2 \ln N_{t}(a)}{t}}$是以$1-\frac{2}{N_{t}(a)^{4}}$的概率成立的：
+    * 当$N_{t}(a)=2$时，成立的概率为0.88
+    * 当$N_{t}(a)=3$时，成立的概率为0.98
+    * 当$N_{t}(a)=4$时，成立的概率为0.99
+
+* 根据Hoeffding&#39;s Inequality：$a_{t}^{U C B}=\arg \max _{a \in \mathcal{A}} \hat{Q}_{t}(a)+\sqrt{\frac{2 \log t}{N_{t}(a)}}$
+</code></pre><h1 id="本文贡献"><a href="#本文贡献" class="headerlink" title="本文贡献"></a>本文贡献</h1><h2 id="LinUCB-with-Disjoint-Linear-Model"><a href="#LinUCB-with-Disjoint-Linear-Model" class="headerlink" title="LinUCB with Disjoint Linear Model"></a>LinUCB with Disjoint Linear Model</h2><p>本文正是在UCB框架下进行的研究工作，即在衡量每个动作预期收益时，引入了个性化因素——上下文环境，使每个动作的预期收益与上下文环境特征有相关性。相比于普通UCB，本文提出了一种LinUCB的方法。LinUCB改变的是预期收益（均值）这一部分。论文给出了下面的公式：</p>
+<ul>
+<li>(1): $R_{\mathrm{A}}(T) \quad \stackrel{\text { def }}{=} \quad \mathbf{E}\left[\sum_{t=1}^{T} r_{t, a_{t}^{*}}\right]-\mathbf{E}\left[\sum_{t=1}^{T} r_{t, a_{t}}\right]$</li>
+<li>(2): $\mathbf{E}\left[r_{t, a} \mid \mathbf{x}_{t, a}\right]=\mathbf{x}_{t, a}^{\top} \boldsymbol{\theta}_{a}^{*}$</li>
+</ul>
+<p>通常UCB在预期收益部分采用的是（1）式左边的E值，通常是历史数据统计出来的收益均值。而本文LinUCB采用（2）式的线性回归模型对这部分进行了拟合，使得（1）式的差最小化。即（1）式左边的E值为Label，右边的E值为线性回归的预测值，RA(T)可看作是Loss。（2）式中的X为与用户和物品（arm）相关的特征值向量，里面可能包括了用户的年龄、性别以及新闻的推荐位置，类型等。而$\theta_{a}^{*}$则是待训练的参数。</p>
+<p>使用岭回归作为loss，通过岭回归公式，可以给出theta的计算公式：$\hat{\boldsymbol{\theta}}_{a}=\left(\mathbf{D}_{a}^{\top} \mathbf{D}_{a}+\mathbf{I}_{d}\right)^{-1} \mathbf{D}_{a}^{\top} \mathbf{c}_{a}$其中Da为m*d的矩阵，包含m个训练数据$x_{t, a}$，$c_a$为m维的向量，每一个值为m个训练数据对应的行动产生的相应奖励值。</p>
+<p>这种回归拟合粗看似乎跟强化学习没有什么关系，因为已经知道了历史数据统计出来的预期收益，直接就能训练出参数$\theta_{a}^{*}$，那么选择下一个动作（推荐哪个新闻），直接就比较预测值就可以了。然而，在采取动作以后，还是要收集反馈（用户点击情况），并纳入历史数据中，以更新预期收益的值，并用于下一次动作的选择。这是强化学习与普通的监督学习最大的区别，即根据环境的反馈进行学习，而没有固定的样本数据和对应的标签值。而（1）式中左边的E作为Label，这个Label其实就是环境的反馈。</p>
+<p>在将线性回归与MAB结合后，没有解决探索/利用问题，即此时选择下一个动作完全是根据历史最优，选择了历史看来收益最好的动作。因此，论文采用了UCB的架构，利用下面的公式（另一篇论文Exploring compact reinforcement-learning representations with linear regression，这里将其作为一个定理使用）：$\left|\mathbf{x}_{t, a}^{\top} \hat{\boldsymbol{\theta}}_{a}-\mathbf{E}\left[r_{t, a} \mid \mathbf{x}_{t, a}\right]\right| \leq \alpha \sqrt{\mathbf{x}_{t, a}^{\top}\left(\mathbf{D}_{a}^{\top} \mathbf{D}_{a}+\mathbf{I}_{d}\right)^{-1} \mathbf{x}_{t, a}}$构造了UCB的置信区间上限。在此基础上，给出了下面的动作选择依据公式：$a_{t} \stackrel{\text { def }}{=} \arg \max _{a \in \mathcal{A}_{t}}\left(\mathbf{x}_{t, a}^{\top} \hat{\boldsymbol{\theta}}_{a}+\alpha \sqrt{\mathbf{x}_{t, a}^{\top} \mathbf{A}_{a}^{-1} \mathbf{x}_{t, a}}\right)$，其中$\alpha=1+\sqrt{\ln (2 / \delta) / 2}$，$\mathbf{A}_{a} \stackrel{\text { def }}{=} \mathbf{D}_{a}^{\top} \mathbf{D}_{a}+\mathbf{I}_{d}$也即是，选择括号内部分得分最大的那个arm进行执行。括号内左边就是回归拟合的预期收益，右边是置信区间的上限。</p>
+<p>在这个基本思想下，算法的伪代码可以写成：</p>
+<p><img src="https://uploader.shimo.im/f/ftbFJydd56deNydl.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<h2 id="LinUCB-with-Hybrid-Linear-Model"><a href="#LinUCB-with-Hybrid-Linear-Model" class="headerlink" title="LinUCB with Hybrid Linear Model"></a>LinUCB with Hybrid Linear Model</h2><p>前面讲的是LinUCB的一种实现方式，对于每个臂维护theta参数。当我们希望解决共享类context的需求时，即一个用户可能有偏好，只喜欢体育，那么这个参数就应该被所有待推荐给他的文章池（arm池）所共享。即在t时刻为该用户推荐文章时，所有待选文章（arm）都要用到这个context。因此，作者引入了下面的公式：$\mathbf{E}\left[r_{t, a} \mid \mathbf{x}_{t, a}\right]=\mathbf{z}_{t, a}^{\top} \boldsymbol{\beta}^{<em>}+\mathbf{x}_{t, a}^{\top} \boldsymbol{\theta}_{a}^{</em>}$。其中z为共享类context（当前用户和文章的共享类特征的组合向量），而$\beta$为待学习的权重，可以看到它没有下标，即所有arm（所有待选文章）都只学习且采用这一个权重，从而实现共享类context的信息交互。与之相对的是权重$\theta_{a}$，每个arm都会学到一个，各arm之间不会共享context的信息。</p>
+<p>在这个思想下，算法的伪代码可以写成：</p>
+<p><img src="https://uploader.shimo.im/f/srzfEtwkkTst54Ev.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<h2 id="评估方法"><a href="#评估方法" class="headerlink" title="评估方法"></a>评估方法</h2><p>由于是探测问题，如果不上线，就没办法探到算法希望的内容。有点像鸡生蛋、蛋生鸡的问题。也可以看作强化学习里的“off-policy evaluation problem”问题。一个方式是根据离线数据构造一个模拟器，但是这种模拟器会引入bias。论文提出了一个没有bias的简单实现：</p>
+<ul>
+<li>假设有若干未知的分布D服从独立同分布$\left(x_{1}, \ldots, x_{K}, r_{1}, \ldots, r_{K}\right)$。每个分布包含了所有arm的可观测特征向量、隐含的奖励</li>
+<li>假设要处理现实世界中，根据日志策略的交互结果生成的一系列事件：<ul>
+<li>每个事件包含了上下文特征向量$x_{1}, \ldots, x_{K}$，一个选择的arm a，以及观察到的奖励ra。</li>
+<li>简单起见，我们把实验的事件流看作是无限的，但是实验所需的事件是有上限的。</li>
+<li>目标是利用这份数据来评估一个bandit算法$\pi$。形式上$\pi$是从历史t-1个事件$h_{t-1}$以及当前的上下文特征$x_{1}, \ldots, x_{K}$到当前时刻t选择arm at的映射。</li>
+</ul>
+</li>
+<li>论文提出的评估策略如下：<img src="https://uploader.shimo.im/f/CTtECuqbtSpHgZPR.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></li>
+<li>把策略$\pi$和一系列事件T作为输入。然后逐一考察日志事件。如果，给定当前历史$h_{t-1}$，如果策略$\pi$和日志策略选择同一个arm，那么保留这个事件，也就是把它加到历史中，更新总体奖励Rt；否则，如果策略$\pi$和日志策略选择的arm不一样，则整个事件被忽略，也不更新状态。</li>
+<li>日志策略选择arm的策略是uniformly at random，所以每个事件被算法保留的概率是$\frac{1}{K}$并且各自是独立的。</li>
+<li>也就是说，被D选择并保留的事件有相同的分布。</li>
+</ul>
+<h1 id="实验细节"><a href="#实验细节" class="headerlink" title="实验细节"></a>实验细节</h1><p><img src="https://uploader.shimo.im/f/2nWVumPUfJL3a4WC.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<h2 id="数据收集"><a href="#数据收集" class="headerlink" title="数据收集"></a>数据收集</h2><ul>
+<li>随机抽取用户</li>
+<li>曝光的文章是从内容池中随机选取的</li>
+<li>为了避免曝光位置bias，我们只考察F1位置的文章</li>
+<li>每个用户交互事件包含三部分内容<ul>
+<li>曝光的文章</li>
+<li>用户、文章信息</li>
+<li>是否点击</li>
+</ul>
+</li>
+<li>选了5月1日470万事件作为训练集，5月3日～9日的3600万个事件作为验证集</li>
+</ul>
+<h2 id="特征构造"><a href="#特征构造" class="headerlink" title="特征构造"></a>特征构造</h2><ul>
+<li>用“支持度”来选择特征，支持度指的是包含这个特征的用户占比。为了减少噪声，选择支持度大于0.1的特征。</li>
+<li>用户特征的向量超过1000维。包括（且只包括）：<ul>
+<li>人口属性学：性别（2种）、年龄（离散化为10段）</li>
+<li>位置信息：美国200个大城市</li>
+<li>行为类型： 1000种行为标签</li>
+</ul>
+</li>
+<li>类似的，文章通常用100种类目特征向量来表示：<ul>
+<li>URL种类：10种类型</li>
+<li>编辑类型：人工标注的数十种文章类型</li>
+</ul>
+</li>
+<li>用论文Personalized recommendation on dynamic content using predictive bilinear models中的编码方式，将特征向量统一长度。同时，我们会为每个特征向量增加一个常数特征1。这样，每个文章和user被表示成83维和1193维的向量</li>
+<li>为了降维和获取非线性特征，我们用08年9月份的数据进行联合分析，然后利用论文A case study of behavior-driven conjoint analysis on Yahoo!中的降维方法。<ul>
+<li>把用户特征投射到文章分类上，然后根据用户兴趣聚类。<ul>
+<li>首先训练一个CTR预估模型：$\varphi_{u}^{\top} W \varphi_{a}$算出的是用户u对文章a的点击率。$\varphi_{u}, \varphi_{a}$分别表示用户和文章的特征向量。W是LR学到的权重矩阵</li>
+<li>原始的用户特征可以用$\psi_{u}=\varphi^{\top} W$，$\psi_{u}$中的第i维表示用户u对文章i的兴趣度。然后用K-means把用户在$\psi_{u}$空间中聚成5类。最终的用户特征是一个6维向量，前五个维是对应5个聚类的相应（用高斯核计算，然后归一化，相加为1）、第六维是常数1。</li>
+</ul>
+</li>
+<li>每个文章a有个单独的6维向量$x_{t, a}$，类似用户特征计算方法。因为文章特征是不重合的，他们是属于disjoint模型特征。</li>
+<li>对于每个文章a，我们把它的6维向量和用户的6维向量做外积，得到6*6=36维特征，表示成$z_{t, a} \in R^{36}$，代表用户和文章的交叉信息，属于hybrid模型特征。</li>
+</ul>
+</li>
+</ul>
+<h2 id="算法比较"><a href="#算法比较" class="headerlink" title="算法比较"></a>算法比较</h2><p>本文对比了如下算法的性能差异：</p>
+<ul>
+<li>random：从内容池中随机选取一个，每个内容选中的概率相同。</li>
+<li>Epsilon-Greedy</li>
+<li>UCB</li>
+<li>disjoint LinUCB</li>
+<li>Hybrid LinUCB</li>
+</ul>
+<h2 id="学习桶和部署桶"><a href="#学习桶和部署桶" class="headerlink" title="学习桶和部署桶"></a>学习桶和部署桶</h2><p>在线上执行时，虽然线性拟合和统计等步骤计算量不大，但是用户和待选文章的数量增大后，仍然是比较大的代价。因此，论文给出了学习桶和部署桶的概念，即利用学习桶更新参数，而在部署桶中利用学习桶得到的参数进行推荐（动作的选择）。</p>
+<h2 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h2><p>处于保密原因，使用相对的CTR，也就是算法的CTR除以随机策略的。假设随机策略的CTR等于1。论文中直接用CTR代替“相对CTR”。</p>
+<p>由于部署集的数据量大于训练集，所以，部署集的CTR更重要一些。但是学习集中的高CTR意味着更快的学习率（或者等价的，更小的regret）。所以论文把训练集和部署集中的CTR都列出来了。</p>
+<h3 id="训练集数据"><a href="#训练集数据" class="headerlink" title="训练集数据"></a>训练集数据</h3><p><img src="https://uploader.shimo.im/f/RFgRNTVI7X8bkeZO.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<ul>
+<li>每个对比的算法（除random和无所不知算法外）都有一个参数：如Epsilon-Greedy中的$\epsilon$和UCB算法中的$\alpha$</li>
+<li>学习集中的CTR都是呈倒U型。当参数较小时，探索不充分，算法不能发现CTR较好的文章，导致点击量较低。同理，当参数很大时，探索过度，导致浪费了流量在CTR较低的文章上。论文为每种算法选择最合适的参数，在下一节的测试数据上跑一遍。</li>
+<li>相比于没有上下文特征的Epsilon-Greedy算法，UCB算法，热启动算法Epsilon-Greedy(warm)和UCB(warm)在最好的参数时，可以击败无所不知算法。但是热启动算法的稳定性不如在线算法，因为热启动算法都是离线用的完全随机数据训练的。Epsilon-Greedy算法在$\epsilon$接近1的时候性能比较稳定。热启动可以帮助ucb（warm）为用户选择更多吸引力的文章，但是不能保证线上的效果。因为ucb（warm）依赖于探测的置信区间，但是不太容易纠正热启动的初始偏置。因此，论文没有在验证集上跑热启动算法。</li>
+<li>在部署集上，Epsilon-Greedy和UCB算法的效果差不多，但是在训练集上的效果差一些，跟上下文无关的算法表现一致。</li>
+<li>为了验证数据稀疏性对模型的影响，论文减少了训练集的样本数量，30%、20%、10%、5%、1%等，部署集样本量不变。</li>
+</ul>
+<h3 id="验证集数据"><a href="#验证集数据" class="headerlink" title="验证集数据"></a>验证集数据</h3><p><img src="https://uploader.shimo.im/f/l0WYphITCPCmvhKf.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<h4 id="特征对结果的影响"><a href="#特征对结果的影响" class="headerlink" title="特征对结果的影响"></a>特征对结果的影响</h4><p>从上表中明显看出，无论是 Epsilon-Greedy （seg/disjoint/hybrid）还是UCB（ucb（seg）、linucb（disjoint/hybrid））都能使CTR提升10%左右。</p>
+<p><img src="https://uploader.shimo.im/f/2XKUnRr1dqk6zMOu.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p>为了更好的可视化特征的效果，上图描述的是对比base CTR是如何提升的。base CTR是描述的文章是否被随机用户感兴趣。提升的比例越高，说明算法把文章推给了潜在感兴趣的用户。</p>
+<ul>
+<li>(a）说明没有用上下文特征的算法也能提升CTR。其他三张图更明显的表明了个性化的效果。极端的例子，3（c）中最高的那个点代表的文章，CTR从1.31到3.03，提升了132%</li>
+</ul>
+<h4 id="样本大小对结果的影响"><a href="#样本大小对结果的影响" class="headerlink" title="样本大小对结果的影响"></a>样本大小对结果的影响</h4><p>论文减少了训练集的样本数量，30%、20%、10%、5%、1%等，来模拟一个较大的内容池，但是流量固定的情况。</p>
+<p><img src="https://uploader.shimo.im/f/HtJLxIPz2ausXQcO.png!thumbnail?fileGuid=RR3Vv6gjtQwp9kcW" alt="图片"></p>
+<p>上图中描述了不同数据量对CTR的影响：</p>
+<ul>
+<li>在所有数量级中，特征仍然是有作用的。</li>
+<li>在部署集上，ucb比Epsilon-Greedy算法的效果普遍要好，在1%流量时更明显。</li>
+<li>相比与 ucb (seg) 和 linucb (disjoint)，linucb（hybrid）在数据量小时优势更明显。原因是混合模型的特征是共享的，CTR的信息可以从一个文章传递到另一个文章，当内容池越大的时候，这个优势越明显。相反，在独立模型中，没法传递这种信息。</li>
+<li>图4（a）描述了迁移学习在稀疏数据中的作用。对比ucb（seg）和linucb（disjoint）：从图4（a）中看出，这两个算法的效果差不多。我们认为这不是巧合。是用户聚类的作用。</li>
+<li>图5描述的是用户最近临（非常数的5个维度）的聚类的直方图。可以看出，大部分用户非常接近某一个聚类，比如85%的用户大于0.5，40%的用户大于0.8。</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2020/11/15/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AA-Contextual-Bandit-Approach-to-Personalized-News-Article-Recommendation%E3%80%8B/" data-id="ckj9dm2cy001fk8wv41knbswe"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/08/10/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AAd-Click-Prediction-a-View-from-the-Trenches%E3%80%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">论文阅读：《Ad Click Prediction: a View from the Trenches》</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2020 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
