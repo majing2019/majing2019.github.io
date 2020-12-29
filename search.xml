@@ -246,27 +246,27 @@
 </ul>
 <h3 id="L2-正则化直观解释"><a href="#L2-正则化直观解释" class="headerlink" title="L2 正则化直观解释"></a>L2 正则化直观解释</h3><p>L2 正则化公式：$L=E_{i n}+\lambda \sum_{j} w_{j}^{2}$，这个式子是怎么得来的呢？我们知道，正则化的目的是限制参数过多或者过大，避免模型更加复杂。例如，使用多项式模型，如果使用 10 阶多项式，模型可能过于复杂，容易发生过拟合。所以，为了防止过拟合，我们可以将其高阶部分的权重 w 限制为 0，这样，就相当于从高阶的形式转换为低阶。</p>
 <p>为了达到这一目的，最直观的方法就是限制 w 的个数，但是这类条件属于 NP-hard 问题，求解非常困难。所以，一般的做法是寻找更宽松的限定条件：$\sum_{j} w_{j}^{2} \leq C$。因此，我们的目标转换为：最小化训练样本误差 Ein，但是要遵循 w 平方和小于 C 的条件，用一张图表示如下：</p>
-<p><img src="https://uploader.shimo.im/f/B4OOZleY96vvQ0bU.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/1.png" alt="图片"></p>
 <p>蓝色椭圆区域是最小化 Ein 区域，红色圆圈是 w 的限定条件区域。在没有限定条件的情况下，一般使用梯度下降算法，在蓝色椭圆区域内会一直沿着 w 梯度的反方向前进，直到找到全局最优值 wlin。例如空间中有一点 w（图中紫色点），此时 w 会沿着 -∇Ein 的方向移动，如图中蓝色箭头所示。但是，由于存在限定条件，w 不能离开红色圆形区域，最多只能位于圆上边缘位置，沿着切线方向。w 的方向如图中红色箭头所示。</p>
 <p>那么w 最终会在什么位置取得最优解呢？w 是沿着圆的切线方向运动，如上图绿色箭头所示。运动方向与 w 的方向（红色箭头方向）垂直。运动过程中，根据向量知识，只要 -∇Ein 与运行方向有夹角，不垂直，则表明 -∇Ein 仍会在 w 切线方向上产生分量，那么 w 就会继续运动，寻找下一步最优解。只有当 -∇Ein 与 w 的切线方向垂直时，-∇Ein在 w 的切线方向才没有分量，这时候 w 才会停止更新，到达最接近 wlin 的位置，且同时满足限定条件。</p>
-<p><img src="https://uploader.shimo.im/f/8IMk9m7G0bmEqiXk.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/2.png" alt="图片"></p>
 <p>-∇Ein 与 w 的切线方向垂直，即 -∇Ein 与 w 的方向平行。如上图所示，蓝色箭头和红色箭头互相平行。这样，根据平行关系得到：$\nabla E_{i n}+\lambda w=0$，这样，我们就把优化目标和限定条件整合在一个式子中了。也就是说只要在优化 Ein 的过程中满足上式，就能实现正则化目标。</p>
 <p>根据最优化算法的思想：梯度为 0 的时候，函数取得最优值。已知 ∇Ein 是 Ein 的梯度，观察上式，λw 是否也能看成是某个表达式的梯度呢？当然可以！λw 可以看成是 1/2λw*w 的梯度：$\frac{\partial}{\partial w}\left(\frac{1}{2} \lambda w^{2}\right)=\lambda w$。这样，我们根据平行关系求得的公式，构造一个新的损失函数：$E_{a u g}=E_{i n}+\frac{\lambda}{2} w^{2}$</p>
 <h3 id="L1-正则化直观解释"><a href="#L1-正则化直观解释" class="headerlink" title="L1 正则化直观解释"></a>L1 正则化直观解释</h3><p>L1 正则化公式也很简单，直接在原来的损失函数基础上加上权重参数的绝对值：$L=E_{i n}+\lambda \sum_{j}\left|w_{j}\right|$，我仍然用一张图来说明如何在 L1 正则化下，对 Ein 进行最小化的优化：</p>
-<p><img src="https://uploader.shimo.im/f/ViAY8vKLm0gBE8Gs.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
-<h3 id="L1-与-L2-解的稀疏性"><a href="#L1-与-L2-解的稀疏性" class="headerlink" title="L1 与 L2 解的稀疏性"></a>L1 与 L2 解的稀疏性</h3><h4 id="直观视角"><a href="#直观视角" class="headerlink" title="直观视角"></a>直观视角</h4><p><img src="https://uploader.shimo.im/f/4c2WtlkCi8LoqeN1.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/3.png" alt="图片"></p>
+<h3 id="L1-与-L2-解的稀疏性"><a href="#L1-与-L2-解的稀疏性" class="headerlink" title="L1 与 L2 解的稀疏性"></a>L1 与 L2 解的稀疏性</h3><h4 id="直观视角"><a href="#直观视角" class="headerlink" title="直观视角"></a>直观视角</h4><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/4.png" alt="图片"></p>
 <p>以二维情况讨论，上图左边是 L2 正则化，右边是 L1 正则化。从另一个方面来看，满足正则化条件，实际上是求解蓝色区域与黄色区域的交点，即同时满足限定条件和 Ein 最小化。对于 L2 来说，限定区域是圆，这样，得到的解 w1 或 w2 为 0 的概率很小，很大概率是非零的。</p>
 <p>对于 L1 来说，限定区域是正方形，方形与蓝色区域相交的交点是顶点的概率很大，这从视觉和常识上来看是很容易理解的。也就是说，方形的凸点会更接近 Ein 最优解对应的 w 位置，而凸点处必有 w1 或 w2 为 0。这样，得到的解 w1 或 w2 为零的概率就很大了。所以，L1 正则化的解具有稀疏性。</p>
 <p>扩展到高维，同样的道理，L2 的限定区域是平滑的，与中心点等距；而 L1 的限定区域是包含凸点的，尖锐的。这些凸点更接近 Ein 的最优解位置，而在这些凸点上，很多 wj 为 0。</p>
 <h4 id="例子视角"><a href="#例子视角" class="headerlink" title="例子视角"></a>例子视角</h4><p>上面说的稍微有点抽象，我们以下图中一个具体的Loss函数为例：</p>
-<p><img src="https://uploader.shimo.im/f/MSBCdHxOWHHKpm8A.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/5.png" alt="图片"></p>
 <p>则最优的 x 在绿点处，x 非零。现在施加 L2 regularization，新的损失函数$\left(L+C x^{2}\right)$如图中蓝线所示：</p>
-<p><img src="https://uploader.shimo.im/f/hQdcIW0ptUGXZNlG.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/6.png" alt="图片"></p>
 <p>最优的 x 在黄点处，x 的绝对值减小了，但依然非零。而如果施加 L1 regularization，则新的损失函数$(L+C|x|)$如图中粉线所示：</p>
-<p><img src="https://uploader.shimo.im/f/tZIem6je5ihSznn9.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/7.png" alt="图片"></p>
 <p>最优的 x 就变成了 0。这里利用的就是绝对值函数的尖峰。两种 regularization 能不能把最优的 x 变成 0，取决于原先的费用函数在 0 点处的导数。如果本来导数不为 0，那么施加 L2 regularization 后导数依然不为 0，最优的 x 也不会变成 0。而施加 L1 regularization 时，只要保证施加L1后x=0处左右两边导数异号，且施加L1后x=0处左右两边导数分别是f’(0)-C和f’(0)+C，即C&gt;|f’(0)|，那么就会形成极小值点。</p>
 <h4 id="概率视角"><a href="#概率视角" class="headerlink" title="概率视角"></a>概率视角</h4><p>为f(w)加入正则化项，相当于为f(w)的参数加入先验，即要求w满足某以分布。L1正则化项相当于为w加入拉普拉斯先验，L2正则化项相当于加入高斯分布的先验，两种分布的概率函数如下图：</p>
-<p><img src="https://uploader.shimo.im/f/IMAFImPd6A8ZNSEu.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/8.png" alt="图片"></p>
 <p>很明显可以观察出，在紫色区域中，P_G(w) &lt; P_L(w)，说明Gauss分布中，值大的w更少。即L2与L1相比，值大的w更少，因此L2比L1更平滑。</p>
 <p>在红色区域中，P_L(w) &lt; P_G(w)，结合图来看，Gauss分布中值很小的w和值为0的w概率很近。而Laplace分布中，值很小的w小于值为0的w。这说明laplace要w更多为0，而Gauss分布要w很小但不一定为0。因此L1比L2更稀疏。</p>
 <h4 id="梯度视角"><a href="#梯度视角" class="headerlink" title="梯度视角"></a>梯度视角</h4><p>在L2正则下对参数求导为：</p>
@@ -280,13 +280,13 @@
 <p>可以看到L1正则化的效果与L2正则化的效果很不一样，不再是线性地缩放每个$w_i$，而是减去了一项与权重w i同号的常数，因此当$w_i$ ​&gt;0时，更新权重使得其减小，当$w_i&lt; 0$时，更新权重使得其增大。从这点来说也可以看出L1正则化更有可能使得权重为0，而L2正则化虽也使得权重减小，但缩放操作使得其仍保持同号。</p>
 <p>可以想象用梯度下降时，当w小于1时，L2正则项的惩罚效果越来越小，L1正则项惩罚效果依然很大，L1可以惩罚到0，而L2很难。</p>
 <h3 id="正则化参数-λ"><a href="#正则化参数-λ" class="headerlink" title="正则化参数 λ"></a>正则化参数 λ</h3><p>正则化是结构风险最小化的一种策略实现，能够有效降低过拟合。损失函数实际上包含了两个方面：一个是训练样本误差。一个是正则化项。其中，参数 λ 起到了权衡的作用。</p>
-<p><img src="https://uploader.shimo.im/f/xU5EhlyA6GiBuFNP.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/9.png" alt="图片"></p>
 <p>以 L2 为例，若 λ 很小，对应上文中的 C 值就很大。这时候，圆形区域很大，能够让 w 更接近 Ein 最优解的位置。若 λ 近似为 0，相当于圆形区域覆盖了最优解位置，这时候，正则化失效，容易造成过拟合。相反，若 λ 很大，对应上文中的 C 值就很小。这时候，圆形区域很小，w 离 Ein 最优解的位置较远。w 被限制在一个很小的区域内变化，w 普遍较小且接近 0，起到了正则化的效果。但是，λ 过大容易造成欠拟合。欠拟合和过拟合是两种对立的状态。</p>
 <p>【注】：有关Laplace先验与L1正则化和Gauss先验与L2正则化可参考<a href="https://www.cnblogs.com/heguanyou/p/7688344.html" target="_blank" rel="noopener">https://www.cnblogs.com/heguanyou/p/7688344.html</a></p>
 <h1 id="在线学习和稀疏性简介"><a href="#在线学习和稀疏性简介" class="headerlink" title="在线学习和稀疏性简介"></a>在线学习和稀疏性简介</h1><p>稀疏性在机器学习中是很看重的事情，尤其我们做工程应用，稀疏的特征会大大减少predict时的内存和复杂度。这一点其实很容易理解，说白了，即便加入L1范数，因为是浮点运算，训练出的w向量也很难出现绝对的零。到这里，大家可能会想说，那还不容易，当计算出的w对应维度的值很小时，我们就强制置为零不就稀疏了么。对的，其实不少人就是这么做的，后面的Truncated Gradient和FOBOS都是类似思想的应用。GD求解的模型虽然精度相对较高，但具有训练太费时、不易得到稀疏解和对不可微点迭代效果欠佳等缺点；SGD则存在模型解的精度低、收敛速度慢和很难得到稀疏解的缺点。虽然学术界提出了很多加快收敛或者提高模型精度的方法（如添加momentum项、添加nesterov项、Adagrad算法、Adadelta算法、GSA算法等），但这些方法在提高模型解的稀疏性方面效果有限，而FTRL在这方面则更加有效。</p>
 <h2 id="Online-Gradient-Descent-OGD"><a href="#Online-Gradient-Descent-OGD" class="headerlink" title="Online Gradient Descent(OGD)"></a>Online Gradient Descent(OGD)</h2><p>在线梯度下降法类似于随机梯度下降SGD，一次只处理一个样本，但不同的是不要求序列的样本满足独立同分布的性质，其更新公式为：$w_{t+1}=w_{t}-\eta_{t} \mathbf{g}_{t}$，其中$\eta_{t}=\frac{1}{\sqrt{t}}$是全局非增的。OGD方法在许多问题上均有不错的表现，但是获得的解不够稀疏。在OGD目标函数中添加L1正则化项，可以带来一定的稀疏性，使得模型的参数接近零。但由于参数的更新是两个浮点数进行相加，很难有机会产生精确零解。</p>
 <h2 id="Truncated-Gradient"><a href="#Truncated-Gradient" class="headerlink" title="Truncated Gradient"></a>Truncated Gradient</h2><p>Truncated Gradient具体算法如下：</p>
-<p><img src="https://uploader.shimo.im/f/s4KM0O9gxv8jHBG7.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/10.png" alt="图片"></p>
 <p>从上面的公式可以看出，$\lambda, \theta$决定了 W 的稀疏程度，如果两者都很大，那么稀疏性就会越强。特别的，当$\lambda=\theta$时，此时只需要控制一个参数就可以控制稀疏性。</p>
 <h2 id="FOBOS"><a href="#FOBOS" class="headerlink" title="FOBOS"></a>FOBOS</h2><p>在该算法中，权重的更新分成两个步骤：</p>
 <ul>
@@ -335,7 +335,7 @@
 <p>参考：<br><a href="https://zhuanlan.zhihu.com/p/25315553" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/25315553</a><br><a href="https://zhuanlan.zhihu.com/p/32903540" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/32903540</a></p>
 </blockquote>
 <p>理论及实验均证明，L1-FOBOS这类基于梯度下降的算法有比较高的精度，但L1-RDA却能在损失一定精度的情况下产生更好的稀疏性。把这二者的优点结合成一个算法，这就是FTRL算法的来源,如下图：</p>
-<p><img src="https://uploader.shimo.im/f/3pRUVhk6bCpK9c9H.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/11.png" alt="图片"></p>
 <p>FTRL 综合考虑了 FOBOS 和 RDA 对于梯度和正则项的优势和不足，其权重更新公式是：$W^{(t+1)}=\operatorname{argmin}_{W}\left\{G^{(1: t)} \cdot W+\lambda_{1}|W|_{1}+\frac{\lambda_{2}}{2}|W|_{2}^{2}+\frac{1}{2} \sum_{s=1}^{t} \sigma^{(s)}\left|W-W^{(s)}\right|_{2}^{2}\right\}$</p>
 <p>上面的公式出现了L2范数，不过这一项的引入不会影响 FTRL 的稀疏性，只是使得求解结果更加“平滑”。通过数学计算并且放弃常数项可以得到上面的优化问题相当于求使得下面式子的最小的参数 W：$\left(G^{(1: t)}-\sum_{s=1}^{t} \sigma^{(s)} W^{(s)}\right) \cdot W+\lambda_{1}|W|_{1}+\frac{1}{2}\left(\lambda_{2}+\sum_{s=1}^{t} \sigma^{(s)}\right)|W|_{2}^{2}$</p>
 <p>假设$Z^{(t)}=G^{(1: t)}-\sum_{s=1}^{l} \sigma^{(s)} W^{(s)}=Z^{(t-1)}+G^{(t)}-\sigma^{(t)} W^{(t)}$，则上式等价于$W^{(t+1)}=\operatorname{argmin}_{W}\left\{Z^{(t)} \cdot W+\lambda_{1}|W|_{1}+\frac{1}{2}\left(\lambda_{2}+\sum_{s=1}^{t} \sigma^{(s)}\right)|W|_{2}^{2}\right\}$，写成分量的形式就是：$\operatorname{argmin}_{w_{i}}\left\{z_{i}^{(t)} w_{i}+\lambda_{1}\left|w_{i}\right|+\frac{1}{2}\left(\lambda_{2}+\sum_{s=1}^{t} \sigma^{(s)}\right) w_{i}^{2}\right\}$</p>
@@ -348,12 +348,12 @@
 <h3 id="Per-Coordinate-Learning-Rates"><a href="#Per-Coordinate-Learning-Rates" class="headerlink" title="Per-Coordinate Learning Rates"></a>Per-Coordinate Learning Rates</h3><p>在 SGD 的算法里面使用的是一个全局的学习率$\eta^{(t)}=O\left(t^{-0.5}\right)$，意味着学习率是一个正数并且逐渐递减，对每一个维度都是一样的。而在 FTRL 算法里面，每个维度的学习率是不一样的。如果特征 A 比特征 B变化快，那么在维度 A 上面的学习率应该比维度 B 上面的学习率下降得更快。在 FTRL 中，维度i的学习率的定义如下：$\eta_{i}^{(t)}=\alpha /\left(\beta+\sqrt{\sum_{s=1}^{t}\left(g_{i}^{(s)}\right)^{2}}\right)$</p>
 <p>按照之前的定义$\sigma^{(1: t)}=1 / \eta^{(t)}$，所以$\sum_{s=1}^{t} \sigma^{(s)}=\eta_{i}^{(t)}=\alpha /\left(\beta+\sqrt{\sum_{s=1}^{t}\left(g_{i}^{(s)}\right)^{2}}\right)$</p>
 <p>因此，FTRL的整体算法如下：</p>
-<p><img src="https://uploader.shimo.im/f/v40JWz3xGHM1piIs.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/12.png" alt="图片"></p>
 <p>所谓的per-coordinate，意思就是FTRL是对w每一维分开训练更新的，每一维使用的是不同的学习速率。与w所有特征维度使用统一的学习速率相比，这种方法考虑了训练样本本身在不同特征上分布的不均匀性，如果包含w某一个维度特征的训练样本很少，每一个样本都很珍贵，那么该特征维度对应的训练速率可以独自保持比较大的值，每来一个包含该特征的样本，就可以在该样本的梯度上前进一大步，而不需要与其他特征维度的前进步调强行保持一致。</p>
 <h3 id="Logistic-Regression的FTRL形式"><a href="#Logistic-Regression的FTRL形式" class="headerlink" title="Logistic Regression的FTRL形式"></a>Logistic Regression的FTRL形式</h3><p>Logistic Regression 的 FTRL算法如下：</p>
-<p><img src="https://uploader.shimo.im/f/73YdgIPA7Gkzjaft.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/13.png" alt="图片"></p>
 <h3 id="不同算法的统一描述"><a href="#不同算法的统一描述" class="headerlink" title="不同算法的统一描述"></a>不同算法的统一描述</h3><p>不同的方法在统一的描述形式下，区别点仅在第二项和第三项的处理方式：</p>
-<p><img src="https://uploader.shimo.im/f/1XsWylKTJWjnrlbx.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/adclick/14.png" alt="图片"></p>
 <ul>
 <li>第一项：梯度或累积梯度；</li>
 <li>第二项：L1正则化项的处理；</li>
@@ -375,7 +375,7 @@
 </blockquote>
 <p>我们平常使用的都是32或64位浮点数编码，但是在实际场景中，系数值普遍落在(-2,+2)之间，普通的编码方式就显得非常奢侈了。这里提出了q2.13编码方式：</p>
 <p>1 bit表达正负号，2 bits表达整数位，13 bits表达小数点右边的值，总计是16 bits。用更少的bit来表达就意味着信息损失。但是算法中要运用到对每一小步的累计值，不做处理就会对模型产生影响。具体解决策略为：</p>
-<p>加入一个随机的regret项:R，R符合标准高斯分布，值介于0和1之间。对系数进行round，保证其整体离散误差为0：<img src="https://uploader.shimo.im/f/AEG4NMJ14wVHw08j.png!thumbnail?fileGuid=6QwGjvqHjr3xRqp8" alt="图片">。实验表明，使用了q2.13相较于64位浮点编码可以节省75%的参数存储RAM。</p>
+<p>加入一个随机的regret项:R，R符合标准高斯分布，值介于0和1之间。对系数进行round，保证其整体离散误差为0：$w_{i, \text { rounded }}=2^{-13}\left\lfloor 2^{13} w_{i}+R\right\rfloor$。实验表明，使用了q2.13相较于64位浮点编码可以节省75%的参数存储RAM。</p>
 <h2 id="Training-Many-Similar-Models"><a href="#Training-Many-Similar-Models" class="headerlink" title="Training Many Similar Models"></a>Training Many Similar Models</h2><p>我们在做特征筛选或者设置优化时，基于已有的训练数据，控制变量，生成多个不同的变体来进行对比实验是一个不错的方法。但这样做比较耗费资源。之前有一个比较省资源的方法是基于一个先验模型，使用其他模型来预测残差。但是这样不能进行特征移除和特征替换的效果。这里Google提出了一个方法，由于每个模型变体的相似度是很高的，一部分特征是变体之间共享的，一部分特征是变体独有的。如果采用一张hashtable来存储所有变体的模型参数，就可以摊销各个模型都进行独立存储key的内存消耗。而且也同时会降低看网络带宽、CPU、磁盘的消耗。</p>
 <h2 id="A-Single-Value-Structure"><a href="#A-Single-Value-Structure" class="headerlink" title="A Single Value Structure"></a>A Single Value Structure</h2><p>这个是指不同模型变体之间共享一个特征参数，而不是每一个模型变体存储单独的一个。用一个位字段来标识这个特征被哪些变体使用。</p>
 <p>更新的方式如下：每一个模型变体去进行prediction并计算loss，然后对于每一个特征给出一个迭代后的参数值。对所有的更新后的参数值进行平均并进行更新存储。</p>
@@ -3240,8 +3240,8 @@
 <h3 id="进行分类"><a href="#进行分类" class="headerlink" title="进行分类"></a>进行分类</h3><p>使用SVM分类。</p>
 ]]></content>
       <tags>
-        <tag>论文阅读</tag>
         <tag>机器翻译</tag>
+        <tag>论文阅读</tag>
       </tags>
   </entry>
   <entry>
