@@ -85,10 +85,10 @@
 <h3 id="自编码语言模型"><a href="#自编码语言模型" class="headerlink" title="自编码语言模型"></a>自编码语言模型</h3><p>对于序列$x=(x_1…x_T)$，编码为$x=(y_1…y_T)$，成为AE语言模型，比如Bert。AE模型的缺点在于Pre-train阶段可能需要引入 [Mask] 标记（Bert模型），而 [Mask] 会带来一系列问题。</p>
 <p>以序列[New, York, is, a, city]为例，Bert如果随机选择了[New]和[York]进行mask并预测，则mask后序列变为: [[Mask], [Mask], is, a, city]。比较好的优化函数应该优化的目标是：J=logp(New York | is a city)，但Bert实际优化的目标是J=logp(New | is a city) + logp(York | is a city)，此时p(New York | is a city)=p(New | is a city) * p(York | is a city)，即New和York相互独立。而实际上如果前面出现了“New”，那么后面出现“York”的概率理应大很多。</p>
 <p>而且对于Bert而言，在在pretrain阶段时需要对语料进行Mask标记，但在finetune阶段没有Mask标记，数据分布不一致会影响finetune的效果 。</p>
-<h2 id="XLNET模型"><a href="#XLNET模型" class="headerlink" title="XLNET模型"></a>XLNET模型</h2><h3 id="基于排序构造的语言模型"><a href="#基于排序构造的语言模型" class="headerlink" title="基于排序构造的语言模型"></a>基于排序构造的语言模型</h3><p><img src="/Users/majing/workspace/learning/paper_reading/xlnet/fig1.png" alt="fig1"></p>
+<h2 id="XLNET模型"><a href="#XLNET模型" class="headerlink" title="XLNET模型"></a>XLNET模型</h2><h3 id="基于排序构造的语言模型"><a href="#基于排序构造的语言模型" class="headerlink" title="基于排序构造的语言模型"></a>基于排序构造的语言模型</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/xlnet/1.png" alt="fig1"></p>
 <p>在训练过程中，XLNET对输入序列进行了排列组合，比如2-&gt;4-&gt;3-&gt;1的排序中，对位置3的预测，能够既考虑前文1，也考虑后文4。在计算时，XLNET使用了矩阵的Mask操作来实现排列组合。因此，XLNET能弥补Bert忽略Mask的词内部关联的问题。</p>
 <p>XLNET在训练时，为了减少开销，对于序列1-&gt;2-&gt;3-&gt;4, 取位置c，只对$\boldsymbol{z}_{&gt;\boldsymbol{c}}$进行训练。c的取值通过一个超参数K设置，满足$|\boldsymbol{z}| /(|\boldsymbol{z}|-c) \approx K$。</p>
-<h3 id="双流注意力"><a href="#双流注意力" class="headerlink" title="双流注意力"></a>双流注意力</h3><p><img src="/Users/majing/workspace/learning/paper_reading/xlnet/fig2.png" alt="fig2"></p>
+<h3 id="双流注意力"><a href="#双流注意力" class="headerlink" title="双流注意力"></a>双流注意力</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/xlnet/2.png" alt="fig2"></p>
 <p>（a)表示内容attention(和普通attention一样)，(b)表示Query attention，把目标token的内容信息Mask掉了，(c)表示整个流程。</p>
 <p>h和g的计算公式如下：</p>
 <ul>
@@ -101,13 +101,13 @@
 <h3 id="Memory缓存"><a href="#Memory缓存" class="headerlink" title="Memory缓存"></a>Memory缓存</h3><p>对于超长序列，XLNET借鉴了Transformer-XL的缓存机制，并采用相对位置编码。设长序列为[1…T…2T]，会拆分为$\tilde{\boldsymbol{z}}=[1 \ldots T]$和$\boldsymbol{z}=[T \ldots 2 T]$，h的计算公式为：</p>
 <p>$h_{z_{t}}^{(m)} \leftarrow \text { Attention }\left(\mathrm{Q}=h_{z_{t}}^{(m-1)}, \mathrm{KV}=\left[\tilde{\mathrm{h}}^{(m-1)}, \mathrm{h}_{\mathrm{z} \leq t}^{(m-1)}\right] ; \theta\right)$</p>
 <h2 id="实验结论"><a href="#实验结论" class="headerlink" title="实验结论"></a>实验结论</h2><p>XLNET在GLUE数据集上与其他模型的对比，可以看到有很大提升。</p>
-<p><img src="/Users/majing/workspace/learning/paper_reading/xlnet/fig16.png" alt="fig16"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/xlnet/3.png" alt="fig16"></p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>XLNet使用了排列组合、双流注意力机制很好地解决了BERT的一些天然缺陷。当然还有很多其他语言模型如ERNIE还有待学习。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2019/09/14/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B9%8BXLNET/" data-id="ckj9fewrj001v98wvcoaf2svp"
+      <a data-url="majsunflower.cn/2019/09/14/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B9%8BXLNET/" data-id="ckj9fomcc0020cwwv7vdq87hz"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" rel="tag">论文阅读</a></li></ul>
