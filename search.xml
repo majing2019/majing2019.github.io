@@ -1626,9 +1626,6 @@
     <url>/2020/06/15/YouTube%E5%8F%8C%E5%A1%94DNN/</url>
     <content><![CDATA[<p>这篇文章是谷歌的Youtube团队在推荐系统上DNN方面的尝试，发表在16年9月的RecSys会议。YouTube用户数量超19亿日，日观看时长达1.8亿小时，算是世界范围内视频领域的最大的网站。这篇论文从信息检索领域的经典的两阶段——召回、排序——来阐述如何用深度模型做candidate generate 和 rank。文中不但详细介绍了Youtube推荐算法和架构细节，还给了不少实践经验和方法论。</p>
 <a id="more"></a>
-<blockquote>
-<p>参考：<br><a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf" target="_blank" rel="noopener">https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf</a><br><a href="https://zhuanlan.zhihu.com/p/25343518" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/25343518</a><br><a href="https://www.ershicimi.com/p/beb197c7bfaee3f6ac9fc53f9230da4d" target="_blank" rel="noopener">https://www.ershicimi.com/p/beb197c7bfaee3f6ac9fc53f9230da4d</a><br><a href="https://www.researchgate.net/publication/307573656_Deep_Neural_Networks_for_YouTube_Recommendations" target="_blank" rel="noopener">https://www.researchgate.net/publication/307573656_Deep_Neural_Networks_for_YouTube_Recommendations</a><br><a href="https://zhuanlan.zhihu.com/p/51440316" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/51440316</a><br><a href="https://zhuanlan.zhihu.com/p/76897076" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/76897076</a><br><a href="https://zhuanlan.zhihu.com/p/61827629" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/61827629</a><br><a href="https://zhuanlan.zhihu.com/p/52504407" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/52504407</a> 这里提出的一些问题也挺好, 评论中提到了用softmax做广义的矩阵分论文地址：<a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf" target="_blank" rel="noopener">https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf</a></p>
-</blockquote>
 <h1 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h1><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/youtubednn/1.png" alt="图片"></p>
 <p>在推荐系统领域，特别是YouTube的所在视频推荐领域，主要面临三个挑战：</p>
 <ul>
@@ -1740,7 +1737,7 @@
 <p>另外，我们还发现，把Matching阶段的信息传播到Ranking阶段同样能很好的提升效果，比如推荐来源和所在来源的分数。</p>
 <p>NN更适合处理连续特征，因此稀疏的特别是高基数空间的离散特征需要embedding到稠密的向量中。每个维度（比如query/user_id）都有独立的embedding空间。实际并非为所有的id进行embedding，比如视频id，只需要按照点击排序，选择top N视频进行embedding，其余置为0向量。而对于像“过去点击的视频”这种multivalent特征，与Matching阶段的处理相同，进行加权平均即可。</p>
 <p>另外一个值得注意的是，同维度不同feature采用的相同ID的embedding是共享的（比如“过去浏览的视频id” “seed视频id”），这样可以大大加速训练，但显然输入层仍要分别填充。</p>
-<p>论文中还提到了对特征进行归一化的问题。除了Tree-Based的模型（比如GBDT/RF），机器学习的大多算法大都对输入特征的尺度和分布都是非常敏感。因此建议将特征归一化到[0,1)区间以便于模型收敛。除此之外，我们还把归一化后的x的根号<img src="https://uploader.shimo.im/f/UACoDHHmUBTzMFiP.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片">和平方<img src="https://uploader.shimo.im/f/nESVLZztBv3Oiojh.png!thumbnail?fileGuid=K6JXvxYv66tKWPD3" alt="图片">作为网络输入，以期能使网络能够更容易得到特征的次线性（sub-linear）和（super-linear）超线性函数。</p>
+<p>论文中还提到了对特征进行归一化的问题。除了Tree-Based的模型（比如GBDT/RF），机器学习的大多算法大都对输入特征的尺度和分布都是非常敏感。因此建议将特征归一化到[0,1)区间以便于模型收敛。除此之外，我们还把归一化后的x的根号$\sqrt{x}$和平方作$\sqrt{x^2}$为网络输入，以期能使网络能够更容易得到特征的次线性（sub-linear）和（super-linear）超线性函数。</p>
 <h2 id="建模期望观看时长"><a href="#建模期望观看时长" class="headerlink" title="建模期望观看时长"></a>建模期望观看时长</h2><p>我们的目标是预测期望观看时长。有点击的为正样本，有PV无点击的为负样本，正样本需要根据观看时长进行加权。因此，我们训练阶段网络最后一层用的是 weighted logistic regression作为输出层，并在serving阶段使用e^{Wx+b}来预测用户观看时常。</p>
 <p>问题是，为什么要这样做呢？下面来解释一下。</p>
 <p>我们知道sigmoid函数的数学形式：$h_{\theta}(x)=\frac{1}{1+e^{-\theta^{T} x}}$，我们经常用它将值域映射到0~1之间，来表示一件事情发生/不发生的概率。下面我们从一个新的角度去理解sigmoid。</p>
