@@ -5069,30 +5069,54 @@
     <url>/2020/02/01/%E5%90%84%E7%B1%BB%E8%B5%84%E6%BA%90%E5%AE%9A%E6%9C%9F%E6%B1%87%E6%80%BB/</url>
     <content><![CDATA[<p>一些学习等资源的总结，不定期更新。</p>
 <a id="more"></a>
-<h1 id="学习"><a href="#学习" class="headerlink" title="学习"></a>学习</h1><h2 id="视频类资源"><a href="#视频类资源" class="headerlink" title="视频类资源"></a>视频类资源</h2><h3 id="机器学习"><a href="#机器学习" class="headerlink" title="机器学习"></a>机器学习</h3><ul>
+<h1 id="学习"><a href="#学习" class="headerlink" title="学习"></a>学习</h1><h2 id="视频类资源"><a href="#视频类资源" class="headerlink" title="视频类资源"></a>视频类资源</h2><h3 id="Python"><a href="#Python" class="headerlink" title="Python"></a>Python</h3><ul>
+<li>贪心学院 人工智能Python变成特训营：<a href="https://www.greedyai.com/my/courses/learning" target="_blank" rel="noopener">https://www.greedyai.com/my/courses/learning</a></li>
+<li>CSDN 全部课程：<a href="https://edu.csdn.net/course/index?is_member=1" target="_blank" rel="noopener">https://edu.csdn.net/course/index?is_member=1</a>优惠码：csdn2020 到3月31日</li>
+</ul>
+<h3 id="机器学习"><a href="#机器学习" class="headerlink" title="机器学习"></a>机器学习</h3><ul>
 <li>吴恩达机器学习：<a href="https://study.163.com/course/courseMain.htm?courseId=1004570029" target="_blank" rel="noopener">https://study.163.com/course/courseMain.htm?courseId=1004570029</a></li>
-<li>统计学习基础：链接: <a href="https://pan.baidu.com/s/1NWE6lEJrSgOFAEVVOW2TmQ" target="_blank" rel="noopener">https://pan.baidu.com/s/1NWE6lEJrSgOFAEVVOW2TmQ</a> 提取码: g7km</li>
+<li>统计学习基础：链接:<a href="https://pan.baidu.com/s/1NWE6lEJrSgOFAEVVOW2TmQ" target="_blank" rel="noopener">https://pan.baidu.com/s/1NWE6lEJrSgOFAEVVOW2TmQ</a>提取码: g7km</li>
 <li>林轩田机器学习：<a href="https://www.tinymind.cn/articles/168" target="_blank" rel="noopener">https://www.tinymind.cn/articles/168</a></li>
 </ul>
 <h3 id="深度学习"><a href="#深度学习" class="headerlink" title="深度学习"></a>深度学习</h3><ul>
 <li>花书：<a href="https://www.bilibili.com/video/av69236102?from=search&amp;seid=4183604428283884229" target="_blank" rel="noopener">https://www.bilibili.com/video/av69236102?from=search&amp;seid=4183604428283884229</a></li>
+<li>lecun深度学习：<a href="https://atcold.github.io/pytorch-Deep-Learning/" target="_blank" rel="noopener">https://atcold.github.io/pytorch-Deep-Learning/</a></li>
 </ul>
 <h3 id="NLP"><a href="#NLP" class="headerlink" title="NLP"></a>NLP</h3><ul>
-<li>斯坦福自然语言处理：<a href="https://zhuanlan.zhihu.com/p/63199665" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/63199665</a></li>
+<li>斯坦福自然语言处理：<a href="https://zhuanlan.zhihu.com/p/63199665" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/63199665</a><ul>
+<li><a href="http://cs224d.stanford.edu/syllabus.html" target="_blank" rel="noopener">http://cs224d.stanford.edu/syllabus.html</a></li>
+</ul>
+</li>
 <li>宗成庆统计自然语言处理：<ul>
 <li><a href="https://space.bilibili.com/373951238" target="_blank" rel="noopener">https://space.bilibili.com/373951238</a></li>
 <li><a href="https://space.bilibili.com/303667813/video" target="_blank" rel="noopener">https://space.bilibili.com/303667813/video</a></li>
 </ul>
 </li>
+<li>牛津大学自然语言处理：<a href="https://machinelearningmastery.com/oxford-course-deep-learning-natural-language-processing/" target="_blank" rel="noopener">https://machinelearningmastery.com/oxford-course-deep-learning-natural-language-processing/</a></li>
+<li>陈丹琦深度学习自然语言处理：<a href="https://www.yanxishe.com/resourceDetail/1389?from=leiphonecolumn_res0420" target="_blank" rel="noopener">https://www.yanxishe.com/resourceDetail/1389?from=leiphonecolumn_res0420</a><ul>
+<li>课件：<a href="https://www.yanxishe.com/resourceDetail/1389" target="_blank" rel="noopener">https://www.yanxishe.com/resourceDetail/1389</a></li>
 </ul>
-<h2 id="CV"><a href="#CV" class="headerlink" title="CV"></a>CV</h2><ul>
+</li>
+<li>语音：CS236</li>
+</ul>
+<h3 id="CV"><a href="#CV" class="headerlink" title="CV"></a>CV</h3><ul>
 <li>CS231n计算机视觉：<a href="https://www.bilibili.com/video/av77752864/" target="_blank" rel="noopener">https://www.bilibili.com/video/av77752864/</a></li>
 </ul>
 <h3 id="强化学习"><a href="#强化学习" class="headerlink" title="强化学习"></a>强化学习</h3><ul>
 <li>David Silver强化学习：<a href="https://space.bilibili.com/74997410?spm_id_from=333.788.b_765f7570696e666f.2" target="_blank" rel="noopener">https://space.bilibili.com/74997410?spm_id_from=333.788.b_765f7570696e666f.2</a></li>
 </ul>
+<h3 id="数学"><a href="#数学" class="headerlink" title="数学"></a>数学</h3><ul>
+<li>面向机器学习的数学：<a href="http://coursegraph.com/coursera-specializations-mathematics-machine-learning" target="_blank" rel="noopener">http://coursegraph.com/coursera-specializations-mathematics-machine-learning</a><ul>
+<li><a href="https://github.com/mml-book/mml-book.github.io" target="_blank" rel="noopener">https://github.com/mml-book/mml-book.github.io</a></li>
+</ul>
+</li>
+</ul>
 <h2 id="博客类资源"><a href="#博客类资源" class="headerlink" title="博客类资源"></a>博客类资源</h2><ul>
 <li>科学空间：<a href="https://kexue.fm/" target="_blank" rel="noopener">https://kexue.fm/</a></li>
+<li><a href="https://lonepatient.top/" target="_blank" rel="noopener">https://lonepatient.top/</a></li>
+<li><a href="https://www.cnblogs.com/shona" target="_blank" rel="noopener">https://www.cnblogs.com/shona</a></li>
+<li><a href="https://towardsdatascience.com/" target="_blank" rel="noopener">https://towardsdatascience.com/</a></li>
+<li><a href="http://www.52caml.com/" target="_blank" rel="noopener">http://www.52caml.com/</a></li>
 </ul>
 <h2 id="学习笔记类资源"><a href="#学习笔记类资源" class="headerlink" title="学习笔记类资源"></a>学习笔记类资源</h2><h3 id="机器学习-1"><a href="#机器学习-1" class="headerlink" title="机器学习"></a>机器学习</h3><ul>
 <li>吴恩达机器学习笔记：<a href="https://github.com/fengdu78/Coursera-ML-AndrewNg-Notes" target="_blank" rel="noopener">https://github.com/fengdu78/Coursera-ML-AndrewNg-Notes</a></li>
@@ -5123,14 +5147,69 @@
 <h3 id="强化学习-1"><a href="#强化学习-1" class="headerlink" title="强化学习"></a>强化学习</h3><ul>
 <li>David Silver强化学习笔记：<a href="https://zhuanlan.zhihu.com/reinforce" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/reinforce</a></li>
 </ul>
+<h3 id="tensorflow"><a href="#tensorflow" class="headerlink" title="tensorflow"></a>tensorflow</h3><ul>
+<li><a href="https://github.com/lyhue1991/eat_tensorFlow2_in_30days" target="_blank" rel="noopener">https://github.com/lyhue1991/eat_tensorFlow2_in_30days</a></li>
+<li><a href="https://github.com/ageron/handson-ml2" target="_blank" rel="noopener">https://github.com/ageron/handson-ml2</a></li>
+</ul>
 <h2 id="工具汇总"><a href="#工具汇总" class="headerlink" title="工具汇总"></a>工具汇总</h2><h3 id="NLP-2"><a href="#NLP-2" class="headerlink" title="NLP"></a>NLP</h3><ul>
-<li>jialu: <a href="https://github.com/ownthink/Jiagu" target="_blank" rel="noopener">https://github.com/ownthink/Jiagu</a></li>
+<li>jialu:<a href="https://github.com/ownthink/Jiagu" target="_blank" rel="noopener">https://github.com/ownthink/Jiagu</a></li>
+</ul>
+<h3 id="办公"><a href="#办公" class="headerlink" title="办公"></a>办公</h3><ul>
+<li>mac桌面整理：<a href="http://kitestack.com/desktopshelves/" target="_blank" rel="noopener">http://kitestack.com/desktopshelves/</a></li>
+</ul>
+<h3 id="可视化"><a href="#可视化" class="headerlink" title="可视化"></a>可视化</h3><ul>
+<li>可视化机器学习模型：<a href="http://setosa.io/ev/" target="_blank" rel="noopener">http://setosa.io/ev/</a></li>
+<li>mov转gif：<a href="https://ezgif.com/video-to-gif" target="_blank" rel="noopener">https://ezgif.com/video-to-gif</a></li>
 </ul>
 <h2 id="数据集汇总"><a href="#数据集汇总" class="headerlink" title="数据集汇总"></a>数据集汇总</h2><h3 id="NLP-3"><a href="#NLP-3" class="headerlink" title="NLP"></a>NLP</h3><ul>
 <li>百度：<a href="http://ai.baidu.com/broad" target="_blank" rel="noopener">http://ai.baidu.com/broad</a></li>
 </ul>
-<h2 id="前沿追踪类资源"><a href="#前沿追踪类资源" class="headerlink" title="前沿追踪类资源"></a>前沿追踪类资源</h2><h3 id="NLP-4"><a href="#NLP-4" class="headerlink" title="NLP"></a>NLP</h3><ul>
+<h2 id="书目汇总"><a href="#书目汇总" class="headerlink" title="书目汇总"></a>书目汇总</h2><h3 id="机器学习-2"><a href="#机器学习-2" class="headerlink" title="机器学习"></a>机器学习</h3><ul>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649444696&amp;idx=1&amp;sn=a6ed7ef98dc972e93a9efe77cc203874&amp;chksm=82c0b8dcb5b731ca62a9dd77c465cfedf3f1aa077e7f1ba3c06bb2c85a9f56184567eddb9f9a&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649444696&amp;idx=1&amp;sn=a6ed7ef98dc972e93a9efe77cc203874&amp;chksm=82c0b8dcb5b731ca62a9dd77c465cfedf3f1aa077e7f1ba3c06bb2c85a9f56184567eddb9f9a&amp;scene=21#wechat_redirect</a></li>
+<li>漫画：<a href="http://ct.vpan123.com/d/17400359.html" target="_blank" rel="noopener">http://ct.vpan123.com/d/17400359.html</a></li>
+<li>机器学习实战：<a href="https://www.ituring.com.cn/book/1021" target="_blank" rel="noopener">https://www.ituring.com.cn/book/1021</a></li>
+</ul>
+<h3 id="NLP-4"><a href="#NLP-4" class="headerlink" title="NLP"></a>NLP</h3><ul>
+<li>自然语言处理入门</li>
+<li>Neural Network Methods in Natural Language Processing (Synthesis Lectures on Human Language Technologies)</li>
+<li>Speech and Language Processing：<a href="https://web.stanford.edu/~jurafsky/slp3/" target="_blank" rel="noopener">https://web.stanford.edu/~jurafsky/slp3/</a></li>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446010&amp;idx=1&amp;sn=253dfd8066e7b277adddfe177e3207ca&amp;chksm=82c0bffeb5b736e81886c17c63441e5734c86e321c1214550c0717082b481f785d27bee81561&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446010&amp;idx=1&amp;sn=253dfd8066e7b277adddfe177e3207ca&amp;chksm=82c0bffeb5b736e81886c17c63441e5734c86e321c1214550c0717082b481f785d27bee81561&amp;scene=21#wechat_redirect</a></li>
+</ul>
+<h3 id="语音"><a href="#语音" class="headerlink" title="语音"></a>语音</h3><ul>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">ht</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">tps://mp.weixin.qq.com/s?_</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">_</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">biz</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">=MzA</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">wMTA3M</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">zM</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">4Nw==&amp;mid=26</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">4</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">9446</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">824&amp;i</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">dx=1</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">&amp;s</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">n=91b9043dbb0f746a7</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">6ab2</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">da</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">89c9</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">40757</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">&amp;chksm=82c0b02c</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">b5b73</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">93a07694503c</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">10c332b51b1914dac2daeb5ab83</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">57de</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">31591b3392300aaee3</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">d9&amp;scene=21#wech</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">at_redir</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">ec</a><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649446824&amp;idx=1&amp;sn=91b9043dbb0f746a76ab2da89c940757&amp;chksm=82c0b02cb5b7393a07694503c10c332b51b1914dac2daeb5ab8357de31591b3392300aaee3d9&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">t</a></li>
+</ul>
+<h3 id="图像"><a href="#图像" class="headerlink" title="图像"></a>图像</h3><ul>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649442925&amp;idx=1&amp;sn=aaeb7baba440d9a3d56c9367c38f0fd1&amp;chksm=82c0a3e9b5b72aff8d465d72e194d782c427c2d8cbe4f7cdeb9b5e5c960e833fa7a176c55ea4&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649442925&amp;idx=1&amp;sn=aaeb7baba440d9a3d56c9367c38f0fd1&amp;chksm=82c0a3e9b5b72aff8d465d72e194d782c427c2d8cbe4f7cdeb9b5e5c960e833fa7a176c55ea4&amp;scene=21#wechat_redirect</a></li>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649447181&amp;idx=1&amp;sn=cf784c0809738e76e91fa0e552dc7c23&amp;chksm=82c0b289b5b73b9f55b4f7284de23e8f8df9b011fa487fa8160a1546e8619f4a50b902fb8416&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649447181&amp;idx=1&amp;sn=cf784c0809738e76e91fa0e552dc7c23&amp;chksm=82c0b289b5b73b9f55b4f7284de23e8f8df9b011fa487fa8160a1546e8619f4a50b902fb8416&amp;scene=21#wechat_redirect</a></li>
+</ul>
+<h3 id="编程"><a href="#编程" class="headerlink" title="编程"></a>编程</h3><ul>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649448675&amp;idx=1&amp;sn=070b71e8be06a74486b13e921a6c826a&amp;chksm=82c08967b5b7007156a77e572018f712b016ae7bd9c0c247071c8b37edaeb10f0419fa72bad3&amp;scene=21#wechat_redirect" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzAwMTA3MzM4Nw==&amp;mid=2649448675&amp;idx=1&amp;sn=070b71e8be06a74486b13e921a6c826a&amp;chksm=82c08967b5b7007156a77e572018f712b016ae7bd9c0c247071c8b37edaeb10f0419fa72bad3&amp;scene=21#wechat_redirect</a></li>
+</ul>
+<h3 id="综合"><a href="#综合" class="headerlink" title="综合"></a>综合</h3><ul>
+<li>《分布式机器学习：算法、理论与实践》：理论、方法与实践的全面汇总</li>
+</ul>
+<h3 id="人文"><a href="#人文" class="headerlink" title="人文"></a>人文</h3><ul>
+<li>《美国式婚姻》</li>
+<li>《这些真相》</li>
+<li>《准备好》</li>
+<li>《为什么要睡觉》</li>
+<li>《增长》</li>
+</ul>
+<h2 id="前沿追踪类资源"><a href="#前沿追踪类资源" class="headerlink" title="前沿追踪类资源"></a>前沿追踪类资源</h2><h3 id="NLP-5"><a href="#NLP-5" class="headerlink" title="NLP"></a>NLP</h3><ul>
 <li><a href="https://github.com/sebastianruder/NLP-progress" target="_blank" rel="noopener">https://github.com/sebastianruder/NLP-progress</a></li>
+</ul>
+<h2 id="竞赛"><a href="#竞赛" class="headerlink" title="竞赛"></a>竞赛</h2><ul>
+<li><a href="https://www.flyai.com/" target="_blank" rel="noopener">https://www.flyai.com/</a></li>
+</ul>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><ul>
+<li>techflow资料分享：<a href="https://shimo.im/docs/JxvxtD6hcCRxXKpy" target="_blank" rel="noopener">https://shimo.im/docs/JxvxtD6hcCRxXKpy</a></li>
+<li>C++学习：RAII SFINAE</li>
+</ul>
+<h1 id="画画"><a href="#画画" class="headerlink" title="画画"></a>画画</h1><ul>
+<li><p>[<a href="https://mp.weixin.qq.com/s?__biz=MzA3MzA0MzIzMA==&amp;mid=2652074652&amp;idx=1&amp;sn=5efc72f5323ef6934016d9f4530069b2&amp;chksm=84f2ceedb38547fbae0c5ee3d3b53a2a4735504287981f2b8cb03f66dd409665f4e10c7819e5&amp;scene=0&amp;xtrack=1&amp;key=503aabc154a85e8386e52704d184a74c37628925dd7c230cde894040dc6ad84ccbd9bb4b9b4773798bee5d1ba56bfa31e87f08a881de313da452d1a888c36677e60cf6d8544e2f13ab3f50e6533b99ae&amp;ascene=0&amp;uin=NjI1NjAyODg0&amp;devicetype=iMac+MacBookPro12%2C1+OSX+OSX+10.12.6+build(16G2136)&amp;version=12020610&amp;nettype=WIFI&amp;lang=zh_CN&amp;fontScale=100&amp;exportkey=AXzqtd%2Fuy8f1J431fjIkjew%3D&amp;pass_ticket=dqWuD%2FfbuXrH7NuxVzcXiLbcebIgYSleEdJ%2BaeSxOW3oTBcjhs9oYfCg1nuYC4Z7](" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzA3MzA0MzIzMA==&amp;mid=2652074652&amp;idx=1&amp;sn=5efc72f5323ef6934016d9f4530069b2&amp;chksm=84f2ceedb38547fbae0c5ee3d3b53a2a4735504287981f2b8cb03f66dd409665f4e10c7819e5&amp;scene=0&amp;xtrack=1&amp;key=503aabc154a85e8386e52704d184a74c37628925dd7c230cde894040dc6ad84ccbd9bb4b9b4773798bee5d1ba56bfa31e87f08a881de313da452d1a888c36677e60cf6d8544e2f13ab3f50e6533b99ae&amp;ascene=0&amp;uin=NjI1NjAyODg0&amp;devicetype=iMac+MacBookPro12%2C1+OSX+OSX+10.12.6+build(16G2136)&amp;version=12020610&amp;nettype=WIFI&amp;lang=zh_CN&amp;fontScale=100&amp;exportkey=AXzqtd%2Fuy8f1J431fjIkjew%3D&amp;pass_ticket=dqWuD%2FfbuXrH7NuxVzcXiLbcebIgYSleEdJ%2BaeSxOW3oTBcjhs9oYfCg1nuYC4Z7](</a></p>
+</li>
+<li><p><a href="https://github.com/sebastianruder/NLP-progress" target="_blank" rel="noopener">https://github.com/sebastianruder/NLP-progress</a>)</p>
+</li>
 </ul>
 ]]></content>
   </entry>
