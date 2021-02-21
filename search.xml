@@ -1298,23 +1298,28 @@
 <ul>
 <li><p>观测到行动a的奖励的均值Qt(a)，假设奖励的真实值变化范围在[Qt(a)-delta, Q(t)+Ut(a)]之间，我们乐观的认为行动a的奖励是Qt(a)+Ut(a)，每一次都按这个值来选择行动a，其中Ut(a)是关于Nt(a)的函数，Nt(a)越大，Ut(a)越小：$N_{t}(a)=\sum_{i=1}^{t} 1\left[a_{i}=a\right]$。Ut(a)总是采取最贪心的行动：$a_{t}^{U C B}=\operatorname{argmax}_{a \in \mathcal{A}} \hat{Q}_{t}(a)+\hat{U}_{t}(a)$</p>
 </li>
-<li><p>Hoeffding’s Inequality：不对数据分布进行任何假设，设X1, …, Xt为独立同分布的随机变量，他们的值在[0,1]之间，样本平均值为$\overline{X_{t}}=\frac{1}{t} \sum_{i}^{t} \mathrm{X}_{i}$，对于$\delta&gt;0$以下不等式总是成立：</p>
-</li>
+<li><p>Hoeffding’s Inequality：不对数据分布进行任何假设，设X1, …, Xt为独立同分布的随机变量，他们的值在[0,1]之间，样本平均值为$\overline{X_{t}}=\frac{1}{t} \sum_{i}^{t} \mathrm{X}_{i}$，对于$\delta&gt;0$以下不等式总是成立：$P\left\{\left|E[X]-\overline{X_{t}}\right| \leq \delta\right\} \geq 1-2 e^{-2 t \delta^{2}}$</p>
+<ul>
+<li>当$\delta$的取值为$\sqrt{\frac{2 \ln N_{t}(a)}{t}}$时，$2 e^{-2 t \delta^{2}}=\frac{2}{N_{t}(a)^{4}}$即</li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
-<pre><code>  $P\left\{\left|E[X]-\overline{X_{t}}\right| \leq \delta\right\} \geq 1-2 e^{-2 t \delta^{2}}$
-
-  * 当$\delta$的取值为$\sqrt{\frac{2 \ln N_{t}(a)}{t}}$时，$2 e^{-2 t \delta^{2}}=\frac{2}{N_{t}(a)^{4}}$即
-  * $\overline{X_{t}}-\sqrt{\frac{2 \ln N_{t}(a)}{t}} \leq E[X] \leq \overline{X_{t}}+\sqrt{\frac{2 \ln N_{t}(a)}{t}}$是以$1-\frac{2}{N_{t}(a)^{4}}$的概率成立的：
-    * 当$N_{t}(a)=2$时，成立的概率为0.88
-    * 当$N_{t}(a)=3$时，成立的概率为0.98
-    * 当$N_{t}(a)=4$时，成立的概率为0.99
-
-* 根据Hoeffding&#39;s Inequality：$a_{t}^{U C B}=\arg \max _{a \in \mathcal{A}} \hat{Q}_{t}(a)+\sqrt{\frac{2 \log t}{N_{t}(a)}}$
-</code></pre><h1 id="本文贡献"><a href="#本文贡献" class="headerlink" title="本文贡献"></a>本文贡献</h1><h2 id="LinUCB-with-Disjoint-Linear-Model"><a href="#LinUCB-with-Disjoint-Linear-Model" class="headerlink" title="LinUCB with Disjoint Linear Model"></a>LinUCB with Disjoint Linear Model</h2><p>本文正是在UCB框架下进行的研究工作，即在衡量每个动作预期收益时，引入了个性化因素——上下文环境，使每个动作的预期收益与上下文环境特征有相关性。相比于普通UCB，本文提出了一种LinUCB的方法。LinUCB改变的是预期收益（均值）这一部分。论文给出了下面的公式：</p>
+</li>
+<li><p>$\overline{X_{t}}-\sqrt{\frac{2 \ln N_{t}(a)}{t}} \leq E[X] \leq \overline{X_{t}}+\sqrt{\frac{2 \ln N_{t}(a)}{t}}$是以$1-\frac{2}{N_{t}(a)^{4}}$的概率成立的：</p>
+<pre><code>  * 当$N_{t}(a)=2$时，成立的概率为0.88
+</code></pre><ul>
+<li><p>当$N_{t}(a)=3$时，成立的概率为0.98</p>
+<pre><code>* 当$N_{t}(a)=4$时，成立的概率为0.99
+</code></pre><ul>
+<li>根据Hoeffding’s Inequality：$a_{t}^{U C B}=\arg \max _{a \in \mathcal{A}} \hat{Q}_{t}(a)+\sqrt{\frac{2 \log t}{N_{t}(a)}}$</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="本文贡献"><a href="#本文贡献" class="headerlink" title="本文贡献"></a>本文贡献</h1><h2 id="LinUCB-with-Disjoint-Linear-Model"><a href="#LinUCB-with-Disjoint-Linear-Model" class="headerlink" title="LinUCB with Disjoint Linear Model"></a>LinUCB with Disjoint Linear Model</h2><p>本文正是在UCB框架下进行的研究工作，即在衡量每个动作预期收益时，引入了个性化因素——上下文环境，使每个动作的预期收益与上下文环境特征有相关性。相比于普通UCB，本文提出了一种LinUCB的方法。LinUCB改变的是预期收益（均值）这一部分。论文给出了下面的公式：</p>
 <ul>
 <li>(1): $R_{\mathrm{A}}(T) \quad \stackrel{\text { def }}{=} \quad \mathbf{E}\left[\sum_{t=1}^{T} r_{t, a_{t}^{*}}\right]-\mathbf{E}\left[\sum_{t=1}^{T} r_{t, a_{t}}\right]$</li>
 <li>(2): $\mathbf{E}\left[r_{t, a} \mid \mathbf{x}_{t, a}\right]=\mathbf{x}_{t, a}^{\top} \boldsymbol{\theta}_{a}^{*}$</li>
