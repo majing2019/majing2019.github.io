@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    机器学习之数学基础 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-机器学习之数学基础" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      机器学习之数学基础
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2021/02/21/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E4%B9%8B%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" class="article-date">
+  <time datetime="2021-02-21T14:59:41.000Z" itemprop="datePublished">2021-02-21</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>隔离在家，终于有时间好好看看书、学学习了。今天来复习下机器学习中的一些数学基础。</p>
+<a id="more"></a>
+<h1 id="排列组合"><a href="#排列组合" class="headerlink" title="排列组合"></a>排列组合</h1><h2 id="排列"><a href="#排列" class="headerlink" title="排列"></a>排列</h2><p>班里有三名同学，成绩前两名有几种可能性？咱们可以用乘法原理：选第一名有 3 种可能性，选第二名有 2 中可能性，因为第一名那个人不可能同时又是第二名了，将这两步相乘起来：$P_{n}^{m}=\frac{n !}{(n-m) !}=n(n-1)(n-2) \ldots \ldots(n-m+1)$，例如$P_{3}^{2}=3 \times 2=6$。</p>
+<h2 id="组合"><a href="#组合" class="headerlink" title="组合"></a>组合</h2><p>班里有三名同学，选出两名代表参加年级会议有几种选法？$C_{n}^{m}=\frac{n !}{(n-m) ! m !}=\frac{n(n-1)(n-2) \ldots \ldots(n-m+1)}{m(m-1)(m-2) \times \ldots \ldots \times 1}$，相当于计算$P_{n}^{m}$后再除以重复的个数$m!$。</p>
+<h3 id="组合公式1"><a href="#组合公式1" class="headerlink" title="组合公式1"></a><strong>组合公式1</strong></h3><p>$C_{n}^{m}=C_{n}^{n-m}$，例如$C_{4}^{3}=C_{4}^{1}$，比如，班里有 A、B、C、D 四个同学，每天要选出三个同学做值日，有几种选法？这个问题对于学过排列组合的同学自然非常简单了，就是 C4 抽 3，但是，假如问一个没学过排列组合的人，他会怎么想呢？如果想 ABC，ACD……这种就会比较难想，不如去想它的反面：选Ａ、B、C 或 D 放学直接回家，总共就四种。这就能直观的理解这个公式了。这个公式对于运算 C 10 抽 8 这样的组合数时非常有用，直接转化成 C 10 抽 2 来计算。</p>
+<h3 id="组合公式2"><a href="#组合公式2" class="headerlink" title="组合公式2"></a><strong>组合公式2</strong></h3><p>$C_{n}^{m-1}+C_{n}^{m}=C_{n+1}^{m}$，例如$C_{3}^{1}+C_{3}^{2}=C_{4}^{2}$。比如，四个妹子中，想约两个妹子有几种约法。如果四个人都是普通朋友，看作是相同的 A、B、C、D，那自然有 C 4 抽 2 =6 种约法。下面我们来点刺激的：假如这四个人中有一个是你女朋友，她最特殊，你会先问她来不来：</p>
+<ul>
+<li>如果她来，但你还想一共约两个妹子（手动滑稽），那么就需要在其他三个妹子中再约一个，有 C3 抽 1 种方法；</li>
+<li>如果她不来，那你就需要在其他三个妹子中再约两个，有 C3 抽 2 种方法。</li>
+</ul>
+<p>两类相加，表示的意义就是从 4 个妹子中约两个妹子的情况总数，即公式成立。这个公式对于处理两个组合数相加问题非常有用。</p>
+<h3 id="组合公式3"><a href="#组合公式3" class="headerlink" title="组合公式3"></a><strong>组合公式3</strong></h3><p>$C_{n}^{0}+C_{n}^{1}+\ldots \ldots C_{n}^{n}=2^{n}$，例如$C_{2}^{0}+C_{2}^{1}+C_{2}^{2}=2^{2}$。想象一个笼子里有两只兔子，抓出来的话有几种抓法？</p>
+<ul>
+<li>第一种方法是我去笼子里抓，我在抓的时候就想好是抓 1 只还是抓 2 只，或是抓 0 只（即不抓）。由于先想好了这一点，就会有 C 2 抽 1 和 C 2 抽 2 这些组合数，分别表示按“抓一只”、“抓两只” 分类，每类的情况数；</li>
+<li>第二种情况是我把笼子打开，让每只兔子自己选择跳出来或是不跳出来（2 种可能性），每只兔子都是独立的个体，所以可以用乘法原理，总共的情况数是 n 个 2 相乘，即 2 的 n 次方。</li>
+</ul>
+<p>两种方法都表示“兔子出来的情况数”，因此一样，即公式得以解释。这个公式对于处理一系列“底下相同的”组合数相加的问题非常好用，大大节省计算量。</p>
+<h3 id="组合公式4"><a href="#组合公式4" class="headerlink" title="组合公式4"></a><strong>组合公式4</strong></h3><p>$C_{r}^{r}+C_{r+1}^{r}+\ldots \ldots+C_{n}^{r}=C_{n+1}^{r+1}$，例如$C_{2}^{2}+C_{3}^{2}+C_{4}^{2}=C_{5}^{3}$。比如说你要在 A、B、C、D、E 这 5 个小球中抽取 3 个小球，咱们可以按“哪个小球是第一个”分类：</p>
+<ul>
+<li>第一类：A 为火车头，那么还需在后面四个小球中抽取两个小球；</li>
+<li>第二类：B 为火车头，那么还需在后面三个小球中抽取两个小球；</li>
+<li>第三类：C 为火车头，那么还需在后面两个小球中抽取两个小球。</li>
+</ul>
+<p>至于 D 或 E 开头的，就不足“三节车厢”了，故不计算。我们把之前说的三类加起来，就直观地理解了这个公式。</p>
+<p><strong>组合公式5</strong>: $\sum_{i=0}^{k} C_{n}^{i} C_{m}^{k-i}=C_{m+n}^{k}$，例如$C_{4}^{0} C_{3}^{3}+C_{4}^{1} C_{3}^{2}+C_{4}^{2} C_{3}^{1}+C_{4}^{3} C_{3}^{0}=C_{7}^{3}$。这个公式可以想像成可以想象成班里选几名学生，分男女选和不分男女选情况数一样。</p>
+<h1 id="概率统计"><a href="#概率统计" class="headerlink" title="概率统计"></a>概率统计</h1><h2 id="随机变量"><a href="#随机变量" class="headerlink" title="随机变量"></a>随机变量</h2><p>随机变量的名字虽然叫“变量”，但实际上可以理解为一个函数。随机变量用于表示随机实验的结果。例如有一个骰子（6个面），随机变量X表示连续抛两次骰子的数字相加的结果，那么X=f(x)，其中x表示骰子，f表示求两次骰子数字和的函数。</p>
+<h3 id="离散随机变量"><a href="#离散随机变量" class="headerlink" title="离散随机变量"></a>离散随机变量</h3><p>例如抛骰子一次，可能的结果取值为1,2,3,4,5,6。抛骰子两次，骰子的值的和的可能取值为2,3,4,5,6,7,8,9,10,11,12。</p>
+<h3 id="连续随机变量"><a href="#连续随机变量" class="headerlink" title="连续随机变量"></a>连续随机变量</h3><p>例如高中生的身高，可能的取值在[120,240]厘米之间，体重在[50,300]斤。连续随机变量也可以是多维的，比如高中生的身高和体重是[xxx厘米, xxx斤]。</p>
+<p>某一支股票未来的价格X（随机变量），其值可能在[0, 10000]之间变化。预测股票的未来价格，可以通过预测X在[0, 10000]之间的概率分布来实现。</p>
+<h3 id="分布函数"><a href="#分布函数" class="headerlink" title="分布函数"></a>分布函数</h3><p>设X是一个随机变量，x是任意实数，函数$F(x)=P\{X\le x\},-\infty&lt;x&lt;+\infty$称为X的分布函数。对任意实数$x_1$、$x_2$($x_1&lt;x_2$)有$P\{x_1&lt;X\le x_2\}=P\{X\le x_2\}-P\{X \le x_1\}=F(x_2)-F(x_1)$。</p>
+<h3 id="离散型随机变量的概率分布"><a href="#离散型随机变量的概率分布" class="headerlink" title="离散型随机变量的概率分布"></a>离散型随机变量的概率分布</h3><p>以抛骰子为例，扔一次的值为离散随机变量，取值为1,2,3,4,5,6，则概率分布P(X=X_1)=1/6, P(X=X_2)=1/6,…。离散型随机变量的概率分布有如下特点：</p>
+<ul>
+<li>$P(X) &gt;= 0$</li>
+<li>$\sum_{P(X_i)}=1$</li>
+</ul>
+<h4 id="0-1分布"><a href="#0-1分布" class="headerlink" title="0-1分布"></a>0-1分布</h4><p>设随机变量X只可能取0与1两个值，他的分布率是$P{x=k}=p^k(1-p)^{1-k},k=0,1 (0&lt;p&lt;1)$，则称X服从以p为参数的0-1分布或两点分布。其分布律可以表示为下表：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th style="text-align:left">X</th>
+<th style="text-align:left">0</th>
+<th style="text-align:left">1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">$p_k$</td>
+<td style="text-align:left">1-p</td>
+<td style="text-align:left">p</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>常见的比如新生儿的性别、检查产品质量是否合格、某车间的电力消耗是否超过符合、抛硬币等问题都可以用0-1分布描述。</p>
+<h4 id="伯努利-二项分布"><a href="#伯努利-二项分布" class="headerlink" title="伯努利/二项分布"></a>伯努利/二项分布</h4><p>如果进行n次不同的实验，每次实验完全相同并且只有两种可能的结果，这样的实验结果分布情况就是二项分布。最简单的比如抛一枚硬币n次，实验结果为x次正面朝上，n-x次反面朝上，这就是一个简单的二项分布。</p>
+<p>二项分布的概率公式为：$p(x)=C^x_np^xq^{n-x}(x=0,1,2,3,…,n)$，$\frac{n!}{x!(n-x)!}$，其中n代表n次实验，减少每一次实验结果为T或者F，x表示实验结果为T的次数，q是实验结果为T的概率，q=1-p表示实验结果为F的概率。二项分布的性质：$E(X)=np$、$Var(X)=np(1-p)$。</p>
+<h4 id="几何分布"><a href="#几何分布" class="headerlink" title="几何分布"></a>几何分布</h4><p>在n次伯努利试验中，试验k次才得到第一次成功的机率。即：前k-1次皆失败，第k次成功的概率。其概率分布函数为：$P(X=k)=(1-p)^{k-1}p$，性质：$E(x)=\frac{1}{p}$、$Var(X)=\frac{1-p}{p^2}$。</p>
+<h4 id="泊松分布"><a href="#泊松分布" class="headerlink" title="泊松分布"></a>泊松分布</h4><p>日常生活中，大量时间是有固定频率的，例如某网站平均每分钟的访问次数、一本书一页中的印刷错误数、某地区在一天内邮递遗失的信件数、某医院在一天内的急诊病人数等。它们的特点是，我们可以预估这些事件的总数，但是没法知道具体的发生事件。已知平均每小时出生3个婴儿，请问下一个小时，会出生几个？有可能一下子出生6个，也有可能一个都不出生，这是我们没法知道的。</p>
+<p>泊松分布就是描述某段时间内，某个事件发生的概率，其概率表达式：$P(N(t)=k)=\frac{\lambda^ke^{-\lambda}}{k!}$，其中N表示某种函数关系，t表示时间，k表示数量，$\lambda$表示事件的频率， 例如1小时内出生3个婴儿的概率就表示为$P(N(1))=3$。</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/1.png" alt="图片"></p>
+<p><strong>应用举例</strong></p>
+<p>观察事物平均发生m次的条件下，实际发生x次的概率P(x)可用$P(x)=\frac{m^{x}}{x !} \times e^{-m}$表示。例如采用0.05J/㎡紫外线照射大肠杆菌时，每个基因组（～4×10核苷酸对）平均产生3个嘧啶二体。实际上每个基因组二体的分布是服从泊松分布的，将取如下形式：</p>
+<ul>
+<li>$P(0)=e^{-3}=0.05$</li>
+<li>$P(1)=\frac{3}{1 !} e^{-3}=0.15$</li>
+<li>$P(2)=\frac{3^{2}}{2 !} e^{-3}=0.22$</li>
+</ul>
+<p><strong>泊松定理</strong></p>
+<p>松分布的产生机制可以通过如下例子来解释。为方便记，设所观察的这段时间为[0,1),取一个很大的自然数n，把时间段[0,1)分为等长的n段：$l_{1}=\left[0, \frac{1}{n}\right], l_{2}=\left[\frac{1}{n}, \frac{2}{n}\right], \ldots, l_{i}=\left[\frac{i-1}{n}, \frac{i}{n}\right], \ldots, l_{n}=\left[\frac{n-1}{n}, 1\right]$。我们做如下两个假定：</p>
+<ul>
+<li>在每段$l_i$内，恰发生一个事故的概率，近似的与这段时间的长$\frac{1}{n}$成正比，可设为$\frac{\lambda}{n}$。当n很大时，$\frac{1}{n}$很小时，在$l_i$这么短暂的一段时间内，要发生两次或者更多次事故是不可能的。因此在$l_i$这段时间内不发生事故的概率为$1-\frac{\lambda}{n}$。</li>
+<li>$l_{i}, \ldots, l_{n}$各段是否发生事故是独立的</li>
+</ul>
+<p>把在[0,1)时段内发生的事故数X视作在n个划分之后的小时段$l_{i}, \ldots, l_{n}$内有事故的时段数，则按照上述两个假定，X应服从二项分布$B\left(n, \frac{\lambda}{n}\right)$。于是，我们有：$P(X=i)=\left(\begin{array}{c}n \\i \end{array}\right)\left(\frac{\lambda}{n}\right)^{i}\left(1-\frac{\lambda}{n}\right)^{n-i}$。</p>
+<p>注意到当$n \rightarrow \infty$取极限时，我们有：$\frac{\left(\begin{array}{l}n\\i\end{array}\right)}{n^{i}} \rightarrow \frac{1}{i !},\left(1-\frac{\lambda}{n}\right)^{n}\rightarrow e^{-\lambda}$，从而有：$\begin{aligned}P(X=i) &amp;=\left(\begin{array}{c}n \\i\end{array}\right)\left(\frac{\lambda}{n}\right)^{i}\left(1-\frac{\lambda}{n}\right)^{n-i} \\&amp;=\frac{e^{-\lambda} \lambda^{i}}{i !}\end{aligned}$。</p>
+<p>从上述推导可以看出：泊松分布可作为二项分布的极限而得到。一般的说，若$X \sim B(n, p)$，其中n很大，p很小，因而$n p=\lambda$不太大时，X的分布接近于泊松分布$P(\lambda)$，即$C^n_kp^k(1-p)^{n-k}\approx \frac{\lambda^k e^{-\lambda}}{k!}$其中$\lambda= n p$（【注】：当n&gt;=20，p&lt;=0.05时近似效果最佳）。这个事实有时可将较难计算的二项分布转化为泊松分布去计算。</p>
+<p>举个栗子，某计算机硬件公司制造某种特殊型号的微型芯片，次品率达0.1%，各芯片成为次品相互独立，求在1000只产品中至少有2只次品的概率：</p>
+<p>用X记次品数，$X \sim b(1000, 0.01)$，所求概率为$P\{X\ge2\}=1-P\{X=0\}-P\{X=1\}=1-(0.999)^{1000}-C^{1000}_1(0.999)^{999}(0.001)\approx1-0.367-0.368\approx 0.264$，利用泊松定力来计算得$\lambda=1000 \times 0.001 =1$，$P\{X\ge2\}=1-P\{X=0\}-P\{X=1\}\approx 1- e^{-1} - e^{-1} \approx 0.2642$。</p>
+<p><strong>性质</strong></p>
+<p>阶乘特点以及泰勒公式使得一类期望的计算十分简便：</p>
+<p>$E(X(X-1)(X-2))=\sum_{k=0}^{n} k(k-1)(k-2) e^{-\lambda} \frac{\lambda^{k}}{k !}=\sum_{k=3}^{n} e^{-\lambda} \frac{\lambda^{k}}{(k-3) !}=\lambda^{3} e^{-\lambda} \sum_{k=3}^{n} \frac{\lambda^{k-3}}{(k-3) !}=\lambda^{3} e^{-\lambda} e^{\lambda}=\lambda$</p>
+<h3 id="连续型随机变量的概率分布"><a href="#连续型随机变量的概率分布" class="headerlink" title="连续型随机变量的概率分布"></a>连续型随机变量的概率分布</h3><h4 id="概率密度"><a href="#概率密度" class="headerlink" title="概率密度"></a>概率密度</h4><p>如果对于随机变量X的分布函数F(x)，存在非负可积函数f(x)，使对于任意实数x有$F(x)=\int^x_{-\infty}f(t)dt$，则称X为连续型随机变量，f(x)称为X的概率密度函数。概率密度f(x)有以下性质：</p>
+<ul>
+<li>$f(x)\ge 0$</li>
+<li>$\int^{\infty}_{-\infty}f(x)dx=1$</li>
+<li>对于任意实数$x_1,x_2(x_1 \le x_2)$，$P\{x_1 &lt; X \le x_2\}=F(x_2)-F(x_1)=\int^{x_2}_{x_1}f(x)dx$，也就是说概率$P\{x_1&lt;X\le x_2\}$等于区间$(x_1, x_2]$上曲线f(x)之下的曲边提醒的面积。</li>
+<li>若f(x)在点x处连续，则有$F’(x)=f(x)$</li>
+</ul>
+<h4 id="均匀分布"><a href="#均匀分布" class="headerlink" title="均匀分布"></a>均匀分布</h4><p>均匀概率分布是指连续随机变量所有可能出现值出现的概率都相同。其概率密度函数为$f(x)=\left\{\begin{array}{ll}\frac{1}{b-a}, &amp; a&lt;x&lt;b, \\0, &amp; \text { 其他 },\end{array}\right.$，如下图所示：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/2.png" alt="图片"></p>
+<p>其分布函数为：</p>
+<p>$F(x)=\left\{\begin{array}{ll}0, &amp; x&lt;a \\\frac{x-a}{b-a}, &amp; a \leqslant x&lt;b \\1, &amp; x \geqslant b\end{array}\right.$，如下图所示：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/3.png" alt="图片"></p>
+<p>【注】：对于连续随机变量的概率分布中，单个点无法求概率，只能计算积分。</p>
+<h4 id="正太分布"><a href="#正太分布" class="headerlink" title="正太分布"></a>正太分布</h4><p>若随机变量X服从一个位置参数为$\mu$、尺度参数为$\sigma$的正太分布，记为：$X~N(\mu, \sigma^2)$，则其概率密度函数为$f(x)=\frac{1}{\sigma \sqrt{2\pi}}e^{-\frac{(x-\mu)^2}{2\sigma^2}}$。正太分布的数学期望值$\mu$等于位置参数，决定了分布的位置；其标准差$\sigma$等于尺度参数，决定了分布的幅度。</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/4.png" alt="图片"></p>
+<p>正太分布有一个性质，如下图：深蓝色区域是距平均值小于一个标准差之内的数值范围。在正太分布中，此范围所占比率为全部数值的68%，根据正太分布，两个标准差之内的比率合起来为95%，三个标准差之内的比率合起来为99%。在实际应用上，常考虑一组数据具有近似于正太分布的概率分布。若其假设正确，则约有68.3%数值分布在距离平均值有1个标准差之内的范围，约95.4%数值分布在距离平均值有2个标准差之内的范围，以及约99.7%数值分布在距离平均值有3个标准差之内的范围，称为“68-95-99.7”法则或“经验法则”。</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/5.png" alt="图片"></p>
+<h4 id="指数分布"><a href="#指数分布" class="headerlink" title="指数分布"></a>指数分布</h4><p>指数分布用来表达独立随机事件发生的时间间隔，比如旅客进入机场的时间间隔、打进客服中心电话的时间间隔、婴儿出生的时间间隔、网站访问的时间间隔、奶粉销售的时间间隔等。</p>
+<p>指数分布的概率密度函数：</p>
+<script type="math/tex; mode=display">f(x;\lambda)=\left\{ \begin{aligned} \lambda e^{-\lambda x} & , & x \ge0, \\ 0 & , & x<0.\end{aligned} \right.</script><p>其中$\lambda &gt; 0$是分布的一个参数，常被称为率参数(rate parameter)，即每单位时间发生该事件的次数。指数分布的区间是$[0,\infty]$。如果一个随机变量X呈指数分布，即可以写作：$X~Exponential(\lambda)$。</p>
+<p>指数分布的累计分布函数可以写成：</p>
+<script type="math/tex; mode=display">f(x;\lambda)=\left\{ \begin{aligned} 1-e^{-\lambda x} & , & x \ge0, \\ 0 & , & x<0.\end{aligned} \right.</script><p>指数分布的均值(期望)是$E[X]=\frac{1}{\lambda}$，例如你平均每个小时街道2次电话，那么你预期等待每一次电话的时间是半个小时。方差是$E[X]=\frac{1}{\lambda^2}$。</p>
+<p>举一个例子，假设一个医院每小时平均有3个婴儿出生，那么接下来15分钟，会有婴儿出生的概率是多少呢？我们已知指数分布的累积分布函数为$P(X\le t)=1-P(x\ge t)=1-e^{-\lambda t}$，那么接下来15分钟，会有婴儿出生的概率为$P(X\le \frac{1}{4})=1-e^{-3\cdot \frac{1}{4}}\approx 0.53$。</p>
+<p>指数分布与泊松分布的关系：</p>
+<ul>
+<li>无记忆性：指数函数的一个重要特征是无记忆性。这表示如果一个随机变量呈现指数分布，它的条件概率遵循：$P(T&gt;s+t|T&gt;t)=P(T&gt;s)$ for all $s,t\ge 0$。举例说明，如果X是一元件的寿命，已知元件已使用了s小时，它总共能使用至少s+t小时的条件概率，与从开始使用时算起它至少能使用t小时的概率相等。</li>
+<li>与泊松过程的关系：<ul>
+<li>泊松过程：泊松过程是随机过程的一种，是以事件的发生时间来定义的。 我们说一个随机过程N(t) 是一个时间齐次的一维泊松过程，如果它满足以下条件： 在两个互斥（不重叠）的区间内所发生的事件的数目是互相独立的随机变量。 在一个时间区间或空间区域内的事件数，和另一个互斥（不重叠）的时间区间或空间区域内的事件数，这两个随机变数是独立的。</li>
+<li>根据泊松过程的定义，长度为t的时间段内没有随机事件出现的概率等于$\frac{e^{-\lambda t (\lambda t)^0}}{0!}=e^{-\lambda t}$，长度为t的时间端内随机时间发生一次的概率等于$\frac{e^{-\lambda t (\lambda t)^1}}{1!}=e^{-\lambda t}\lambda t$，所以第k次随机事件之后长度为t的时间段，第k+n次(n=1,2,3,…)随机事件出现的概率等于$1-e^{-\lambda t}$，这是指数分布，也表明了泊松过程的无记忆性。</li>
+</ul>
+</li>
+</ul>
+<h3 id="主要随机变量一览表"><a href="#主要随机变量一览表" class="headerlink" title="主要随机变量一览表"></a>主要随机变量一览表</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/6.png" alt="图片"></p>
+<h2 id="概率性质"><a href="#概率性质" class="headerlink" title="概率性质"></a>概率性质</h2><h3 id="基本性质"><a href="#基本性质" class="headerlink" title="基本性质"></a>基本性质</h3><ul>
+<li>$P(A_1\cup A_2 \cup \cdots \cup A_n)=P(A_1)+P(A_2)+ \cdots + P(A_n)$</li>
+<li>设A、B是两个事件，若$A \subset B$则有$P(B-A)=P(B)-P(A)$</li>
+<li>对于任意两事件A、B有$P(A\cup B)=P(A)+P(B)-P(AB)$</li>
+</ul>
+<h3 id="条件概率"><a href="#条件概率" class="headerlink" title="条件概率"></a>条件概率</h3><p>条件概率是指事件A在另外一个事件B已经发生条件下的发生概率，表示为P(A|B)。下面看一个机器学习中的例子：</p>
+<ul>
+<li>概率：任意一封邮件为垃圾邮件的概率，其值可能非常低，小于5%</li>
+<li>条件概率：一封邮件，发件人电邮不是你的正常联系人，并且包括如下句子：“北京25岁女孩开豪车，揭秘原来是炒股暴发户，之前一直炒股好多产品都赚不到钱，很烦恼，加逍遥老师微信才给了一条名录”，其为垃圾邮件的概率。</li>
+</ul>
+<p>条件概率公式：$P\left\{X=x_{i} \mid Y=y_{j}\right\}=\frac{P\left\{X=x_{i}, Y=y_{j}\right\}}{P\left\{Y=y_{j}\right\}}$</p>
+<h3 id="联合概率"><a href="#联合概率" class="headerlink" title="联合概率"></a>联合概率</h3><p>联合概率指的是包含多个条件且所有条件同时成立的概率，记作P(X=A, Y=B)。例如，中国人中身高低于172cm且体重高于130斤的概率为P(X<172, Y>=130)。</p>
+<h3 id="贝叶斯定理"><a href="#贝叶斯定理" class="headerlink" title="贝叶斯定理"></a>贝叶斯定理</h3><p>贝叶斯定理描述在已知一些条件下，某事件的发生概率。例如，已知某癌症与年龄有关，使用贝叶斯定理可以通过某人年龄计算出它罹患癌症的概率。</p>
+<p>通常，事件A在事件B的条件下发生的概率P(A|B)，与事件B在事件A条件下发生的概率P(B|A)是不一样的。然而这两者是有确定关系的，贝叶斯定理就是这种关系的陈述。贝叶斯公式的一个用途，即通过已知的三个概率而推出第四个概率：$P(A|B)=\frac{P(B|A)P(A)}{P(B)}$。</p>
+<p>在更一般化的情况，假设$\{A_i\}$是事件集合里的部分集合，对于任意的$A_i$，贝叶斯定理可用下式表示$P(A_i|B)=\frac{P(B|A_i)P(A_i)}{\sum_jP(B|A_j)P(A_j)}$，其中分母是P(B)的全概率公式。</p>
+<p>举一个实际栗子来说明以贝叶斯定理：假设现存技术不是完美的，真正吸毒者被检出阳性（吸毒）的概率为99%，不吸毒的被检出是阳性的概率为1%。假设一个小区有0.5%的真正吸毒者，如果警察对小区所有人做排查，查处一个人检测结果是阳性，那么这个人的是真实吸毒的可能性有多高？我们用D表示吸毒，+表示阳性，则有：</p>
+<p>$P(D|+)=\frac{P(+|D)P(D)}{P(+)}=\frac{P(+|D)P(D)}{P(+|D)P(D)+P(+|N)P(N)}=\frac{0.99\times 0.005}{0.99\times 0.005 + 0.01 \times 0.995}=0.3322$</p>
+<h3 id="期望"><a href="#期望" class="headerlink" title="期望"></a>期望</h3><p>设p(x)是一个离散概率分布函数，x的取值范围为$\{x_1, x_2, …, x_n\}$，其期望被定义为：$E(x)=\sum^n_{k=1}x_kp(x_k)$。</p>
+<p>设p(x)是一个连续概率密度函数，其期望为$E(x)=\int^{+\infty}_{-\infty}xp(x)dx$。期望的满足一些性质。</p>
+<p>例1：设$X \sim \pi(\lambda)$，求E(X)</p>
+<p>X的分布律：$P\{X=k\}=\frac{\lambda^{k} \mathrm{e}^{-\lambda}}{k !}, \quad k=0,1,2, \cdots, \quad \lambda&gt;0$</p>
+<p>则$E(X)=\sum_{k=0}^{\infty} k \frac{\lambda^{k} \mathrm{e}^{-\lambda}}{k !}=\lambda \mathrm{e}^{-\lambda} \sum_{k=1}^{\infty} \frac{\lambda^{k-1}}{(k-1) !}=\lambda \mathrm{e}^{-\lambda} \cdot \mathrm{e}^{\lambda}=\lambda$</p>
+<p>例2：设$X \sim U(a, b)$，求E(X)</p>
+<p>X的分布律：</p>
+<p>$f(x)=\left\{\begin{array}{ll}\frac{1}{b-a}, &amp; a&lt;x&lt;b \\0, &amp; \text { 其他. }\end{array}\right.$</p>
+<p>则$E(X)=\int_{-\infty}^{\infty} x f(x) \mathrm{d} x=\int_{a}^{b} \frac{x}{b-a} \mathrm{~d} x=\frac{a+b}{2}$</p>
+<h4 id="线性运算规则"><a href="#线性运算规则" class="headerlink" title="线性运算规则"></a>线性运算规则</h4><p>$E(ax+by+c)=aE(x)+bE(y)+c$</p>
+<h4 id="函数的期望"><a href="#函数的期望" class="headerlink" title="函数的期望"></a>函数的期望</h4><p>设f(x)为x的函数，p(x)为x的概率密度函数，则f(x)的期望为：</p>
+<ul>
+<li>离散变量：$E(f(x))=\sum^n_{k=1}f(x_k)P(x_k)$</li>
+<li>连续变量：$E(f(x))=\int^{+\infty}_{-\infty}f(x)p(x)dx$</li>
+</ul>
+<p>要注意的是，函数的期望不等于期望的函数，即$E(f(x))\neq f(E(x))$</p>
+<h4 id="乘积的期望"><a href="#乘积的期望" class="headerlink" title="乘积的期望"></a>乘积的期望</h4><p>一般来说，乘积的期望不等于期望的乘积，除非变量相互独立。因此如果x和y相互独立，则$E(xy)=E(x)E(y)$</p>
+<h3 id="方差"><a href="#方差" class="headerlink" title="方差"></a>方差</h3><p>方差是一种特殊的期望（是x-E(x)这个函数的期望），其定义为：$Var(x)=E((x-E(x))^2)$</p>
+<h4 id="展开表示"><a href="#展开表示" class="headerlink" title="展开表示"></a>展开表示</h4><p>反复利用期望的线性性质，可以算出方差的另一种表示形式：$Var(x)=E((x-E(x))^2)=E(x^2)-(E(x))^2$。由这个式子也可以知道“常数的方差为0”。</p>
+<h4 id="线性组合的方差"><a href="#线性组合的方差" class="headerlink" title="线性组合的方差"></a>线性组合的方差</h4><p>方差不满足线性性质，两个变量的线性组合方差计算方法如下：$Var(ax+by)=a^2Var(x)+b^2Var(y)+2Cov(x,y)$。</p>
+<p>如果两个变量相互独立，则：$Var(ax+by)=a^2Var(x)+b^2Var(y)$</p>
+<p>如果x和y相互独立，则：$Var(x+y)=Var(x)+Var(y)$</p>
+<h3 id="协方差"><a href="#协方差" class="headerlink" title="协方差"></a>协方差</h3><p>两个随机变量的协方差被定义为：$Cov(x,y)=E((x-E(x))(y-E(y)))$。因此方差是一种特殊的协方差，当x=y时：$Cov(x,y)=Var(x)=Var(y)$。</p>
+<p>协方差表示的是两个变量的总体的误差，这与只表示一个变量误差的方差不同。如果两个变量的变化趋势一致，也就是说如果其中一个大于自身的期望值，另外一个也大于自身的期望值，那么两个变量之间的协方差就是正值。如果两个变量的变化趋势相反，即其中一个大于自身的期望值，另外一个小于自身的期望值，那么两个变量之间的协方差就是负值。协方差有如下性质：</p>
+<ul>
+<li>独立变量的协方差为0</li>
+<li>$\operatorname{Cov}\left(\sum_{i=1}^{m} a_{i} x_{i}, \sum_{j=1}^{n} b_{j} y_{j}\right)=\sum_{i=1}^{m} \sum_{j=1}^{n} a_{i} b_{j} \operatorname{Cov}\left(x_{i}, y_{j}\right)$</li>
+<li>$\operatorname{Cov}(a+b x, c+d y)=b d \operatorname{Cov}(x, y)$</li>
+<li>$\operatorname{Var}\left(\sum_{k=1}^{n} a_{i} x_{i}\right)=\sum_{i=1}^{n} \sum_{j=1}^{n} a_{i} a_{j} \operatorname{Cov}\left(x_{i}, x_{j}\right)$</li>
+</ul>
+<h4 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h4><p>两个随机变量X、Y联合概率分布如下，求协方差？</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/7.png" alt="图片"></p>
+<p>$\operatorname{cov}(X, Y)=\sum_{i=1}^{n} p_{i}\left(x_{i}-E(X)\right)\left(y_{i}-E(Y)\right)$</p>
+<p>$\begin{aligned}\operatorname{cov}(X, Y)=&amp; \sigma_{X Y}=\sum_{(x, y) \in S} f(x, y)\left(x-\mu_{X}\right)\left(y-\mu_{Y}\right) \\=&amp;\left(\frac{1}{4}\right)\left(1-\frac{3}{2}\right)(1-2)+\left(\frac{1}{4}\right)\left(1-\frac{3}{2}\right)(2-2) \\&amp;+(0)\left(1-\frac{3}{2}\right)(3-2)+(0)\left(2-\frac{3}{2}\right)(1-2) \\&amp;+\left(\frac{1}{4}\right)\left(2-\frac{3}{2}\right)(2-2)+\left(\frac{1}{4}\right)\left(2-\frac{3}{2}\right)(3-2) \\=&amp; \frac{1}{4}\end{aligned}$</p>
+<h3 id="相关系数"><a href="#相关系数" class="headerlink" title="相关系数"></a>相关系数</h3><p>相关系数通过方差和协方差定义，描述两个随机变量的相关性：$Corr(x,y)=\frac{Cov(x,y)}{\sqrt{Var(x)Var(y)}}$。相关系数有以下性质：</p>
+<ul>
+<li>有界性：相关系数的取值范围为-1到1</li>
+<li>统计意义：值越接近1，说明两个变量正相关性（线性）越强，越接近-1，说明负相关性越强，当为0时表示两个变量没有相关性。</li>
+</ul>
+<p>下面举一个实际的栗子。有5个县的过敏生产总值分别为10,20,30,50和80亿。这5个县的贫困率分别为11%,12%,13%,15%和18%。请计算国民生产总值和贫困率的相关系数。</p>
+<ul>
+<li>令x和y为包含上述数据的向量：x=(10,20,30,50,80)和y=(0.11,0.12,0.13,0.15,0.18)</li>
+<li>X的期望E(x)为(10+20+30+50+80)/5=38</li>
+<li>Y的期望E(Y)为(0.11+0.12+0.13+0.15+0.18)/5=0.138</li>
+<li>X,Y的协方差为[(10-38)<em>(0.11-0.138)+(20-38)</em>(0.12-0.138)+(30-38)<em>(0.13-0.138)+(50-38)</em>(0.15-0.138)+(80-38)*(0.18-0.138)]/5=0.616</li>
+<li>X的方差为[(10-38)^2+(20-38)^2+(30-38)^2+(50-38)^2+(80-38)^2]/5=616</li>
+<li>Y的方差为[(0.11-0.138)^2+(0.12-0.138)^2+(0.13-0.138)^2+(0.15-0.138)^2+(0.18-0.138)^2]/5=0.000616</li>
+<li>X,Y的相关系数0.616/[sqrt(616)*sqrt(0.000616)]=1说明国明生产总值和贫困率是非常正相关的。</li>
+</ul>
+<h4 id="物理解释"><a href="#物理解释" class="headerlink" title="物理解释"></a>物理解释</h4><p>我们可以把相关系数看成两个向量的夹角，以上面栗子为例：</p>
+<ul>
+<li>令x和y为包含上述数据的向量：x=(10,20,30,50,80)和y=(0.11,0.12,0.13,0.15,0.18)</li>
+<li>X的期望E(X)为(10+20+30+50+80)/5=38</li>
+<li>Y的期望E(Y)为(0.11+0.12+0.13+0.15+0.18)/5=0.138</li>
+<li>X减去期望[10-38,20-38,30-38,50-38,80-38]=[-28,-18,-8,12,42]</li>
+<li>Y减去期望[0.11-0.138,0.12-0.138,0.13-0.138,0.15-0.138,0.18-0.138]=[-0.028,-0.018,-0.008,0.012,0.042]</li>
+<li>$cos\theta = \frac{XY}{||X||||Y||}=\frac{3.08}{55.497*0.055}=1$</li>
+</ul>
+<h2 id="多维随机变量"><a href="#多维随机变量" class="headerlink" title="多维随机变量"></a>多维随机变量</h2><p>设(X,Y)是二维随机变量，对于任意实数x、y，二元函数$F(x,y)=P\{(X\le x)\cap(Y\le y)\}=P\{X\le x, Y\le y\}$称为二维随机变量(X,Y)的联合分布函数，如下表所示：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/8.png" alt="图片"></p>
+<p>如果将二维随机变量(X,Y)看成是平面上随机点的坐标，那么分布函数F(x,y)在(x,y)处的函数值就是随机点(X,Y)落在下图中阴影部分的面积，且有</p>
+<p>$\begin{array}{l}P\left\{x_{1}&lt;X \leqslant x_{2}, y_{1}&lt;Y \leqslant y_{2}\right\} \\\quad=F\left(x_{2}, y_{2}\right)-F\left(x_{2}, y_{1}\right)+F\left(x_{1}, y_{1}\right)-F\left(x_{1}, y_{2}\right)\end{array}$</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/9.png" alt="图片"></p>
+<p>如果是连续型随机变量，则有$F(x, y)=\int_{-\infty}^{y} \int_{-\infty}^{x} f(u, v) \mathrm{d} u \mathrm{~d} v$。</p>
+<h3 id="边缘分布"><a href="#边缘分布" class="headerlink" title="边缘分布"></a>边缘分布</h3><p>二维随机变量(X,Y)作为一个整体，具有分布函数F(x,y)，而X和Y都是随机变量，各自也有分布函数，记为$F_X(x)$、$F_Y(y)$，且$F_{X}(x)=P\{X \leqslant x\}=P\{X \leqslant x, Y&lt;\infty\}=F(x, \infty)$、$F_{Y}(y)=F(\infty, y)$。对于离散型随机变量有$F_{X}(x)=F(x, \infty)=\sum_{x_{i} \leqslant x} \sum_{j=1}^{\infty} p_{i j}$，如下表：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/10.png" alt="图片"></p>
+<p>对于连续型随机变量有：$F_{X}(x)=F(x, \infty)=\int_{-\infty}^{x}\left[\int_{-\infty}^{\infty} f(x, y) \mathrm{d} y\right] \mathrm{d} x$，其概率密度函数为$f_{X}(x)=\int_{-\infty}^{\infty} f(x, y) \mathrm{d} y$、$f_{Y}(y)=\int_{-\infty}^{\infty} f(x, y) \mathrm{d} x$。</p>
+<h3 id="条件分布"><a href="#条件分布" class="headerlink" title="条件分布"></a>条件分布</h3><p>设(X,Y)是二维离散型随机变量，其分布律为$P\left\{X=x_{i}, Y=y_{j}\right\}=p_{i j}, \quad i, j=1,2, \cdots$，(X,Y)关于X和关于Y的边缘分布律分别为$P\left\{X=x_{i}\right\}=p_{i} .=\sum_{j=1}^{\infty} p_{i j}, \quad i=1,2, \cdots,$、$P\left\{Y=y_{j}\right\}=p_{. j}=\sum_{i=1}^{\infty} p_{i j}, \quad j=1,2, \cdots$。</p>
+<p>由条件概率公式可知，在$Y=y_i$条件下随机变量X的条件分布律为$P\left\{X=x_{i} \mid Y=y_{j}\right\}=\frac{P\left\{X=x_{i}, Y=y_{j}\right\}}{P\left\{Y=y_{j}\right\}}=\frac{p_{i j}}{p \cdot j}$。例如下表的条件概率：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/11.png" alt="图片"></p>
+<p>可以计算出：</p>
+<ul>
+<li>$P\{Y=0 \mid X=1\}=\frac{P\{X=1, Y=0\}}{P\{X=1\}}=\frac{0.030}{0.045}$</li>
+<li>$P\{Y=1 \mid X=1\}=\frac{P\{X=1, Y=1\}}{P\{X=1\}}=\frac{0.010}{0.045}$</li>
+<li>$P\{Y=2 \mid X=1\}=\frac{P\{X=1, Y=2\}}{P\{X=1\}}=\frac{0.005}{0.045}$</li>
+</ul>
+<p>设二维随机变量(X,Y)的概率密度为f(x,y)，关于Y的边缘概率密度为$f_Y(y)$，若对于固定的y，$f_Y(y)&gt;0$则称$\frac{f(x, y)}{f_{Y}(y)}$为在Y=y的条件下X的条件概率密度，记为：$f_{X \mid Y}(x \mid y)=\frac{f(x, y)}{f_{Y}(y)}$。</p>
+<h3 id="相互独立"><a href="#相互独立" class="headerlink" title="相互独立"></a>相互独立</h3><p>如果$F(x, y)=F_{X}(x) F_{Y}(y)$则称X、Y相互独立。</p>
+<h3 id="两个随机变量函数的分布"><a href="#两个随机变量函数的分布" class="headerlink" title="两个随机变量函数的分布"></a>两个随机变量函数的分布</h3><ul>
+<li>Z=X+Y：$f_{X+Y}(z)=\int_{-\infty}^{\infty} f(z-y, y) \mathrm{d} y$、$f_{X+Y}(z)=\int_{-\infty}^{\infty} f(x, z-x) \mathrm{d} x$<ul>
+<li>若X、Y相互独立：$f_{X+Y}(z)=\int_{-\infty}^{\infty} f_{X}(z-y) f_{Y}(y) \mathrm{d} y$、$f_{X+Y}(z)=\int_{-\infty}^{\infty} f_{X}(x) f_{Y}(z-x) \mathrm{d} x$</li>
+<li>卷积公式：$f_{X} * f_{Y}=\int_{-\infty}^{\infty} f_{X}(z-y) f_{Y}(y) \mathrm{d} y=\int_{-\infty}^{\infty} f_{X}(x) f_{Y}(z-x) \mathrm{d} x$</li>
+</ul>
+</li>
+<li>$Z=\frac{Y}{X}$：$f_{Y / X}(z)=\int_{-\infty}^{\infty}|x| f(x, x z) \mathrm{d} x$<ul>
+<li>若X、Y相互独立：$f_{Y / X}(z)=\int_{-\infty}^{\infty}|x| f_{X}(x) f_{Y}(x z) \mathrm{d} x$</li>
+</ul>
+</li>
+<li>Z=XY：$f_{X Y}(z)=\int_{-\infty}^{\infty} \frac{1}{|x|} f\left(x, \frac{z}{x}\right) \mathrm{d} x$<ul>
+<li>若X、Y相互独立：$f_{X Y}(z)=\int_{-\infty}^{\infty} \frac{1}{|x|} f_{X}(x) f_{Y}\left(\frac{z}{x}\right) \mathrm{d} x$</li>
+</ul>
+</li>
+</ul>
+<h3 id="协方差矩阵"><a href="#协方差矩阵" class="headerlink" title="协方差矩阵"></a>协方差矩阵</h3><p>设X、Y是随机变量，$E\left\{[X-E(X)]^{k}[Y-E(Y)]^{\prime}\right\}, \quad k, l=1,2, \cdots$称为X和Y的k+l阶混合中心矩。若n维随机变量$\left(X_{1}, X_{2}, \cdots, X_{n}\right)$的二阶混合中心矩$c_{i j}=\operatorname{Cov}\left(X_{i}, X_{j}\right)=E\left\{\left[X_{i}-E\left(X_{i}\right)\right]\left[X_{j}-E\left(X_{j}\right)\right]\right\}, i, j=1,2, \cdots, n$存在，则下述矩阵为n维随机变量的协方差矩阵：</p>
+<p>$\boldsymbol{C}=\left(\begin{array}{cccc}c_{11} &amp; c_{12} &amp; \cdots &amp; c_{1 n} \\c_{21} &amp; c_{22} &amp; \cdots &amp; c_{2 n} \\\vdots &amp; \vdots &amp; &amp; \vdots \\c_{n 1} &amp; c_{n 2} &amp; \cdots &amp; c_{m}\end{array}\right)$</p>
+<p>由于$c_{ij}=c_{ji}$所以上述矩阵是一个对称矩阵。【注】：矩阵中每一行代表一个样本，每一列代表一个随机变量。</p>
+<p>协方差矩阵是半正定矩阵。</p>
+<h1 id="线性代数"><a href="#线性代数" class="headerlink" title="线性代数"></a>线性代数</h1><h2 id="向量"><a href="#向量" class="headerlink" title="向量"></a>向量</h2><p>一个向量就是一列有序排列的数，可以把向量看作空间中的点，每个元素是不同坐标轴上的坐标。</p>
+<h3 id="向量的导数"><a href="#向量的导数" class="headerlink" title="向量的导数"></a>向量的导数</h3><p>令$A=\left[\begin{array}{cccc}a_{11} &amp; a_{12} &amp; \cdots &amp; a_{1 n} \\a_{21} &amp; a_{22} &amp; \cdots &amp; a_{2 n} \\\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\a_{m 1} &amp; a_{m 2} &amp; \cdots &amp; a_{m n}\end{array}\right]$，$\vec{x}=\left(\begin{array}{c}x_{1} \\x_{2} \\\vdots \\x_{n}\end{array}\right)$，$A \cdot \vec{x}=\left(\begin{array}{c}a_{11} x_{1}+a_{12}x_{2}+\cdots+a_{1 n} x_{n} \\a_{21} x_{1}+a_{22} x_{2}+\cdots+a_{2 n} x_{n} \\\vdots \\a_{m 1} x_{1}+a_{m 2} x_{2}+\cdots+a_{m n} x_{n}\end{array}\right)$，那么：</p>
+<p>$\frac{\partial \vec{y}}{\partial \vec{x}}=\frac{\partial A \vec{x}}{\partial\vec{x}}=\left[\begin{array}{cccc}a_{11} &amp; a_{21} &amp; \cdots &amp; a_{m 1} \\a_{12} &amp;a_{22} &amp; \cdots &amp; a_{m 2} \\\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\a_{1 n} &amp; a_{2 n} &amp;\cdots &amp; a_{m n}\end{array}\right]=A^{T}$</p>
+<h4 id="向量偏导数"><a href="#向量偏导数" class="headerlink" title="向量偏导数"></a>向量偏导数</h4><p>$\frac{\partial A \vec{x}}{\partial \vec{x}}=A^{T}$</p>
+<p>$\frac{\partial A \vec{x}}{\partial \vec{x}^{T}}=A$</p>
+<p>$\frac{\partial\left(\vec{x}^{T} A\right)}{\partial \vec{x}}=A$</p>
+<h4 id="标量对向量的导数"><a href="#标量对向量的导数" class="headerlink" title="标量对向量的导数"></a>标量对向量的导数</h4><p>A为$n\times n$的矩阵，x为$n\times 1$的列向量，记$\frac{\partial y}{\partial \vec{x}}=\frac{\partial\left(\vec{x}^{T} \cdot A \cdot \vec{x}\right)}{\partial \vec{x}}=\left(A^{T}+A\right) \cdot \vec{x}$，若A为对称阵，则有$\frac{\partial y}{\partial \vec{x}}=\frac{\partial\left(\vec{x}^{T} \cdot A \cdot \vec{x}\right)}{\partial \vec{x}}=2A\vec{x}$</p>
+<h2 id="矩阵"><a href="#矩阵" class="headerlink" title="矩阵"></a>矩阵</h2><p>矩阵是二维数组，其中的每一个元素被两个索引确定。</p>
+<h3 id="矩阵乘法"><a href="#矩阵乘法" class="headerlink" title="矩阵乘法"></a>矩阵乘法</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/12.png" alt="图片"></p>
+<p>其中$c_{i j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\ldots+a_{i n} b_{n j}=\sum^{n}_{k=1} a_{i k} b_{k j}$</p>
+<p>矩阵乘法有如下性质：</p>
+<ul>
+<li>不满足交换律：$A\times B \neq B \times A$</li>
+<li>满足结合律：$A\times (B\times C)=(A\times B)\times C$</li>
+<li>$(A+B)^2=A^2+AB+BA+B^2$</li>
+<li>$(AB)^2=(AB)(AB)\neq A^2B^2$</li>
+</ul>
+<h3 id="矩阵转置"><a href="#矩阵转置" class="headerlink" title="矩阵转置"></a>矩阵转置</h3><p>矩阵的转置$A^T$将A的横行写为$A^T$的纵列，把A的纵列写为$A^T$的横行，即$A^T_{ij}=A_{ji}$。形式上说，$m\times n$转置A的转置是$n\times m$矩阵。</p>
+<p>转置有如下基本性质：</p>
+<ul>
+<li>$(A+B)^T=A^T+B^T$</li>
+<li>$(A\times B)^T=B^T\times A^T$ (在公式化简中常用到)</li>
+<li>$(A^T)^T=A$</li>
+</ul>
+<h3 id="逆矩阵"><a href="#逆矩阵" class="headerlink" title="逆矩阵"></a>逆矩阵</h3><p>给定一个n阶方阵A，若存在一n阶方阵B，使得$AB=BA=I_n$，其中$I_n$为n阶单位矩阵，则称A是可逆的，且B是A的逆矩阵，记作$A^{-1}$。</p>
+<p>只有方阵才可能有逆矩阵。若方阵A的逆矩阵存在，则称A为非奇异方阵或可逆方阵。与行列式类似，逆矩阵一般用于求解联立方程组。</p>
+<p>逆矩阵的运算律如下：</p>
+<ul>
+<li>$(AB)^{-1}=B^{-1}A^{-1}$</li>
+<li>$(kA)^{-1}=A^{-1}/k$</li>
+<li>$(A^{-1})^T=(A^T)^{-1}$</li>
+<li>$(A^n)^{-1}=(A^{-1})^n$</li>
+<li>$(A^{-1})^{-1}=A$</li>
+<li>$(\lambda A)^{-1}=\frac{1}{\lambda}\times A^{-1}$</li>
+<li>$(AB)^{-1}=B^{-1}A^{-1}$</li>
+<li>$(A^T)^{-1}=(A^{-1})^T$</li>
+<li>$det(A^{-1})=\frac{1}{det(A)}$</li>
+</ul>
+<p>矩阵可逆的有几个充分必要条件：</p>
+<ul>
+<li>$|A|\neq 0$且$A^{-1}=\frac{1}{|A|}A^*$</li>
+<li>A可以经过有限次初等变换化为单位矩阵</li>
+<li>A可表示为有限个初等矩阵的乘积</li>
+<li>A为满秩矩阵</li>
+<li>A的所有特征值都不为0</li>
+</ul>
+<p>可逆方阵/非奇异方阵有如下定理：</p>
+<ul>
+<li>一个方阵非奇异当且进党它的行列式不为零</li>
+<li>一个方阵非奇异当且仅当它代表的线性变换是个自同构</li>
+<li>一个矩阵半正定当且进党它的每个特征值大于或等于零</li>
+<li>一个矩阵正定当且仅当它的每个特征值都大于零</li>
+</ul>
+<h3 id="伪逆"><a href="#伪逆" class="headerlink" title="伪逆"></a>伪逆</h3><p>对于非方阵而言，其逆矩阵没有定义。假设在下面问题中，我们想通过矩阵A的左逆B来求解线性方程：$Ax=y$，等式两边同时左乘左逆B后，得到：$x=By$，是否存在唯一的映射将A映射到B取决于问题的形式：如果矩阵A的行数大于列数，那么上述方程可能没有解；如果矩阵A的行数小于列数，那么上述方程可能有多个解。</p>
+<p>矩阵A的伪逆定义为：$\boldsymbol{A}^{+}=\lim _{a \backslash_{\boldsymbol{v}} 0}\left(\boldsymbol{A}^{\top} \boldsymbol{A}+\alpha \boldsymbol{I}\right)^{-1} \boldsymbol{A}^{\top}$</p>
+<p>但是计算伪逆的实际算法没有基于这个式子，而是使用这个公式：$A^{+}=V D^{+} U^{\top}$</p>
+<p>其中，矩阵U,D和V是矩阵A奇异值分解后得到的矩阵。对角矩阵D的伪逆D+是其非零元素取倒之后再转置得到的。</p>
+<h4 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h4><p>任何一种广义逆阵都可以用来判断线性方程组是否有解，若有解时列出其所有的解。若一下$n\times m$的线性系统有解存在$Ax=b$，其中向量x伪未知数，向量b伪常数，一下是所有的解$x=A^gb+[I-A^gA]w$，其中参数w为任意矩阵，而$A^g$为A的任何一个广义逆阵。解存在的条件当且仅当$A^gb$为其中一个解，也就是当且进当$AA^gb=b$。</p>
+<h3 id="迹"><a href="#迹" class="headerlink" title="迹"></a>迹</h3><p>矩阵的迹（trace）表示矩阵A主对角线所有元素的和，即$\operatorname{tr}(A)=a_{11}+a_{22}+\cdots+a_{n n}$，具有如下性质：</p>
+<ul>
+<li>$\operatorname{tr}(A)=\operatorname{tr}\left(A^{T}\right)$</li>
+<li>$\operatorname{tr}(A B)=\operatorname{tr}(B A)$</li>
+<li>$\operatorname{tr}(A B C)=\operatorname{tr}(B C A)=\operatorname{tr}(C A B)$</li>
+<li>若A与B相似，则$\operatorname{tr}(A)=\operatorname{tr}(B)$</li>
+<li>$\operatorname{tr}(A+B)=\operatorname{tr}(A)+\operatorname{tr}(B)$</li>
+</ul>
+<h3 id="矩阵的导数"><a href="#矩阵的导数" class="headerlink" title="矩阵的导数"></a>矩阵的导数</h3><p>矩阵求导可参考如下两篇博客：</p>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/263777564" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/263777564</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/273729929" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/273729929</a></li>
+</ul>
+<h4 id="雅可比矩阵"><a href="#雅可比矩阵" class="headerlink" title="雅可比矩阵"></a>雅可比矩阵</h4><p>雅可比矩阵的重要性在于它体现了一个可微方程与给出点的最优线性逼近. 因此, 雅可比矩阵类似于多元函数的导数。</p>
+<p>假设$F: R_{n} \rightarrow R_{m}$是一个从欧式n维空间转换到欧式m维空间的函数. 这个函数由m个实函数组成: y1(x1,…,xn), …, ym(x1,…,xn). 这些函数的偏导数(如果存在)可以组成一个m行n列的矩阵, 这就是所谓的雅可比矩阵：</p>
+<p>$\left[\begin{array}{ccc}\frac{\partial y_{1}}{\partial x_{1}} &amp; \cdots &amp; \frac{\partial y_{1}}{\partial x_{n}} \\\vdots &amp; \ddots &amp; \vdots \\\frac{\partial y_{m}}{\partial x_{1}} &amp; \cdots &amp; \frac{\partial y_{m}}{\partial x_{n}}\end{array}\right]$</p>
+<p>此矩阵表示为: $J_{F}\left(x_{1}, \ldots, x_{n}\right)$或者$\frac{\partial\left(y_{1}, \ldots, y_{m}\right)}{\partial\left(x_{1}, \ldots, x_{n}\right)}$。这个矩阵的第i行是由梯度函数的转置yi(i=1,…,m)表示的。</p>
+<p>如果p是$R_n$中的一点，F在p点可微分, 那么在这一点的导数由$J_F(p)$给出(这是求该点导数最简便的方法). 在此情况下, 由$F(p)$描述的线性算子即接近点p的F的最优线性逼近，x逼近于p：$F(\mathbf{x}) \approx F(\mathbf{p})+J_{F}(\mathbf{p}) \cdot(\mathbf{x}-\mathbf{p})$</p>
+<p>另外介绍一下雅可比行列式。如果m = n, 那么F是从n维空间到n维空间的函数, 且它的雅可比矩阵是一个方块矩阵. 于是我们可以取它的行列式, 称为雅可比行列式。</p>
+<p>在某个给定点的雅可比行列式提供了 在接近该点时的表现的重要信息. 例如, 如果连续可微函数F在p点的雅可比行列式不是零, 那么它在该点附近具有反函数. 这称为反函数定理. 更进一步, 如果p点的雅可比行列式是正数, 则F在p点的取向不变；如果是负数, 则F的取向相反. 而从雅可比行列式的绝对值, 就可以知道函数F在p点的缩放因子；这就是为什么它出现在换元积分法中。</p>
+<p>对于取向问题可以这么理解, 例如一个物体在平面上匀速运动, 如果施加一个正方向的力F即取向相同, 则加速运动, 类比于速度的导数加速度为正；如果施加一个反方向的力F，即取向相反, 则减速运动, 类比于速度的导数加速度为负。</p>
+<h4 id="海森矩阵"><a href="#海森矩阵" class="headerlink" title="海森矩阵"></a>海森矩阵</h4><p>海森矩阵(Hessian matrix或Hessian)是一个自变量为向量的实值函数的二阶偏导数组成的方块矩阵, 此函数如下：$f\left(x_{1}, x_{2} \ldots, x_{n}\right)$。如果f的所有二阶导数都存在, 那么f的海森矩阵即：$H(f)_{i j}(x)=D_{i} D_{j} f(x)$。其中$x=\left(x_{1}, x_{2} \ldots, x_{n}\right)$，即$H(f)$为：</p>
+<p>$\left[\begin{array}{cccc}\frac{\partial^{2} f}{\partial x_{1}^{2}} &amp; \frac{\partial^{2} f}{\partial x_{1} \partial x_{2}} &amp; \cdots &amp; \frac{\partial^{2} f}{\partial x_{1} \partial x_{n}} \\\frac{\partial^{2} f}{\partial x_{2} \partial x_{1}} &amp; \frac{\partial^{2} f}{\partial x_{2}^{2}}&amp; \cdots &amp; \frac{\partial^{2} f}{\partial x_{2} \partial x_{n}} \\\vdots &amp; \vdots &amp;\ddots &amp; \vdots \\\frac{\partial^{2} f}{\partial x_{n} \partial x_{1}} &amp; \frac{\partial^{2} f}{\partial x_{n} \partial x_{2}} &amp; \cdots &amp; \frac{\partial^{2} f}{\partial x_{n}^{2}}\end{array}\right]$。</p>
+<p>海森矩阵被应用于牛顿法解决的大规模优化问题。</p>
+<h3 id="行列式"><a href="#行列式" class="headerlink" title="行列式"></a>行列式</h3><p>行列式是数学中的一个函数，将$n\times n$的矩阵A映射到一个标量，记作$det(A)$或$|A|$。行列式可以看作是有向面积或体积的概念在一般的欧几里得空间中的推广。或者说，在n维欧几里得空间中，行列式描述的是一个线性变换对“体积”所造成的影响。</p>
+<h4 id="几何意义"><a href="#几何意义" class="headerlink" title="几何意义"></a>几何意义</h4><p>行列式是向量形成的平行四边形的面积。在一个二维平面上，两个向量X=(a,c)和X’=(b,d)的行列式是：</p>
+<p>$\operatorname{det}\left(X, X^{\prime}\right)=\left|\begin{array}{ll}a &amp; b \\c &amp; d\end{array}\right|=a d-b c$</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/13.png" alt="图片"></p>
+<h4 id="代数余子式"><a href="#代数余子式" class="headerlink" title="代数余子式"></a>代数余子式</h4><p>在n阶行列式中，将元素$a_{ij}$所在的行和列上的所有元素都划去，留下的元素构成n-1阶行列式，称为元素$a_{ij}$的余子式，记为$M_{ij}$，称$A_{y}=(-1)^{i+j}M_{ij}$。</p>
+<p>例如，三阶行列式$D=\left|\begin{array}{lll}a_{11} &amp; a_{12} &amp; a_{13} \\a_{21} &amp; a_{22} &amp; a_{23} \\a_{31} &amp; a_{32} &amp; a_{33}\end{array}\right|$，$a_{13}$的余子式为$M_{13}=\left|\begin{array}{ll}a_{21} &amp; a_{22} \\a_{31} &amp; a_{32}\end{array}\right|$，代数余子式为$A_{13}=(-1)^{1+3}\left|\begin{array}{cc}a_{21} &amp; a_{22} \\a_{31} &amp; a_{32}\end{array}\right|$</p>
+<h4 id="计算方法"><a href="#计算方法" class="headerlink" title="计算方法"></a>计算方法</h4><p><strong>方法一</strong>：对于n阶矩阵$A=(a_{ij})$，定义n阶行列式的$|A|$的值为$\sum(-1)^{\tau(j_1j_2j_3\cdots j_n)} a_{1 j_{1}} a_{2 j_{2}} \cdots a_{n j_{n}}$，这里$\sum(-1)^{\tau(j_1j_2j_3)}$表示对所有不同的n级排列求和，$\tau(j_1j_2j_3\cdots j_n)$表示序列$j_1j_2\cdots j_n$的逆序数。例如：</p>
+<p>$\begin{array}{l}\left|\begin{array}{lll}a_{11} &amp; a_{12} &amp; a_{13} \\a_{21} &amp; a_{22} &amp; a_{23} \\a_{31} &amp; a_{32} &amp; a_{33}\end{array}\right|=a_{11} a_{22} a_{33}+a_{12} a_{23}a_{31}+a_{13} a_{21} a_{32} \-a_{11} a_{23} a_{32}-a_{12} a_{21} a_{33}-a_{13}a_{22} a_{3}\end{array}$</p>
+<p><strong>方法二</strong>：</p>
+<p>n阶行列式的值等于它的任意一行（列）的元素与其对应的代数余子式的乘积的和。</p>
+<p>例如，设三阶行列式：</p>
+<p>$\left|\begin{array}{ccc}2 &amp; 1 &amp; 2 \-4 &amp; 3 &amp; 1 \\2 &amp; 3 &amp; 5\end{array}\right|=2(-1)^{1+1}\left|\begin{array}{cc}3 &amp; 1 \\3 &amp; 5\end{array}\right|+1(-1)^{1+2}\left|\begin{array}{cc}-4 &amp; 1 \\2 &amp; 5\end{array}\right|+2(-1)^{1+3}\left|\begin{array}{cc}-4 &amp; 3 \\2 &amp; 3\end{array}\right|$</p>
+<p>$\begin{aligned}D &amp;=a_{11} A_{11}+a_{12} A_{12}+a_{13} A_{13} \\&amp;=2 \times(15-3)-(-20-2)+2 \times(-12-6)=10\end{aligned}$</p>
+<p><strong>方法三</strong>：设n阶矩阵A的全部特征值为$\lambda_1,\lambda_2,\cdots,\lambda_n$，则$|A|=\lambda_1\lambda_2\cdots\lambda_n$</p>
+<h4 id="性质"><a href="#性质" class="headerlink" title="性质"></a>性质</h4><ul>
+<li>$D=|\begin{array}{llll}\lambda_{1} &amp; &amp; &amp; \\&amp; \lambda_{2} &amp; &amp; \\&amp; &amp; \ddots &amp; \\&amp; &amp; &amp; \lambda_{n}\end{array} \mid=\lambda_{1} \lambda_{2} \cdots \lambda_{n}$</li>
+<li>$D=\left|\begin{array}{cccc}a_{11} &amp; &amp; &amp; 0 \\a_{21} &amp; a_{22} &amp; &amp; \\\vdots &amp; \vdots &amp; \ddots &amp; \\a_{n 1} &amp; a_{n 2} &amp; \cdots &amp; a_{n n}\end{array}\right|=a_{11} a_{22} \cdots a_{n n}$</li>
+<li>行列式和它的转置行列式相等</li>
+<li>互换行列式的两行，行列式变号</li>
+<li>如果行列式有两行（列）完全相同，则行列式等于零</li>
+<li>如果行列式有两行（列）元素成比例，则行列式等于零</li>
+<li>分行可加性</li>
+</ul>
+<h3 id="秩"><a href="#秩" class="headerlink" title="秩"></a>秩</h3><p>在$m \times n$矩阵A中，任取k行k列，不改变这$k^2$个元素在A中的次序，得到k阶行列式，称为矩阵A的k阶子式。显然$m\times n$矩阵A的k阶子式有$C^k_mC^k_n$个。</p>
+<p>设在矩阵A中有一个不等于0的r阶子式D，且所有r+1阶子式（如果存在）全等于0，那么D称为矩阵A的最高阶非零子式，r称为矩阵A的秩，记作$R(A)=r$，满足如下性质：</p>
+<ul>
+<li>设A为$m \times n$矩阵，当R(A)=m时，称A为行满秩矩阵，当R(A)=n时，称A为列满秩矩阵</li>
+<li>若A为n阶方阵，且R(A)=n，则称A为满秩矩阵</li>
+<li>方阵A为满秩矩阵的充要条件为$|A|\neq 0$</li>
+<li>$n\times n$的可逆矩阵，秩为n，方阵A可逆的充要条件是A为满秩矩阵，可逆矩阵又称满秩矩阵</li>
+<li>矩阵的秩等于它行(列)向量组的秩</li>
+</ul>
+<h4 id="与线性方程组的解的关系"><a href="#与线性方程组的解的关系" class="headerlink" title="与线性方程组的解的关系"></a>与线性方程组的解的关系</h4><p>$\left\{\begin{array}{l}a_{11} x_{1}+a_{12} x_{2}+\cdots+a_{1 n} x_{n}=b_{1} \\a_{21} x_{1}+a_{22} x_{2}+\cdots+a_{2 n} x_{n}=b_{2} \\\ldots \ldots \\a_{m 1} x_{1}+a_{m 2} x_{2}+\cdots+a_{m n} x_{n}=b_{m}\end{array} \Rightarrow A \vec{x}=\vec{b}\right.$</p>
+<p>对于n元线性方程组$Ax=b$：</p>
+<ul>
+<li>无解的充要条件是$R(A)&lt;R(A,b)$</li>
+<li>有唯一解的充要条件是$R(A)=R(A,b)=n$</li>
+<li>有无限多解的充要条件是$R(A)=R(A,b)&lt;n$</li>
+</ul>
+<h3 id="范数"><a href="#范数" class="headerlink" title="范数"></a>范数</h3><p>范数用于衡量一个向量的大小，可以看成一个函数（输入是向量，输出是值），定义如下：$||x||_p=(\sum_i|x_i|^p)^{\frac{1}{p}}$。L1范数为x向量各个元素绝对值之和，L2范数为x向量各个元素平方和的开放。</p>
+<h3 id="向量的内积-点积"><a href="#向量的内积-点积" class="headerlink" title="向量的内积/点积"></a>向量的内积/点积</h3><p>点积有两种定义方式：代数方式和几何方式。通过在欧式空间中引入笛卡尔坐标系，向量之间的点积既可以由向量坐标的代数运算得出，也可以通过引入两个向量的长度和角度等几何概念来求解。</p>
+<h4 id="代数定义"><a href="#代数定义" class="headerlink" title="代数定义"></a>代数定义</h4><p>两个向量$\overrightarrow{a}=[a_1,a_2,…,a_n]$和$\overrightarrow{b}=[b_1,b_2,…,b_n]$的点积为：$\vec{a} \cdot \vec{b}=\sum_{i=1}^{n} a_{i} b_{i}=a_{1} b_{1}+a_{2}b_{2}+\cdots+a_{n} b_{n}$</p>
+<h4 id="几何定义"><a href="#几何定义" class="headerlink" title="几何定义"></a>几何定义</h4><p>在欧几里得空间中，点积可以直观地定义为：$\overrightarrow{a}\cdot\overrightarrow{b}=|\overrightarrow{a}||\overrightarrow{b}|cos\theta$，这里$|\overrightarrow{x}|$表示$\overrightarrow{x}$的模(长度), $\theta$表示两个向量之间的角度。</p>
+<p>两个互相垂直的向量的点积总是零，若$\overrightarrow{a}$和$\overrightarrow{b}$都是单位向量(长度为1)，它们的点积就是它们的夹角的余弦。给定两个向量，夹角可以通过下式得到：$cos\theta = \frac{a\cdot b}{\overrightarrow{a}\overrightarrow{b}}=a\cdot b$</p>
+<h4 id="标量投影"><a href="#标量投影" class="headerlink" title="标量投影"></a>标量投影</h4><p>欧式空间中向量A在向量B上的标量投影是指：$A_{B}=|\mathbf{A}| \cos \theta$。从点积的几何定义$\mathbf{A} \cdot \mathbf{B}=|\mathbf{A}||\mathbf{B}| \cos \theta$不难得出两个向量的点积$A\cdot B$可以理解为向量A在向量B上的投影再乘以B的长度：$\mathbf{A} \cdot \mathbf{B}=A_{B}|\mathbf{B}|=B_{A}|\mathbf{A}|$，如下图：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/14.png" alt="图片"></p>
+<h3 id="向量外积"><a href="#向量外积" class="headerlink" title="向量外积"></a>向量外积</h3><p>外积(outer product)一般指两个向量的张量积，其结果为一矩阵；与外积相对，两向量的内积结果为标量。</p>
+<p>给定$m\times 1$列向量u和$1\times n$行向量v，它们的外积$\mathbf{u} \otimes\mathbf{v}$被定义为$m\times n$的矩阵A：$\mathbf{u} \otimes\mathbf{v}=\mathbf{A}=\mathbf{u v}$，使用坐标：</p>
+<p>$\left[\begin{array}{l} b_{1} \ b_{2} \ b_{3} \ b_{4} \end{array}\right]\otimes\left[\begin{array}{lll} a_{1} &amp; a_{2} &amp; a_{3}\end{array}\right]=\left[\begin{array}{lll} a_{1} {b_1} &amp; a_{2} b_{1} &amp; a_{3} b_{1} \ a_{1}b_{2} &amp; a_{2} b_{2} &amp; a_{3} b_{2} \ a_{1} b_{3} &amp; a_{2} b_{3} &amp; a_{3} b_{3} \ a_{1}b_{4} &amp; a_{2} b_{4} &amp; a_{3} b_{4} \end{array}\right]$</p>
+<h3 id="对称矩阵"><a href="#对称矩阵" class="headerlink" title="对称矩阵"></a>对称矩阵</h3><p>$A^T=A$，对称矩阵有如下性质：</p>
+<ul>
+<li>对称矩阵的不同特征值对应的特征向量是正交的</li>
+<li>若A是n阶实对称矩阵，则存在正交矩阵Q使得$Q^TAQ=diag(\lambda_1,\lambda_2,\cdots,\lambda_n)$，其中$\lambda_i$为A的特征值</li>
+</ul>
+<h3 id="相似矩阵"><a href="#相似矩阵" class="headerlink" title="相似矩阵"></a>相似矩阵</h3><p>对于n阶矩阵A,B，如果存在n阶可逆矩阵P，使得$\boldsymbol{P}^{-1} \boldsymbol{A P}=\boldsymbol{B}$，则说矩阵A相似于矩阵B，记作$A~B$。相似矩阵具有如下性质：</p>
+<ul>
+<li>若$A~B$，则$R(A)=R(B)$</li>
+<li>若$A~B$，则$|A|=|B|$</li>
+<li>若$A~B$，则$A^T~B^T$</li>
+<li>若$A~B$且A可逆，则B亦可逆，且$A^T~B^T$</li>
+<li>若$A~B$，则对任意多项式$f(\lambda)$，必有$f(A)~f(B)$</li>
+<li>若$A~B$，则A与B具有相同的特征多项式，从而具有完全相同的特征值</li>
+<li>n阶矩阵A能与对焦矩阵相似的充要条件是A存在n个线性无关的特征向量<ul>
+<li>当n阶矩阵A相似于对焦矩阵时，该对角矩阵的主对角元素恰是A的全部特征值；相似因子P的各列恰是A的n各线性无关的特征向量</li>
+</ul>
+</li>
+</ul>
+<h3 id="正交"><a href="#正交" class="headerlink" title="正交"></a>正交</h3><h4 id="向量正交"><a href="#向量正交" class="headerlink" title="向量正交"></a>向量正交</h4><p>正交是垂直这一直观概念的推广。作为一个形容词，只有在一个确定的内积空间中才有意义。若内积空间中两向量的内积为0，则称它们是正交的。如果能够定义向量间的夹角，则正交可以直观的理解为垂直。</p>
+<h4 id="正交向量组"><a href="#正交向量组" class="headerlink" title="正交向量组"></a>正交向量组</h4><p>如果一组非零向量两两正交，则称这组向量为正交向量组，简称正交组。正交向量组必是线性无关组。如果一个正交向量组中每个向量都是单位向量，则称该向量组为单位正交向量组。</p>
+<h4 id="正交矩阵"><a href="#正交矩阵" class="headerlink" title="正交矩阵"></a>正交矩阵</h4><p>如果n阶实矩阵A的列向量组是一个单位正交向量组，则称A为正交矩阵。正交矩阵有如下定理或性质：</p>
+<ul>
+<li>n阶实矩阵A为正交矩阵的充要条件是$A^TA=E$</li>
+<li>若A是正交矩阵，则-A也是正交矩阵</li>
+<li>若A是正交矩阵，则$A^T(A^{-1})$也是正交矩阵</li>
+<li>若A,B都是n阶正交矩阵，则AB也是n阶正交矩阵</li>
+<li>正交矩阵的行列式值必定为+1或-1，因为$1=det(I)=det(Q^TQ)=det(Q^T)det(Q)=(det(Q))^2\Rightarrow det(Q)=\pm1$</li>
+</ul>
+<h4 id="正交变换"><a href="#正交变换" class="headerlink" title="正交变换"></a>正交变换</h4><p>对于n阶实矩阵A，以n阶正交矩阵Q为相似因子进行的相似变换$Q^{-1}AQ$称为对A的正交变换。这个变换的特点是不改变向量的尺寸和向量间的夹角，那么它到底是个什么样的变换呢？看下面这张图：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/15.png" alt="图片"></p>
+<p>假设二维空间中的一个向量OA，它在标准坐标系也即e1、e2表示的坐标是中表示为(a,b)’（用’表示转置），现在把它用另一组坐标e1’、e2’表示为(a’,b’)’，存在矩阵U使得(a’,b’)’=U(a,b)’，则U即为正交矩阵。从图中可以看到，正交变换只是将变换向量用另一组正交基表示，在这个过程中并没有对向量做拉伸，也不改变向量的空间位置，加入对两个向量同时做正交变换，那么变换前后这两个向量的夹角显然不会改变。上面的例子只是正交变换的一个方面，即旋转变换，可以把e1’、e2’坐标系看做是e1、e2坐标系经过旋转某个角度得到，怎么样得到该旋转矩阵U呢？如下：</p>
+<p>$\mathbf{x}=\left[\begin{array}{l}a \\b\end{array}\right]$</p>
+<p>$a^{\prime}=x \cdot e 1^{\prime}=e_1^{T} x$</p>
+<p>$b^{\prime}=x \cdot e 2^{\prime}=e_2^{\prime T} x$</p>
+<p>a’和b’实际上是x在e1’和e2’轴上的投影大小，所以直接做内积可得，那么：</p>
+<p>$\left[\begin{array}{l}a^{\prime} \\b^{\prime}\end{array}\right]=\left[\begin{array}{l}e _1^{\prime T} \\e_2^{\prime T}\end{array}\right] x$</p>
+<p>从图中可以看到：</p>
+<p>$\boldsymbol{e} \mathbf{1}^{\prime}=\left[\begin{array}{c}\cos \theta \\\sin \theta\end{array}\right] \quad e 2^{\prime}=\left[\begin{array}{c}-\sin \theta \\\cos\theta\end{array}\right]$</p>
+<p>所以：</p>
+<p>$\mathbf{U}=\left[\begin{array}{cc}\cos \theta &amp; \sin \theta \-\sin \theta &amp; \cos\theta\end{array}\right]$</p>
+<p>正交阵U行（列）向量之间都是单位正交向量。上面求得的是一个旋转矩阵，它对向量做旋转变换！也许你会有疑问：刚才不是说向量空间位置不变吗？怎么现在又说它被旋转了？对的，这两个并没有冲突，说空间位置不变是绝对的，但是坐标是相对的，加入你站在e1上看OA，随着e1旋转到e1’，看OA的位置就会改变。如下图：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/16.png" alt="图片"></p>
+<p>如图，如果我选择了e1’、e2’作为新的标准坐标系，那么在新坐标系中OA（原标准坐标系的表示）就变成了OA’，这样看来就好像坐标系不动，把OA往顺时针方向旋转了“斯塔”角度，这个操作实现起来很简单：将变换后的向量坐标仍然表示在当前坐标系中。</p>
+<p>旋转变换是正交变换的一个方面，这个挺有用的，比如在开发中需要实现某种旋转效果，直接可以用旋转变换实现。正交变换的另一个方面是反射变换，也即e1’的方向与图中方向相反，这个不再讨论。</p>
+<p>总结：正交矩阵的行（列）向量都是两两正交的单位向量，正交矩阵对应的变换为正交变换，它有两种表现：旋转和反射。正交矩阵将标准正交基映射为标准正交基（即图中从e1、e2到e1’、e2’）</p>
+<h3 id="特征值与特征向量"><a href="#特征值与特征向量" class="headerlink" title="特征值与特征向量"></a>特征值与特征向量</h3><p>对于n阶矩阵$A=(a_{ij})$，把含有字母$\lambda$的矩阵$\lambda E - A$称为A的特征矩阵，行列式$\lambda E - A$的值表达式称为A的特征多项式。特征多项式的根称为A的特征值。</p>
+<p>$\left|\begin{array}{cccc}a_{11}-\lambda &amp; a_{12} &amp; \cdots &amp; a_{1 n} \\a_{21} &amp; a_{22}-\lambda &amp; \cdots &amp; a_{2 n} \\\vdots &amp; \vdots &amp; &amp; \vdots \\a_{n 1} &amp; a_{n 2} &amp; \cdots &amp; a_{n n}-\lambda\end{array}\right|=0$</p>
+<p>方阵A的特征向量是指与A相乘后相当于对该向量进行缩放的非零向量v：$Av=\lambda v$。对于方阵A，求其特征值与特征向量的步骤如下：</p>
+<ul>
+<li>写出A的特征矩阵$\lambda E - A$，并计算其特征多项式$|\lambda E - A|$</li>
+<li>求出$|\lambda E - A|=0$的全部根，即A的全部特征值，记互异的特征值为$\lambda_1,\lambda_2,\cdots,\lambda_t$</li>
+<li>对每一个$\lambda_i(i=1,2,\cdots,t)$求出齐次线性方程组$(\lambda_iE-A)x=0$的全部非零解，即A对应于特征值$\lambda_i$的全部特征向量$x_1,x_2,\cdots,x_s$，于是A对应于特征值$\lambda_i$的全部特征向量可表示为$k_1x_1+k_2x_2+\cdots+k_sx_s$</li>
+</ul>
+<p>例如求下面矩阵的特征值和特征向量：</p>
+<p>$A=\left(\begin{array}{rrr}-1 &amp; 1 &amp; 0 \-4 &amp; 3 &amp; 0 \\1 &amp; 0 &amp; 2\end{array}\right)$</p>
+<p>A的特征多项式为</p>
+<p>$|\boldsymbol{A}-\lambda \boldsymbol{E}|=\left|\begin{array}{ccc}-1-\lambda &amp; 1 &amp; 0 \-4 &amp; 3-\lambda &amp; 0 \\1 &amp; 0 &amp; 2-\lambda\end{array}\right|=(2-\lambda)(1-\lambda)^{2}$</p>
+<p>所以A的特征值是$\lambda_{1}=2, \lambda_{2}=\lambda_{3}=1$。</p>
+<p>当$\lambda_1=2$时，解方程$(A-2 E) x=0$，由</p>
+<p>$A-2 E=\left(\begin{array}{ccc}-3 &amp; 1 &amp; 0 \-4 &amp; 1 &amp; 0 \\1 &amp; 0 &amp; 0\end{array}\right) \sim\left[\begin{array}{ccc}1 &amp; 0 &amp; 0 \\0 &amp; 1 &amp; 0 \\0 &amp; 0 &amp; 0\end{array}\right)$</p>
+<p>得到基础解系$p_{1}=\left(\begin{array}{l}0 \\0 \\1\end{array}\right)$，所以$k p_{1}(k \neq 0)$是对应于$\lambda_1=2$的全部特征向量。</p>
+<p>当$\lambda_{2}=\lambda_{3}=1$时，解方程$(A-E) x=0$，由</p>
+<p>$A-E=\left(\begin{array}{rrr}-2 &amp; 1 &amp; 0 \-4 &amp; 2 &amp; 0 \\1 &amp; 0 &amp; 1\end{array}\right)-\left(\begin{array}{lll}1 &amp; 0 &amp; 1 \\0 &amp; 1 &amp; 2 \\0 &amp; 0 &amp; 0\end{array}\right)$</p>
+<p>得基础解系$p_{2}=\left(\begin{array}{r}-1 \-2 \\1\end{array}\right)$，所以$k p_{2}(k \neq 0)$是对应于$\lambda_{2}=\lambda_{3}=1$的全部特征向量。</p>
+<h3 id="正定矩阵"><a href="#正定矩阵" class="headerlink" title="正定矩阵"></a>正定矩阵</h3><p>对于n阶实对称矩阵，若对任意n维向量$x\neq 0$，都有$x^TAx&gt;0$，则矩阵A是正定矩阵。若$x^TAx \ge 0$，则称A为半正定矩阵。</p>
+<p>判断正定矩阵的方法：A的特征值都是正数；A的n个顺序主子式的值全为正数。</p>
+<p>实际上，我们可以将$y=\boldsymbol{x}^{T} A \boldsymbol{x}$视作$y=a x^{2}$的多维表达式。当我们希望$y=\boldsymbol{x}^{T} A \boldsymbol{x} \geq 0$对于任意向量x都恒成立，就要求矩阵A是一个半正定矩阵。</p>
+<p>从直观上怎么解释呢？若给定任意一个正定矩阵$A \in \mathbb{R}^{n \times n}$和一个非零向量$\boldsymbol{x} \in \mathbb{R}^{n}$，则两者相乘得到的向量$\boldsymbol{y}=A \boldsymbol{x} \in \mathbb{R}^{n}$与向量x的夹角恒小于$\frac{\pi}{2}$(等价于$\boldsymbol{x}^{T} A \boldsymbol{x}&gt;0$)</p>
+<h4 id="主子式"><a href="#主子式" class="headerlink" title="主子式"></a>主子式</h4><p>设A是一个$m\times n$的矩阵，I是集合$\{1,\cdots,m\}$的一个k元子集，J是集合$\{1,\cdots,n\}$的一个k元子集，那么$|A|_{I,J}$表示A的k阶子式。其中抽取的k行的行标是I中所有元素，k列的列标是J中所有元素。</p>
+<ul>
+<li>如果$I=J$，那么称$|A|_{I,J}$是A的主子式</li>
+<li>如果$I=J=\{1,\cdots,k\}$(所取的是左起前k列和上起前k行)，那么相应的主子式被称为顺序主子式。一个$n\times n$的方块矩阵有n个顺序主子式。</li>
+</ul>
+<h3 id="主成分分解"><a href="#主成分分解" class="headerlink" title="主成分分解"></a>主成分分解</h3><p>主成分分析（Principal components analysis，以下简称PCA）是最重要的降维方法之一。在数据压缩消除冗余和数据噪音消除等领域都有广泛的应用。具体的，假如我们的数据集是n维的，共有m个数据$\left(x^{(1)}, x^{(2)}, \ldots, x^{(m)}\right)$，我们希望将这m个数据的维度从n维降到n’维，希望这m个n’维的数据集尽可能的代表原始数据集。我们知道数据从n维降到n’维肯定会有损失，但是我们希望损失尽可能的小。那么如何让这n’维的数据尽可能表示原来的数据呢？</p>
+<p>我们先看看最简单的情况，也就是n=2，n’=1,也就是将数据从二维降维到一维。数据如下图。我们希望找到某一个维度方向，它可以代表这两个维度的数据。图中列了两个向量方向，$u_1$和$u_2$，那么哪个向量可以更好的代表原始数据集呢？从直观上也可以看出，$u_1$比$u_2$好。</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/17.png" alt="图片"></p>
+<p>为什么$u_1$比$u_2$好呢？可以有两种解释，第一种解释是样本点到这个直线的距离足够近，第二种解释是样本点在这个直线上的投影能尽可能的分开。</p>
+<p>假如我们把n’从1维推广到任意维，则我们的希望降维的标准为：样本点到这个超平面的距离足够近,或者说样本点在这个超平面上的投影能尽可能的分开。基于上面的两种标准，我们可以得到PCA的两种等价推导。</p>
+<h4 id="PCA推导——基于最小投影距离"><a href="#PCA推导——基于最小投影距离" class="headerlink" title="PCA推导——基于最小投影距离"></a>PCA推导——基于最小投影距离</h4><p>我们首先看第一种解释的推导，即样本点到这个超平面的距离足够近。假设m个n维数据$\left(x^{(1)}, x^{(2)}, \ldots, x^{(m)}\right)$都已经进行了中心化，即$\sum_{i=1}^{m} x^{(i)}=0$。经过投影变换后得到的新坐标系为$\left\{w_{1}, w_{2}, \ldots, w_{n}\right\}$，其中w是标准正交基，即$|w|_{2}=1, w_{i}^{T} w_{j}=0$。</p>
+<p>如果我们将数据从n维降到n’维，即丢弃新坐标系中的部分坐标，则新的坐标系为$\left\{w_{1}, w_{2}, \ldots, w_{n^{\prime}}\right\}$，样本点$x^{(i)}$在n’维坐标系中的投影为：$z^{(i)}=\left(z_{1}^{(i)}, z_{2}^{(i)}, \ldots, z_{n^{\prime}}^{(i)}\right)^{T}$。其中$z_{j}^{(i)}=w_{j}^{T} x^{(i)}$是$x^{(i)}$在低维坐标系里第j维的坐标。</p>
+<p>如果我们用$z^{(i)}$来恢复原始数据$x^{(i)}$，则得到的恢复数据$\bar{x}^{(i)}=\sum_{j=1}^{n^{\prime}} z_{j}^{(i)} w_{j}=W z^{(i)}$，其中，W为标准正交基组成的矩阵。</p>
+<p>现在我们考虑整个样本集，我们希望所有的样本到这个超平面的距离足够近，即最小化下式：$\sum_{i=1}^{m}\left|\bar{x}^{(i)}-x^{(i)}\right|_{2}^{2}$。</p>
+<p>将这个式子进行整理，可以得到：</p>
+<p>$\begin{aligned}\sum_{i=1}^{m}\left|\bar{x}^{(i)}-x^{(i)}\right|_{2}^{2}&amp;=\sum_{i=1}^{m}\left|W z^{(i)}-x^{(i)}\right|_{2}^{2} \\&amp;=\sum_{i=1}^{m}\left(W z^{(i)}\right)^{T}\left(W z^{(i)}\right)-2 \sum_{i=1}^{m}\left(Wz^{(i)}\right)^{T} x^{(i)}+\sum_{i=1}^{m} x^{(i) T} x^{(i)} \\&amp;=\sum_{i=1}^{m} z^{(i) T} z^{(i)}-2 \sum_{i=1}^{m} z^{(i) T} W^{T} x^{(i)}+\sum_{i=1}^{m}x^{(i) T} x^{(i)} \\&amp;=\sum_{i=1}^{m} z^{(i) T_{z}(i)}-2 \sum_{i=1}^{m}z^{(i) T_{z}(i)}+\sum_{i=1}^{m} x^{(i) T_{x}} x^{(i)} \\&amp;=-\sum_{i=1}^{m} z^{(i) T_{z}(i)}+\sum_{i=1}^{m} x^{(i) T} x^{(i)} \\&amp;=-\operatorname{tr}\left(W^{T}\left(\sum_{i=1}^{m} x^{(i)} x^{(i) T}\right)W\right)+\sum_{i=1}^{m} x^{(i) T} x^{(i)} \\&amp;=-\operatorname{tr}\left(W^{T} XX^{T} W\right)+\sum_{i=1}^{m} x^{(i) T} x^{(i)}\end{aligned}$</p>
+<p>其中第(1)步用到了\bar{x}^{(i)}=W z^{(i)}，第二步用到了平方和展开，第（3）步用到了矩阵转置公式$(A B)^{T}=B^{T} A^{T}$和$W^{T} W=I$，第（4）步用到了$z^{(i)}=W^{T} x^{(i)}$，第（5）步合并同类项，第（6）步用到了$z^{(i)}=W^{T} x^{(i)}$和矩阵的迹,第7步将代数和表达为矩阵形式。</p>
+<p>注意到$\sum_{i=1}^{m} x^{(i)} x^{(i) T}$是数据集的协方差矩阵，W的每一个向量$w_j$是标准正交基。而$\sum_{i=1}^{m} x^{(i) T} x^{(i)}$是一个常量。最小化上式等价于：$\underbrace{\arg \min }_{W}-\operatorname{tr}\left(W^{T} X X^{T} W\right) \text { s.t. } W^{T} W=I$。</p>
+<p>这个最小化不难，直接观察也可以发现最小值对应的W由协方差矩阵$X X^{T}$最大的n’个特征值对应的特征向量组成。当然用数学推导也很容易。利用拉格朗日函数可以得到$J(W)=-\operatorname{tr}\left(W^{T} X X^{T} W+\lambda\left(W^{T} W-I\right)\right)$。对W求导有$-X X^{T} W+\lambda W=0$，整理下即为：$X X^{T} W=\lambda W$。</p>
+<p>这样可以更清楚的看出，W为$X X^{T}$的n’个特征向量组成的矩阵，而$\lambda$为$X X^{T}$的若干特征值组成的矩阵，特征值在主对角线上，其余位置为0。当我们将数据集从n维降到n’维时，需要找到最大的n’个特征值对应的特征向量。这n’个特征向量组成的矩阵W即为我们需要的矩阵。对于原始数据集，我们只需要用$z^{(i)}=W^{T} x^{(i)}$，就可以把原始数据集降维到最小投影距离的n’维数据集。</p>
+<h4 id="PCA推导——基于最大投影方差"><a href="#PCA推导——基于最大投影方差" class="headerlink" title="PCA推导——基于最大投影方差"></a>PCA推导——基于最大投影方差</h4><p>对于任意一个样本$x^{(i)}$，在新的坐标系中的投影为$W^{T} x^{(i)}$，在新坐标系中的投影方差为$x^{(i) T} W W^{T} x^{(i)}$，要使所有的样本的投影方差和最大，也就是最大化$\sum_{i=1}^{m} W^{T} x^{(i)} x^{(i) T} W$的迹,即：$\underbrace{\arg \max }_{W} \operatorname{tr}\left(W^{T} X X^{T} W\right) \text { s.t. } W^{T} W=I$。利用拉格朗日函数可以得到$J(W)=\operatorname{tr}\left(W^{T} X X^{T} W+\lambda\left(W^{T} W-I\right)\right)$。对W求导有$X X^{T} W+\lambda W=0$，整理下即为：$X X^{T} W=(-\lambda) W$</p>
+<h4 id="PCA算法流程"><a href="#PCA算法流程" class="headerlink" title="PCA算法流程"></a>PCA算法流程</h4><ul>
+<li>输入：n维样本集$D=\left(x^{(1)}, x^{(2)}, \ldots, x^{(m)}\right)$，要降维到的维数n’</li>
+<li>输出：降维后的样本集D’</li>
+<li>对所有的样本进行中心化：$x^{(i)}=x^{(i)}-\frac{1}{m} \sum_{j=1}^{m} x^{(j)}$</li>
+<li>计算样本的协方差矩阵$X X^{T}$</li>
+<li>取出最大的n’个特征值对应的特征向量$\left(w_{1}, w_{2}, \ldots, w_{n^{\prime}}\right)$，将所有的特征向量标准化后，组成特征向量矩阵W</li>
+<li>对样本集中的每一个样本$x^{(i)}$，转化为新的样本$z^{(i)}=W^{T} x^{(i)}$</li>
+<li>得到输出样本集$D^{\prime}=\left(z^{(1)}, z^{(2)}, \ldots, z^{(m)}\right)$</li>
+</ul>
+<p>有时候，我们不指定降维后的n’的值，而是换种方式，指定一个降维到的主成分比重阈值t。这个阈值t在（0,1]之间。假如我们的n个特征值为$\lambda_{1} \geq \lambda_{2} \geq \ldots \geq \lambda_{n}$，则n’可以通过下式得到：$\frac{\sum_{i=1}^{n^{\prime}} \lambda_{i}}{\sum_{i=1}^{n} \lambda_{i}} \geq t$</p>
+<h4 id="PCA实例"><a href="#PCA实例" class="headerlink" title="PCA实例"></a>PCA实例</h4><p>假设我们的数据集有10个二维数据(2.5,2.4), (0.5,0.7), (2.2,2.9), (1.9,2.2), (3.1,3.0), (2.3, 2.7), (2, 1.6), (1, 1.1), (1.5, 1.6), (1.1, 0.9)，需要用PCA降到1维特征。</p>
+<p>首先我们对样本中心化，这里样本的均值为(1.81, 1.91),所有的样本减去这个均值向量后，即中心化后的数据集为(0.69, 0.49), (-1.31, -1.21), (0.39, 0.99), (0.09, 0.29), (1.29, 1.09), (0.49, 0.79), (0.19, -0.31), (-0.81, -0.81), (-0.31, -0.31), (-0.71, -1.01)。</p>
+<p>现在我们开始求样本的协方差矩阵，由于我们是二维的，则协方差矩阵为：</p>
+<p>$\mathbf{X X}^{\mathbf{T}}=\left(\begin{array}{ll}\operatorname{cov}\left(x_{1},x_{1}\right)&amp; \operatorname{cov}\left(x_{1}, x_{2}\right)\\\operatorname{cov}\left(x_{2}, x_{1}\right) &amp; \operatorname{cov}\left(x_{2},x_{2}\right)\end{array}\right)$</p>
+<p>对于我们的数据，求出协方差矩阵为：</p>
+<p>$\mathbf{X X}^{\mathbf{T}}=\left(\begin{array}{ll}0.616555556 &amp; 0.615444444 \\0.615444444 &amp; 0.716555556\end{array}\right)$</p>
+<p>求出特征值为（0.0490833989， 1.28402771），对应的特征向量分别为：$(0.735178656,0.677873399)^{T}(-0.677873399,-0.735178656)^{T}$，由于最大的k=1个特征值为1.28402771，对于的k=1个特征向量为$(-0.677873399,-0.735178656)^{T}$，则我们的$\mathrm{W}=(-0.677873399,-0.735178656)^{T}$。</p>
+<p>我们对所有的数据集进行投影$z^{(i)}=W^{T} x^{(i)}$，得到PCA降维后的10个一维数据集为：(-0.827970186， 1.77758033， -0.992197494， -0.274210416， -1.67580142， -0.912949103， 0.0991094375， 1.14457216, 0.438046137， 1.22382056)。</p>
+<h4 id="核PCA"><a href="#核PCA" class="headerlink" title="核PCA"></a>核PCA</h4><p>在上面的PCA算法中，我们假设存在一个线性的超平面，可以让我们对数据进行投影。但是有些时候，数据不是线性的，不能直接进行PCA降维。这里就需要用到和支持向量机一样的核函数的思想，先把数据集从n维映射到线性可分的高维N&gt;n,然后再从N维降维到一个低维度n’, 这里的维度之间满足n’&lt;n&lt;N。</p>
+<p>使用了核函数的主成分分析一般称之为核主成分分析(Kernelized PCA, 以下简称KPCA。假设高维空间的数据是由n维空间的数据通过映射$\phi$产生。则对于n维空间的特征分解：$\sum_{i=1}^{m} x^{(i)} x^{(i) T} W=\lambda W$，映射为：$\sum_{i=1}^{m} \phi\left(x^{(i)}\right) \phi\left(x^{(i)}\right)^{T} W=\lambda W$，通过在高维空间进行协方差矩阵的特征值分解，然后用和PCA一样的方法进行降维。一般来说，映射$\phi$不用显式的计算，而是在需要计算的时候通过核函数完成。由于KPCA需要核函数的运算，因此它的计算量要比PCA大很多。</p>
+<h3 id="对角化分解"><a href="#对角化分解" class="headerlink" title="对角化分解"></a>对角化分解</h3><p>给定一个大小为$m\times m$的矩阵A，其对角化分解可以写成$A=U \Lambda U^{-1}$。其中，U的每一列都是特征向量，$\Lambda$对角线上的元素是从大到小排列的特征值，若将U记作$U=\left(\vec{u}_{1}, \vec{u}_{2}, \ldots, \vec{u}_{m}\right)$，则</p>
+<p>$\begin{array}{l}A U=A\left(\vec{u}_{1}, \vec{u}_{2}, \ldots,\vec{u}_{m}\right)=\left(\lambda_{1} \vec{u}_{1}, \lambda_{2} \vec{u}_{2}, \ldots,\lambda_{m} \vec{u}_{m}\right) \\=\left(\vec{u}_{1}, \vec{u}_{2}, \ldots,\vec{u}_{m}\right)\left[\begin{array}{ccc}\lambda_{1} &amp; \cdots &amp; 0 \\\vdots &amp;\ddots &amp; \vdots \\0 &amp; \cdots &amp; \lambda_{m}\end{array}\right] \\\Rightarrow A U=U\Lambda \Rightarrow A=U \Lambda U^{-1}\end{array}$</p>
+<p>更为特殊的是，当矩阵A是一个对称矩阵时，则存在一个对称对角化分解，即$A=Q \Lambda Q^{T}$，其中Q的每一列都是相互正交的特征向量，且是单位向量，$\Lambda$对角线上的元素是从大到小排列的特征值。</p>
+<p>当然，将矩阵Q记作$Q=\left(\vec{q}_{1}, \vec{q}_{2}, \ldots, \vec{q}_{m}\right)$，则矩阵A也可以写成如下形式：$A=\lambda_{1} \vec{q}_{1} \vec{q}_{1}^{T}+\lambda_{2} \vec{q}_{2} \vec{q}_{2}^{T}+\ldots+\lambda_{m} \vec{q}_{m} \vec{q}_{m}^{T}$。那么如果A不是方阵，即行和列不相同时，可以使用SVD进行分解。</p>
+<h4 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h4><p>矩阵$A=\left[\begin{array}{ll}2 &amp; 1 \\1 &amp; 2\end{array}\right]$，根据$|\lambda I-A|=\left|\begin{array}{cc}\lambda-2 &amp; -1 \-1 &amp; \lambda-2\end{array}\right|=0$求得特征值为$\lambda_{1}=3, \quad \lambda_{2}=1$，相应地，$\vec{q}_{1}=\left(\frac{\sqrt{2}}{2},\frac{\sqrt{2}}{2}\right)^{T}, \quad \vec{q}_{2}=\left(-\frac{\sqrt{2}}{2}, \frac{\sqrt{2}}{2}\right)^{T}$，则$A=\lambda_{1} \vec{q}_{1} \vec{q}_{1}^{T}+\lambda_{2} \vec{q}_{2}\vec{q}_{2}^{T}=\left[\begin{array}{ll}2 &amp; 1 \\1 &amp; 2\end{array}\right]$，我们就很容易地得到了矩阵A的对称对角化分解。</p>
+<h3 id="奇异值分解"><a href="#奇异值分解" class="headerlink" title="奇异值分解"></a>奇异值分解</h3><p>将一个普通矩阵分解为奇异向量和奇异值，比如将矩阵A分解称三个矩阵的乘积$A=UDV^T$。</p>
+<p>假设A是一个m<em>n矩阵，那么U是一个m</em>m矩阵，D是一个m<em>n矩阵，V是一个n</em>n矩阵。这些矩阵每一个都拥有特殊的结构，其中U和V都是正交矩阵，D是对角矩阵(D不一定是方阵)。对角矩阵D对角线上的元素被成为矩阵A的奇异值，矩阵U的列向量被成为左奇异向量，矩阵V的列向量被称为右奇异向量。$A^TA$的特征值为$\lambda_i$，则称$\sigma_i=\sqrt{\lambda_i}(i=1,2,\cdots,n)$为A的奇异值。</p>
+<h4 id="几何意义-1"><a href="#几何意义-1" class="headerlink" title="几何意义"></a>几何意义</h4><p>如果矩阵<em>A</em>是正定矩阵，它的奇异值分解就是$\boldsymbol{A}=\boldsymbol{Q} \boldsymbol{\Lambda} \boldsymbol{Q}^{T}$。可以将矩阵<em>A</em>视为一种线性变换操作，将其行空间中的一个向量v1,变为其列空间中的向量 $\mathbf{u}_{1}=\boldsymbol{A} \mathbf{v}_{1}$ 。奇异值分解就是要在行空间中寻找一组正交基，将其通过矩阵<em>A</em>线性变换生成列空间中的一组正交基$\boldsymbol{A} \mathbf{v}_{i}=\sigma_{i} \mathbf{u}_{i}$，如下图所示：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/18.png" alt="图片"></p>
+<p>G.Strang给出了二阶方阵SVD的集合意义：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/19.png" alt="图片"></p>
+<h4 id="物理意义"><a href="#物理意义" class="headerlink" title="物理意义"></a>物理意义</h4><p>苏神在博客中阐述了SVD与自编码器、聚类的关系，可以参考：<a href="https://kexue.fm/archives/4208" target="_blank" rel="noopener">https://kexue.fm/archives/4208</a>、<a href="https://kexue.fm/archives/4216" target="_blank" rel="noopener">https://kexue.fm/archives/4216</a></p>
+<h4 id="求解方法"><a href="#求解方法" class="headerlink" title="求解方法"></a>求解方法</h4><p>我们首先回顾下特征值和特征向量的定义如下：$A x=\lambda x$，其中A是一个$n \times n$的实对称矩阵，x是一个n维向量，则我们说$\lambda$是矩阵A的一个特征值，而x是矩阵A的特征值$lambda$所对应的特征向量。</p>
+<p>求出特征值和特征向量有什么好处呢？ 就是我们可以将矩阵A特征分解。如果我们求出了矩阵A的n个特征值$\lambda_{1} \leq \lambda_{2} \leq \ldots \leq \lambda_{n}$，以及这n个特征值所对应的特征向量$\left\{w_{1}, w_{2}, \ldots w_{n}\right\}$，如果这n个特征向量线性无关，那么矩阵A就可以用下式的特征分解表示：$A=W \Sigma W^{-1}$。其中W是这n个特征向量所张成的$n \times n$维矩阵，而$\Sigma$为这n个特征值为主对角线的$n \times n$维矩阵。</p>
+<p>一般我们会把W的这n个特征向量标准化，即满足$\left|w_{i}\right|_{2}=1$，或者说$w_{i}^{T} w_{i}=1$，此时W的n个特征向量为标准正交基，满足$W^{T} W=I$，即$W^{T}=W^{-1}$，也就是说W为酉矩阵。这样我们的特征分解表达式可以写成：$A=W \Sigma W^{T}$。注意到要进行特征分解，矩阵A必须为方阵。那么如果A不是方阵，即行和列不相同时，我们还可以对矩阵进行分解吗？答案是可以，此时我们的SVD登场了。</p>
+<p>SVD也是对矩阵进行分解，但是和特征分解不同，SVD并不要求要分解的矩阵为方阵。假设我们的矩阵A是一个𝑚×𝑛的矩阵，那么我们定义矩阵A的SVD为：$A=U \Sigma V^{T}$。其中U是一个$m \times m$的矩阵，$\Sigma$是一个$m \times n$的矩阵，除了主对角线上的元素以外全为0，主对角线上的每个元素都称为奇异值，V是一个$n \times n$的矩阵。U和V都是酉矩阵，即满足$U^{T} U=I, V^{T} V=I$UTU=I,VTV=I。下图可以很形象的看出上面SVD的定义：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/20.png" alt="图片"></p>
+<p>那么我们如何求出SVD分解后的$U, \Sigma, V$这三个矩阵呢？</p>
+<p>如果我们将A的转置和A做矩阵乘法，那么会得到$n \times n$的一个方阵$A^{T} A$，既然$A^{T} A$是方阵，那么我们就可以进行特征分解，得到的特征值和特征向量满足下式：$\left(A^{T} A\right) v_{i}=\lambda_{i} v_{i}$。这样我们就可以得到矩阵$A^{T} A$的n个特征值和对应的n个特征向量v了。将$A^{T} A$的所有特征向量张成一个$n \times n$的矩阵V，就是我们SVD公式里面的V矩阵了。一般我们将V中的每个特征向量叫做A的右奇异向量。如果我们将A和A的转置做矩阵乘法，那么会得到$m \times m$的一个方阵$AA^{T}$是方阵，那么我们就可以进行特征分解，得到的特征值和特征向量满足下式：$\left(A A^{T}\right) u_{i}=\lambda_{i} u_{i}$。这样我们就可以得到矩阵$AA^{T}$的m个特征值和对应的m个特征向量u了。将$AA^{T}$的所有特征向量张成一个$m \times m$的矩阵U，就是我们SVD公式里面的U矩阵了。一般我们将U中的每个特征向量叫做A的左奇异向量。</p>
+<p>U和V我们都求出来了，现在就剩下奇异值矩阵$\Sigma$没有求出了。由于$\Sigma$除了对角线上是奇异值其他位置都是0，那我们只需要求出每个奇异值$\sigma$就可以了。我们注意到：$A=U \Sigma V^{T} \Rightarrow A V=U \Sigma V^{T} V \Rightarrow A V=U \Sigma \Rightarrow A v_{i}=\sigma_{i} u_{i} \Rightarrow \sigma_{i}=A v_{i} / u_{i}$。</p>
+<p>这样我们可以求出我们的每个奇异值，进而求出奇异值矩阵$\Sigma$。</p>
+<p>【注】：我们说$A^{T} A$的特征向量组成的就是我们SVD中的V矩阵，而$AA^{T}$的特征向量组成的就是我们SVD中的U矩阵，这有什么根据吗？这个其实很容易证明，我们以V矩阵的证明为例：$A=U \Sigma V^{T} \Rightarrow A^{T}=V \Sigma^{T} U^{T} \Rightarrow A^{T} A=V \Sigma^{T} U^{T} U \Sigma V^{T}=V \Sigma^{2} V^{T}$。上式证明使用了$U^{T} U=I, \Sigma^{T} \Sigma=\Sigma^{2}$，可以看出$A^{T} A$的特征向量组成的的确就是我们SVD中的V矩阵。类似的方法可以得到$AA^{T}$的特征向量组成的就是我们SVD中的U矩阵。</p>
+<p>进一步我们还可以看出我们的特征值矩阵等于奇异值矩阵的平方，也就是说特征值和奇异值满足如下关系：$\sigma_{i}=\sqrt{\lambda_{i}}$。这样也就是说，我们可以不用$\sigma_{i}=A v_{i} / u_{i}$来计算奇异值，也可以通过求出$A^{T} A$的特征值取平方根来求奇异值。</p>
+<h4 id="SVD实例"><a href="#SVD实例" class="headerlink" title="SVD实例"></a>SVD实例</h4><p>我们的矩阵A定义为：</p>
+<p>$\mathbf{A}=\left(\begin{array}{ll}0 &amp; 1 \\1 &amp; 1 \\1 &amp; 0\end{array}\right)$</p>
+<p>我们首先求出$A^{T} A$和$A A^{T}$：</p>
+<p>$\mathbf{A}^{\mathbf{T}} \mathbf{A}=\left(\begin{array}{lll}0 &amp; 1 &amp; 1 \\1 &amp; 1 &amp; 0\end{array}\right)\left(\begin{array}{ll}0 &amp; 1 \\1 &amp; 1 \\1 &amp; 0\end{array}\right)=\left(\begin{array}{ll}2 &amp; 1 \\1 &amp; 2\end{array}\right)$</p>
+<p>$\mathbf{A} \mathbf{A}^{\mathbf{T}}=\left(\begin{array}{ll}0 &amp; 1 \\1 &amp; 1 \\1 &amp; 0\end{array}\right)\left(\begin{array}{lll}0 &amp; 1 &amp; 1 \\1 &amp; 1 &amp; 0\end{array}\right)=\left(\begin{array}{lll}1 &amp; 1 &amp; 0 \\1 &amp; 2 &amp; 1 \\0 &amp; 1 &amp; 1\end{array}\right)$</p>
+<p>进而求出$A^TA$的特征值和特征向量：$\lambda_{1}=3 ; v_{1}=\left(\begin{array}{c}1 / \sqrt{2} \\1/ \sqrt{2}\end{array}\right) ; \lambda_{2}=1 ; v_{2}=\left(\begin{array}{c}-1 / \sqrt{2}\\1 / \sqrt{2}\end{array}\right)$</p>
+<p>接着求$AA^T$的特征值和特征向量：$\lambda_{1}=3 ; u_{1}=\left(\begin{array}{c}1 / \sqrt{6} \\2 /\sqrt{6} \\1 / \sqrt{6}\end{array}\right) ; \lambda_{2}=1 ; u_{2}=\left(\begin{array}{c}1 /\sqrt{2} \\0 \-1 / \sqrt{2}\end{array}\right) ; \lambda_{3}=0 ; u_{3}=\left(\begin{array}{c}1 / \sqrt{3} \-1 / \sqrt{3} \\1 / \sqrt{3}\end{array}\right)$</p>
+<p>利用$A v_{i}=\sigma_{i} u_{i}, i=1,2$求奇异值：</p>
+<p>$\left(\begin{array}{ll}0 &amp; 1 \\1 &amp; 1 \\1 &amp; 0\end{array}\right)\left(\begin{array}{l}1 /\sqrt{2}\\1 / \sqrt{2}\end{array}\right)=\sigma_{1}\left(\begin{array}{l}1 / \sqrt{6} \\2 /\sqrt{6} \\1 / \sqrt{6}\end{array}\right) \Rightarrow \sigma_{1}=\sqrt{3}$</p>
+<p>$\left(\begin{array}{ll}0 &amp; 1 \\1 &amp; 1 \\1 &amp; 0\end{array}\right)\left(\begin{array}{c}-1 /\sqrt{2} \\1 / \sqrt{2}\end{array}\right)=\sigma_{2}\left(\begin{array}{c}1 / \sqrt{2} \\0\-1 / \sqrt{2}\end{array}\right) \Rightarrow \sigma_{2}=1$</p>
+<p>当然，我们也可以用$\sigma_{i}=\sqrt{\lambda_{i}}$直接求出奇异值为$\sqrt{3}$和1。最终得到A的奇异值分解为：</p>
+<p>$A=U \Sigma V^{T}=\left(\begin{array}{ccc}1 / \sqrt{6} &amp; 1 / \sqrt{2} &amp; 1 / \sqrt{3} \\2 /\sqrt{6} &amp; 0 &amp; -1 / \sqrt{3} \\1 / \sqrt{6} &amp; -1 / \sqrt{2} &amp; 1 /\sqrt{3}\end{array}\right)\left(\begin{array}{cc}\sqrt{3} &amp; 0 \\0 &amp; 1 \\0 &amp; 0\end{array}\right)\left(\begin{array}{cc}1 / \sqrt{2} &amp; 1 / \sqrt{2} \-1 / \sqrt{2} &amp; 1 /\sqrt{2}\end{array}\right)$</p>
+<h4 id="SVD性质"><a href="#SVD性质" class="headerlink" title="SVD性质"></a>SVD性质</h4><p>对于奇异值,它跟我们特征分解中的特征值类似，在奇异值矩阵中也是按照从大到小排列，而且奇异值的减少特别的快，在很多情况下，前10%甚至1%的奇异值的和就占了全部的奇异值之和的99%以上的比例。也就是说，我们也可以用最大的k个的奇异值和对应的左右奇异向量来近似描述矩阵。也就是说：$A_{m \times n}=U_{m \times m} \Sigma_{m \times n} V_{n \times n}^{T} \approx U_{m \times k} \Sigma_{k \times k} V_{k \times n}^{T}$</p>
+<p>其中k要比n小很多，也就是一个大的矩阵A可以用三个小的矩阵$U_{m \times k}, \Sigma_{k \times k}, V_{k \times n}^{T}$来表示。如下图所示，现在我们的矩阵A只需要灰色的部分的三个小矩阵就可以近似描述了：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/21.png" alt="图片"></p>
+<p>由于这个重要的性质，SVD可以用于PCA降维，来做数据压缩和去噪。也可以用于推荐算法，将用户和喜好对应的矩阵做特征分解，进而得到隐含的用户需求来做推荐。同时也可以用于NLP中的算法，比如潜在语义索引（LSI）。</p>
+<h4 id="SVD应用"><a href="#SVD应用" class="headerlink" title="SVD应用"></a>SVD应用</h4><p><strong>SVD用于PCA</strong></p>
+<p>用PCA降维，需要找到样本协方差矩阵$X^TX$的最大的d个特征向量，然后用这最大的d个特征向量张成的矩阵来做低维投影降维。可以看出，在这个过程中需要先求出协方差矩阵$X^TX$，当样本数多样本特征数也多的时候，这个计算量是很大的。</p>
+<p>注意到我们的SVD也可以得到协方差矩阵$X^TX$最大的d个特征向量张成的矩阵，但是SVD有个好处，有一些SVD的实现算法可以不求先求出协方差矩阵$X^TX$，也能求出我们的右奇异矩阵V。也就是说，我们的PCA算法可以不用做特征分解，而是做SVD来完成。这个方法在样本量很大的时候很有效。实际上，scikit-learn的PCA算法的背后真正的实现就是用的SVD，而不是我们我们认为的暴力特征分解。</p>
+<p>另一方面，注意到PCA仅仅使用了我们SVD的右奇异矩阵，没有使用左奇异矩阵，那么左奇异矩阵有什么用呢？假设我们的样本是$m \times n$的矩阵X，如果我们通过SVD找到了矩阵$X X^{T}$最大的d个特征向量张成的$m \times d$维矩阵U，则我们如果进行如下处理：$X_{d \times n}^{\prime}=U_{d \times m}^{T} X_{m \times n}$。</p>
+<p>可以得到一个$d \times n$的矩阵X‘,这个矩阵和我们原来的𝑚×𝑛维样本矩阵X相比，行数从m减到了d，可见对行数进行了压缩。也就是说，左奇异矩阵可以用于行数的压缩。相对的，右奇异矩阵可以用于列数即特征维度的压缩，也就是我们的PCA降维。</p>
+<p>sklearn的PCA使用：<a href="https://www.cnblogs.com/pinard/p/6243025.html" target="_blank" rel="noopener">https://www.cnblogs.com/pinard/p/6243025.html</a></p>
+<p><strong>最小二乘法</strong></p>
+<p>参考：<a href="https://zhuanlan.zhihu.com/p/38128785" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/38128785</a></p>
+<p><strong>推荐系统</strong></p>
+<p>参考：<a href="https://blog.csdn.net/y990041769/article/details/77833622" target="_blank" rel="noopener">https://blog.csdn.net/y990041769/article/details/77833622</a>、<a href="https://www.cnblogs.com/bjwu/p/9358777.html" target="_blank" rel="noopener">https://www.cnblogs.com/bjwu/p/9358777.html</a></p>
+<p><strong>图像压缩</strong></p>
+<p>参考：<a href="http://blog.chinaunix.net/uid-20761674-id-4040274.html" target="_blank" rel="noopener">http://blog.chinaunix.net/uid-20761674-id-4040274.html</a></p>
+<p><strong>减噪</strong></p>
+<p>参考：<a href="http://blog.chinaunix.net/uid-20761674-id-4040274.html" target="_blank" rel="noopener">http://blog.chinaunix.net/uid-20761674-id-4040274.html</a></p>
+<p><strong>数据分析</strong></p>
+<p>参考：<a href="http://blog.chinaunix.net/uid-20761674-id-4040274.html" target="_blank" rel="noopener">http://blog.chinaunix.net/uid-20761674-id-4040274.html</a></p>
+<h3 id="白化"><a href="#白化" class="headerlink" title="白化"></a>白化</h3><p>计算观测数据x的$n\times n$的对称阵$x\cdot x^T$的特征值和特征向量，用特征值形成对角阵D，特征向量形成正交阵，则$x\cdot x^T=U^TDU$，令$\tilde{x}=U^{T} D^{-0.5} U \cdot x$，这个过程就叫做白化，也就是去掉了信号的相关性，便于后续模型更好得学习。</p>
+<p>白化具有一个性质：</p>
+<p>$\begin{array}{l}\tilde{x} \cdot \tilde{x}^{T}=\left(U^{T} D^{-0.5} U \cdot x\right)\left(U^{T} D^{-0.5} U \cdot x\right)^{T} \\=\left(U^{T} D^{-0.5} U \cdot x\right)\left(x^{T} U^{T} D^{-0.5} U\right) \\=U^{T} D^{-0.5} U \cdot\left(x x^{T}\right) \cdot U^{T} D^{-0.5} U \\=U^{T} D^{-0.5} U \cdot U^{T} D U \cdot U^{T} D^{-0.5} U=I\end{array}$</p>
+<p>相当于白化后的矩阵的行向量和列向量是正交的。</p>
+<h1 id="微积分"><a href="#微积分" class="headerlink" title="微积分"></a>微积分</h1><h2 id="导数"><a href="#导数" class="headerlink" title="导数"></a>导数</h2><p>导数的两种定义：</p>
+<p>$f^{\prime}\left(x_{0}\right)=\lim _{\Delta x \rightarrow 0} \frac{f\left(x_{0}+\Delta x\right)-f\left(x_{0}\right)}{\Delta x}$</p>
+<p>$f^{\prime}\left(x_{0}\right)=\lim _{x \rightarrow x_{0}} \frac{f(x)-f\left(x_{0}\right)}{x-x_{0}}$</p>
+<p>其物理意义是函数在点上切线的斜率</p>
+<h3 id="利用极限求导"><a href="#利用极限求导" class="headerlink" title="利用极限求导"></a>利用极限求导</h3><ul>
+<li>$y=x^2$</li>
+</ul>
+<p>$\begin{aligned}f^{\prime}(x) &amp;=\lim _{\Delta x \rightarrow 0} \frac{f(x+\Delta x)-f(x)}{\Delta x}=\lim _{\Delta x \rightarrow 0} \frac{\left(x_{\star}+\Delta x\right)^{2}-x^{2}}{\Delta x} \\&amp;=\lim _{\Delta x \rightarrow 0} \frac{x^{2}+2 x \cdot \Delta x+(\Delta x)^{2}-x^{2}}{\Delta x}=\lim _{\Delta x \rightarrow 0}(2 x+\Delta x)=2 x\end{aligned}$</p>
+<ul>
+<li>$\lim _{x \rightarrow 0} \frac{\sin (x)}{x}=1$</li>
+</ul>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/22.png" alt="图片"></p>
+<p>假设圆形为单位圆，半径为1，三角形ACD的面积=0.5<em>AC</em>BD=0.5<em>1</em>sin(x)=0.5sin(x)</p>
+<p>圆弧CD与AC,AD围成的扇面ACD的面积=pi*(x/2pi)=0.5</p>
+<p>三角形ACE的面积=0.5<em>AC</em>CE=0.5<em>1</em>tanh(x)=0.5tanh(x)</p>
+<p>$\begin{array}{l}-p i / 2<x<p i / 2 \\0.5 \sin (x)<=0.5 x<=0.5 \tan (x) \\\sin (x)<x<=\tan (x) \\\sin (x)<x<=\sin (x) / \cos (x) \\1 / \sin (x)>=1 / x&gt;=\cos (x) / \sin (x) \\\sin (x) /\sin (x)&gt;=\sin (x) / x&gt;=\cos (x) \\1&gt;=\sin (x) / x&gt;=\cos (x)\end{array}$</p>
+<p>当x-&gt;0，cos(x)-&gt;1</p>
+<p>当x-&gt;0, 1 &gt;= sin(x)/x &gt;= 1</p>
+<p>根据夹逼定理，当x-&gt;0，sin(x)/x=1</p>
+<ul>
+<li>$\lim _{x \rightarrow 0} \frac{1-\cos (x)}{x}=0$</li>
+</ul>
+<p>$\frac{1-\cos (x)}{x}=\frac{1-\cos (x)}{x} \frac{1+\cos (x)}{1+\cos (x)}=\frac{1-\cos (x)^{2}}{x(1+\cos (x)}$</p>
+<p>$\lim _{x \rightarrow 0} \frac{1-\cos (x)^{2}}{x(1+\cos (x))}=\lim _{x \rightarrow 0} \frac{\sin (x)^{2}}{x(1+\cos (x))}=\lim _{x \rightarrow 0} \frac{\sin (x) \sin (x)}{x(1+\cos (x))}$</p>
+<p>$=\lim _{x \rightarrow 0} \frac{\sin (x)}{x} \frac{\sin (x)}{1+\cos (x)}=\lim _{x \rightarrow 0} 1 \frac{\sin (x)}{1+\cos (x)}=1 * 0=0$</p>
+<ul>
+<li>y=sinx</li>
+</ul>
+<p>已知$\lim _{x \rightarrow 0} \frac{\sin (x)}{x}=1$，$\lim _{x \rightarrow 0} \frac{1-\cos (x)}{x}=0$</p>
+<p>$f^{\prime}(x)=\lim _{\Delta x \rightarrow 0} \frac{f(x+\Delta x)-f(x)}{\Delta x}=\lim _{\Delta x \rightarrow 0} \frac{\sin (x+\Delta x)-\sin (x)}{\Delta x}=\lim _{\Delta x \rightarrow 0} \frac{\sin x \cos \Delta x+\cos x \sin \Delta x-\sin x}{\Delta x}_{k}$</p>
+<p>$=\sin x \cdot \lim _{\Delta x \rightarrow 0} \frac{\cos \Delta x-1}{\Delta x}+\lim _{\Delta x \rightarrow 0} \frac{\cos x \sin \Delta x}{\Delta x}=\lim _{\Delta x \rightarrow 0} \frac{\cos x \sin \Delta x}{\Delta x}=\cos x$</p>
+<h3 id="左右导数"><a href="#左右导数" class="headerlink" title="左右导数"></a>左右导数</h3><p>左导数：$f_{-}^{\prime}\left(x_{0}\right)=\lim _{\Delta x \rightarrow 0^{-}} \frac{f\left(x_{0}+\Delta x\right)-f\left(x_{0}\right)}{\Delta x}=\lim _{x \rightarrow x_{0}^{-}} \frac{f(x)-f\left(x_{0}\right)}{x-x_{0}},\left(x=x_{0}+\Delta x\right)$</p>
+<p>右导数：$f^{\prime}{ }_{+}\left(x_{0}\right)=\lim _{\Delta x \rightarrow 0^{+}} \frac{f\left(x_{0}+\Delta x\right)-f\left(x_{0}\right)}{\Delta x}=\lim _{x \rightarrow x_{0}^{+}} \frac{f(x)-f\left(x_{0}\right)}{x-x_{0}}$</p>
+<p>右导数存在，左导数不存在的函数例子：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/23.png" alt="图片"></p>
+<h3 id="函数的可导与连续之间的关系"><a href="#函数的可导与连续之间的关系" class="headerlink" title="函数的可导与连续之间的关系"></a>函数的可导与连续之间的关系</h3><p>可导必连续，连续未必可导，可导时左右导数相等。</p>
+<h3 id="四则运算法则"><a href="#四则运算法则" class="headerlink" title="四则运算法则"></a>四则运算法则</h3><ul>
+<li>$y^{\prime}=(c \cdot x)^{\prime}=c \cdot x^{\prime}$，c为任意常数</li>
+<li>$y^{\prime}=[a u(x)+b v(x)]^{\prime}=a u^{\prime}(x)+b v^{\prime}(x)$，a和b是任意常数</li>
+<li>$y^{\prime}=[u(x) v(x)]^{\prime}=u^{\prime}(x) v(x)+u(x) v^{\prime}(x)$</li>
+<li>$y^{\prime}=\left[\frac{u(x)}{v(x)}\right]^{\prime}=\frac{u^{\prime}(x) v(x)-u(x) v^{\prime}(x)}{v^{2}(x)}$，$v(x)\neq 0$</li>
+</ul>
+<h3 id="基本导数与微分表"><a href="#基本导数与微分表" class="headerlink" title="基本导数与微分表"></a>基本导数与微分表</h3><ul>
+<li>若$f(x)=c$，则$f’(x)=0$</li>
+<li>若$f(x)=x^a$，则$f’(x)=ax^{a-1}$</li>
+<li>若$f(x)=sin(x)$，则$f’(x)=cos(x)$</li>
+<li>若$f(x)=cos(x)$，则$f’(x)=-sin(x)$</li>
+<li>若$f(x)=a^x$，则$f’(x)=a^xln(a)$</li>
+<li>若$f(x)=e^x$，则$f’(x)=e^x$</li>
+<li>若$f(x)=log_a(x)$，则$f’(x)=\frac{1}{xln(a)}$</li>
+<li>若$f(x)=ln(x)$，则$f’(x)=\frac{1}{x}$</li>
+<li>若$f(x)=\sqrt{x}$，则$f’(x)=\frac{1}{2\sqrt{x}}$</li>
+<li>若$f(x)=\frac{1}{x}$，则$f’(x)=-\frac{1}{x^2}$</li>
+</ul>
+<h3 id="反函数运算法则"><a href="#反函数运算法则" class="headerlink" title="反函数运算法则"></a>反函数运算法则</h3><p>设$y=f(x)$在点x的某临域内单调连续，在点x处可导且$f’(x)\neq 0$，则其反函数在点x所对应的y处可导，且有$\frac{dy}{dx}=\frac{1}{\frac{dx}{dy}}$</p>
+<h3 id="复合函数运算法则"><a href="#复合函数运算法则" class="headerlink" title="复合函数运算法则"></a>复合函数运算法则</h3><p>若$\mu=m(x)$在点x可导，而$y=f(\mu)$对应点$\mu$可导，则$y=f(m(x))$在点x可导且$y’=f’(\mu)\cdot m’(x)$</p>
+<h3 id="常用高阶导数公式"><a href="#常用高阶导数公式" class="headerlink" title="常用高阶导数公式"></a>常用高阶导数公式</h3><ul>
+<li>$\left(a^{x}\right)^{n}=a^{x} \ln ^{n} a \quad(a&gt;0)$</li>
+<li>$\left(e^{x}\right)^{(n)}=e^{x}$</li>
+<li>$(\sin k x)^{(n)}=k^{n} \sin \left(k x+n \cdot \frac{\pi}{2}\right)$</li>
+<li>$(\cos k x)^{(n)}=k^{n} \cos \left(k x+n \cdot \frac{\pi}{2}\right)$</li>
+<li>$\left(x^{m}\right)^{(n)}=m(m-1) \cdots(m-n+1) x^{m-n}$</li>
+<li>$(\ln x)^{(n)}=(-1)^{(n-1)} \frac{(n-1) !}{x^{n}}$</li>
+<li>莱布尼兹公式：若$u(x)$， $v(x)$均n阶可导，则$(u v)^{(n)}=\sum_{i=0}^{n} c_{n}^{i} u^{(i)} v^{(n-i)}$，其中$u^{(0)}=u, v^{(0)}=v$</li>
+</ul>
+<h2 id="平面曲线的切线和法线"><a href="#平面曲线的切线和法线" class="headerlink" title="平面曲线的切线和法线"></a>平面曲线的切线和法线</h2><p>切线方程：$y-y_{0}=f^{\prime}\left(x_{0}\right)\left(x-x_{0}\right)$</p>
+<p>法线方程：$y-y_{0}=-\frac{1}{f^{\prime}\left(x_{0}\right)}\left(x-x_{0}\right), f^{\prime}\left(x_{0}\right) \neq 0$</p>
+<h2 id="微分中值定理"><a href="#微分中值定理" class="headerlink" title="微分中值定理"></a>微分中值定理</h2><h3 id="费马定理"><a href="#费马定理" class="headerlink" title="费马定理"></a>费马定理</h3><p>若函数$f(x)$满足条件：</p>
+<ul>
+<li>函数$f(x)$在$x_0$的某邻域内有定义，并且在次邻域内恒有$f(x)\le f(x_0)$或$f(x).ge f(x_0)$</li>
+<li>$f(x)$在$x_0$处可导</li>
+</ul>
+<p>则有$f’(x_0)=0$</p>
+<h3 id="罗尔定理"><a href="#罗尔定理" class="headerlink" title="罗尔定理"></a>罗尔定理</h3><p>设函数$f(x)$满足条件：</p>
+<ul>
+<li>在闭区间$[a,b]$上连续</li>
+<li>在$(a,b)$内可导</li>
+<li>$f(a)=f(b)$</li>
+</ul>
+<p>则在$(a,b)$内存在一个$c$，使$f’(c)=0$</p>
+<h3 id="拉格朗日中值定理"><a href="#拉格朗日中值定理" class="headerlink" title="拉格朗日中值定理"></a>拉格朗日中值定理</h3><p>设函数$f(x)$满足条件：</p>
+<ul>
+<li>在$[a,b]$上连续</li>
+<li>在$(a,b)$内可导</li>
+</ul>
+<p>则在$(a,b)$内一定存在一个c，使得$\frac{f(b)-f(a)}{b-a}=f’(c)$</p>
+<h3 id="柯西中值定理"><a href="#柯西中值定理" class="headerlink" title="柯西中值定理"></a>柯西中值定理</h3><p>设函数$f(x)$, $g(x)$满足条件：</p>
+<ul>
+<li>在$[a,b]$上连续</li>
+<li>在$(a,b)$内可导且$f’(x)$, $g’(x)$均存在，且$g’(x)\neq 0$</li>
+</ul>
+<p>则在$(a,b)$内存在一个c，使$\frac{f(b)-f(a)}{g(b)-g(a)}=\frac{f’(c)}{g’(c)}$</p>
+<h3 id="洛必达法则"><a href="#洛必达法则" class="headerlink" title="洛必达法则"></a>洛必达法则</h3><p>洛必达法则可以求出特定函数趋近于某数的极限值。令c属于扩展实数，两函数$f(x),g(x)$在以$x=c$为端点的开区间可微，$lim_{x-&gt;c}\frac{f’(x)}{g’(x)}$属于扩展实数。并且$g’(x)\neq 0$。如果$lim_{x-&gt;c}f(x)=lim_{x-&gt;c}g(x)=0$或$lim_{x-&gt;c}|f(x)|=lim_{x-&gt;c}|g(x)|=\infty$其中一者成立，则称欲求的极限$lim_{x-&gt;c}\frac{f(x)}{g(x)}$为未定式。此时洛必达法则表明：$lim_{x-&gt;c}\frac{f(x)}{g(x)}=lim_{x-&gt;c}\frac{f’(x)}{g’(x)}$</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/24.png" alt="图片"></p>
+<h4 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h4><p>$\begin{aligned}\lim _{x \rightarrow 0} \frac{\sin \pi x}{\pi x} &amp;=\lim _{x \rightarrow 0} \frac{\sin x}{x} \\&amp;=\lim _{x \rightarrow 0} \frac{\cos x}{1}=\frac{1}{1}=1\end{aligned}$</p>
+<p>$\begin{aligned}\lim _{x \rightarrow 0} \frac{2 \sin x-\sin 2 x}{x-\sin x} &amp;=\lim _{x\rightarrow 0} \frac{2 \cos x-2 \cos 2 x}{1-\cos x} \\&amp;=\lim _{x \rightarrow 0} \frac{-2 \sin x+4 \sin 2 x}{\sin x} \\&amp;=\lim _{x \rightarrow 0} \frac{-2 \cos x+8 \cos 2 x}{\cos x} \\&amp;=\frac{-2 \cos 0+8 \cos 0}{\cos 0} \\&amp;=6\end{aligned}$</p>
+<h2 id="泰勒公式"><a href="#泰勒公式" class="headerlink" title="泰勒公式"></a>泰勒公式</h2><p>设函数$f(x)$在点$x_0$处的某邻域内有$n+1$阶导数，则对该邻域内异于$x_0$的一点x，在$x_0$与$x$之间至少存在一个$\xi$使得：$\begin{array}{l}f(x)=f\left(x_{0}\right)+f^{\prime}\left(x_{0}\right)\left(x-x_{0}\right)+\frac{1}{2 !}f^{\prime \prime}\left(x_{0}\right)\left(x-x_{0}\right)^{2}+\cdots \+\frac{f^{(n)}\left(x_{0}\right)}{n !}\left(x-x_{0}\right)^{n}+R_{n}(x)\end{array}$，其中$R_{n}(x)=\frac{f^{(n+1)}(\xi)}{(n+1) !}\left(x-x_{0}\right)^{n+1}$称为$f(x)$在点$x_0$处的n阶泰勒余项。</p>
+<p>令$x_0=0$，则n阶泰勒公式$f(x)=f(0)+f^{\prime}(0) x+\frac{1}{2 !} f^{\prime \prime}(0)x^{2}+\cdots+\frac{f^{(n)}(0)}{n !} x^{n}+R_{n}(x)^{\cdots \ldots(1)}$，其中$R_{n}(x)=\frac{f^{(n+1)}(\xi)}{(n+1) !} x^{n+1}$，$\xi$在0</p>
+<p>与x之间，（1）式称为麦克劳林公式。</p>
+<p>泰勒公式将函数表达为更简单的形式：</p>
+<ul>
+<li>$e^{x}=1+x+\frac{1}{2 !} x^{2}+\cdots+\frac{1}{n !} x^{n}+\frac{x^{n+1}}{(n+1) !} e^{\xi}$</li>
+<li>$\sin x=x-\frac{1}{3 !} x^{3}+\cdots+\frac{x^{n}}{n !} \sin \frac{n \pi}{2}+\frac{x^{n+1}}{(n+1) !} \sin \left(\xi+\frac{n+1}{2} \pi\right)$</li>
+<li>$\cos x=1-\frac{1}{2 !} x^{2}+\cdots+\frac{x^{n}}{n !} \cos \frac{n \pi}{2}+\frac{x^{n+1}}{(n+1) !} \cos \left(\xi+\frac{n+1}{2} \pi\right)$</li>
+<li>$\ln (1+x)=x-\frac{1}{2} x^{2}+\frac{1}{3} x^{3}-\cdots+(-1)^{n-1} \frac{x^{n}}{n}+\frac{(-1)^{n} x^{n+1}}{(n+1)(1+\xi)^{n+1}}$</li>
+<li>$\begin{array}{l}\text (1+x)^{m}=1+m x+\frac{m(m-1)}{2 !} x^{2}+\cdots+\frac{m(m-1) \cdots(m-n+1)}{n !} x^{n} \+\frac{m(m-1) \cdots(m-n+1)}{(n+1) !} x^{n+1}(1+\xi)^{m-n-1}\end{array}$</li>
+</ul>
+<p>最后一项因为比较小，经常被省略。</p>
+<h2 id="函数单调性"><a href="#函数单调性" class="headerlink" title="函数单调性"></a>函数单调性</h2><h3 id="th1"><a href="#th1" class="headerlink" title="th1"></a>th1</h3><p>设函数$f(x)$在(a,b)区间内可导，如果对任意$x\in (a,b)$都有$f’(x)&gt;0$(或$f’(x)&lt;0$)，则函数$f(x)$在$(a,b)$内是单调增加的（或单调减少）。</p>
+<h3 id="th2"><a href="#th2" class="headerlink" title="th2"></a>th2</h3><p>设函数$f(x)$在$x_0$出可导，且在$x_0$处取极值，则$f’(x_0)=0$</p>
+<h3 id="th3"><a href="#th3" class="headerlink" title="th3"></a>th3</h3><p>设函数$f(x)$在$x_0$的某一邻域内可微，且$f’(x)=0$(或$f(x)$在$x_0$处连续，但$f’(x_0)$不存在)：</p>
+<ul>
+<li>若当x经过$x_0$时，$f’(x)$由”+”变”-“，则$f(x_0)$为极大值</li>
+<li>若当x经过$x_0$时，$f’(x)$由”-“变”+”，则$f(x_0)$为极小值</li>
+<li>若$f’(x)$经过$x=x_0$的两侧不变号，则$f(x_0)$不是极值</li>
+</ul>
+<h3 id="th4"><a href="#th4" class="headerlink" title="th4"></a>th4</h3><p>设$f(x)$在点$x_0$处有$f’’(x)\neq 0$，且$f’(x_0)=0$，则当$f’’(x_0)<0$时，$f(x_0)$为极大值；当$f''(x_0)>0$时，$f(x_0)$为极小值</p>
+<h2 id="渐近线"><a href="#渐近线" class="headerlink" title="渐近线"></a>渐近线</h2><h3 id="水平渐近线"><a href="#水平渐近线" class="headerlink" title="水平渐近线"></a>水平渐近线</h3><p>若$\lim _{x \rightarrow+\infty} f(x)=b$，或$\lim _{x \rightarrow-\infty} f(x)=b$，则$y=b$称为函数$y=f(x)$的水平渐近线。</p>
+<h3 id="铅值渐近线"><a href="#铅值渐近线" class="headerlink" title="铅值渐近线"></a>铅值渐近线</h3><p>若$\lim _{x \rightarrow x_{0}^{-}} f(x)=\infty$，或$\lim _{x \rightarrow x_{0}^{+}} f(x)=\infty$，则$x=x_0$称为$y=f(x)$的铅直渐近线。</p>
+<h3 id="斜渐近线"><a href="#斜渐近线" class="headerlink" title="斜渐近线"></a>斜渐近线</h3><p>若$a=\lim _{x \rightarrow \infty} \frac{f(x)}{x}$，$b=\lim _{x \rightarrow \infty}[f(x)-a x]$，则$y=ax+b$称为$y=f(x)$的斜渐近线。</p>
+<h2 id="函数的凹凸性"><a href="#函数的凹凸性" class="headerlink" title="函数的凹凸性"></a>函数的凹凸性</h2><h3 id="凹凸性判别定理"><a href="#凹凸性判别定理" class="headerlink" title="凹凸性判别定理"></a>凹凸性判别定理</h3><p>若在L上$f’’(x)<0$(或$f''(x)>0$)，则f(x)在L上是凸的(或凹的)。</p>
+<h3 id="拐点判别定理1"><a href="#拐点判别定理1" class="headerlink" title="拐点判别定理1"></a>拐点判别定理1</h3><p>若在$x_0$处$f’’(x)=0$(或$f’’(x)$不存在)，当x变动经过$x_0$时$f’’(x)$变号，则$(x_0, f(x_0))$为拐点。</p>
+<h3 id="拐点判别定理2"><a href="#拐点判别定理2" class="headerlink" title="拐点判别定理2"></a>拐点判别定理2</h3><p>设$f(x)$在$x_0$点的某邻域内有三阶导数且$f’’(x)=0$，$f’’’(x)\neq 0$，则$(x_0, f(x_0))$为拐点。</p>
+<h2 id="函数最优化"><a href="#函数最优化" class="headerlink" title="函数最优化"></a>函数最优化</h2><h3 id="最优化数学模型"><a href="#最优化数学模型" class="headerlink" title="最优化数学模型"></a>最优化数学模型</h3><p>最优化的基本数学模型如下：min f(x)  s.t. $h_i(x)=0, g_j(x) \le 0$</p>
+<p>它有三个基本要素，即：</p>
+<ul>
+<li>设计变量：x是一个实数域范围内的n维向量，被成为决策变量或问题的解</li>
+<li>目标函数：f(x)为目标函数</li>
+<li>约束条件：$h_i(x)=0$称为灯饰约束，$g_i(x)\le 0$为不等式约束, $i=0,1,2$</li>
+</ul>
+<h3 id="凸集"><a href="#凸集" class="headerlink" title="凸集"></a>凸集</h3><p>实数域R上(或复数C上)的向量空间中，如果集合S中任两点的连线上的点都在S内，则称集合S为凸集，如下图所示：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/25.png" alt="图片"></p>
+<p>数学定义为：设集合$D \subset R^{n}$，若对于任意两点$x, y \in D$，及实数$\lambda(0 \leq \lambda \leq 1)$都有：$\lambda x+(1-\lambda) y \in D$则称集合D为凸集。</p>
+<h3 id="超平面和半空间"><a href="#超平面和半空间" class="headerlink" title="超平面和半空间"></a>超平面和半空间</h3><p>二维空间的超平面就是一条线(可以是曲线)，三维空间的超平面就是一个面(可以是曲面)。其数学表达式如下：</p>
+<p>超平面：$H=\left\{x \in R^{n} \mid a_{1}x_1+a_{2}x_2+\ldots+a_{n}x_n=b\right\}$</p>
+<p>半空间：$H^{+}=\left\{x \in R^{n} \mid a_{1}x_1+a_{2}x_2+\ldots+a_{n}x_n \geq b\right\}$</p>
+<h3 id="凸集分离定理"><a href="#凸集分离定理" class="headerlink" title="凸集分离定理"></a>凸集分离定理</h3><p>所谓两个凸集分离，直观地看是指两个凸集合没有交叉和重合的部分，因此可以用一张超平面将两者隔在两边，如下图所示：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/26.png" alt="图片"></p>
+<h3 id="凸函数"><a href="#凸函数" class="headerlink" title="凸函数"></a>凸函数</h3><p>凸函数是一个定义在某个向量空间的凸子集C(区间)上的实值函数f，如果在其定义域C上的任意两点x, y, 以及$t\in [0,1]$有：$f(tx+(1-ty))\le tf(x)+(1-t)f(y)$。也就是说，一个函数是凸的当且进党其上境图（在函数图像上方的点集）为一个凸集。</p>
+<p>如果对于任意的$t\in (0,1)$有$f(tx+(1-t)y)&lt;tf(x)+(1-t)f(y)$，函数f是严格凸的。</p>
+<p>若对于任意的x,y,z，其中$x&lt;z&lt;y$，都有$f(z)\le max\{f(x), f(y)\}$，则称函数f是几乎凸的。</p>
+<p>如果一个函数是凸函数，则其仅有一个全局最优解，没有局部最优解。这个性质在机器学习算法优化中有很重要的应用，因为机器学习模型最后就是在求某个函数的全局最优解。一旦证明该函数（机器学习里面叫“损失函数”）是凸函数，那相当于我们一定能找到它的全局最优解了。</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/27.png" alt="图片"></p>
+<h2 id="梯度下降法"><a href="#梯度下降法" class="headerlink" title="梯度下降法"></a>梯度下降法</h2><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/28.png" alt="图片"></p>
+<p>如上图所示，当需要求f(x)的最小值时(机器学习中的f(x)一般就是损失函数，而我们的目标就是希望损失函数最小化)，我们就可以先任意取一个函数的初始点$x_0$(三维情况就是$(x_0,y_0,z_0)$)，让其沿着途中红色箭头(负梯度方向)走，一次到$x_0,x_1,\cdots,x_n$(迭代n次)这样可最快达到极小值点。</p>
+<p>梯度下降法基于以下观察：如果实值函数$F(x)$在点a处可微且有定义，那么函数$F(x)$在a点沿着梯度相反的方向$-\nabla F(\mathbf{a})$下降最快。因而，如果$\mathbf{b}=\mathbf{a}-\gamma \nabla F(\mathbf{a})$，对于$\lambda &gt; 0$为一个够小数值时成立，那么$F(a)\ge F(b)$。考虑到这一点，我们可以从函数F的局部极小值的初始估计$x_0$除法，并考虑如下序列$x_0,x_1,x_2,\cdots$使得$\mathbf{x}_{n+1}=\mathbf{x}_{n}-\gamma_{n} \nabla F\left(\mathbf{x}_{n}\right), n \geq 0$。因此可得到$F\left(\mathbf{x}_{0}\right) \geq F\left(\mathbf{x}_{1}\right) \geq F\left(\mathbf{x}_{2}\right) \geq\cdots$，如果顺利的话序列$(x_n)$收敛到期望的极值。注意每次迭代步长$\lambda$可以改变。（注意当快到极值时，$\lambda$可设置更小一些）</p>
+<h2 id="牛顿法"><a href="#牛顿法" class="headerlink" title="牛顿法"></a>牛顿法</h2><p>牛顿法也是求解无约束最优化问题常用的方法，最大的优点是收敛速度快。从本质上取看，牛顿法是二阶收敛，梯度下降是一阶收敛，所以牛顿法就更快。通俗地说，比如你想找一条最短的路径走到一个盆地的最底部，梯度下降法每次只从你当前所处位选一个坡度最大的方向走一步，牛短发在选择方向时，不仅会考虑坡度是否够大，还会考虑你走了一步之后，坡度是否会变得更大。所以，可以说牛顿法比梯度下降法看得更远一点，能更快地走到最底部。</p>
+<p>从几何上说，牛顿法就是用一个二次曲面曲拟合你当前所处位置的局部曲面，而梯度下降法是用一个平面去拟合当前的局部曲面，通常情况下，二次曲面的拟合会比平面更好，所以牛顿法选择的下降路径会更符合真实的最优下降路径。</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/mathbasic/29.png" alt="图片"></p>
+<h3 id="推导"><a href="#推导" class="headerlink" title="推导"></a>推导</h3><p>将目标函数f(x)在$x_k$处进行二阶泰勒展开，可得：$f(x)=f\left(x_{k}\right)+f^{\prime}\left(x_{k}\right)\left(x-x_{k}\right)+\frac{1}{2} f^{\prime \prime}\left(x_{k}\right)\left(x-x_{k}\right)^{2}$，因为目标函数f(x)有极值的必要条件是在极值点处一阶导数为0，即$f’(x)=0$。所以对上面的展开式两边同时求导（注意x才是变量，$x_k$是常量，即$f’(x_k), f’’(x_k)$都是常量），并令$f’(x)=0$可得：</p>
+<p>$f^{\prime}\left(x_{k}\right)+f^{\prime \prime}\left(x_{k}\right)\left(x-x_{k}\right)=0$，即$x=x_{k}-\frac{f^{\prime}\left(x_{k}\right)}{f^{\prime \prime}\left(x_{k}\right)}$。于是可以构造如下的迭代公式：$x_{k+1}=x_{k}-\frac{f^{\prime}\left(x_{k}\right)}{f^{\prime \prime}\left(x_{k}\right)}$。这样我们就可以利用该迭代公式依次产生序列$\left\{x_{1}, x_{2}, \ldots, x_{k}\right\}$才逐渐逼近f(x)的极小值点。</p>
+<h3 id="高维情况"><a href="#高维情况" class="headerlink" title="高维情况"></a>高维情况</h3><p>上面讲的x都是实数，当x是向量时，迭代公式为：</p>
+<p>$\mathbf{x}_{n+1}=\mathbf{x}_{n}-\left[H f\left(\mathbf{x}_{n}\right)\right]^{-1} \nabla f\left(\mathbf{x}_{n}\right), n \geq 0$</p>
+<p>$\nabla f=\left[\begin{array}{c}\frac{\partial f}{\partial x_{1}} \\\frac{\partial f}{\partial x_{2}} \\\vdots \\\frac{\partial f}{\partial x_{N}}\end{array}\right]$</p>
+<p>$H(f)=\left[\begin{array}{cccc}\frac{\partial^{2} f}{\partial x_{1}^{2}} &amp; \frac{\partial^{2} f}{\partial x_{1} \partial x_{2}} &amp; \cdots &amp; \frac{\partial^{2} f}{\partial x_{1} \partial x_{n}} \\\frac{\partial^{2} f}{\partial x_{2} \partial x_{1}} &amp; \frac{\partial^{2} f}{\partial x_{2}^{2}}&amp; \cdots &amp; \frac{\partial^{2} f}{\partial x_{2} \partial x_{n}} \\\vdots &amp; \vdots &amp;\ddots &amp; \vdots \\\frac{\partial^{2} f}{\partial x_{n} \partial x_{1}} &amp; \frac{\partial^{2} f}{\partial x_{n} \partial x_{2}} &amp; \cdots &amp; \frac{\partial^{2} f}{\partial x_{n}^{2}}\end{array}\right]$</p>
+<p>【注】：基本的牛顿迭代公式是用一阶导数除以二阶导数，高阶牛顿迭代公式仍然是一阶导除以二阶导（把海森矩阵的逆运算看作是除法，海森矩阵为二阶导）</p>
+<h3 id="阻尼牛顿法"><a href="#阻尼牛顿法" class="headerlink" title="阻尼牛顿法"></a>阻尼牛顿法</h3><p>牛顿法的迭代公式中没有步长因子，是定步长迭代。对于非二次型目标函数，有时候会出现$f(x_{k+1})&gt;f(x_k)$的情况，这表明，原始牛顿法不能保证函数值稳定的下降。在严重的情况下甚至会造成序列发散而导致计算失败。</p>
+<p>为消除这一弊病，人们又提出阻尼牛顿法。阻尼牛顿法每次迭代的方向仍然是$x_k$，但每次迭代会沿此方向做一维搜索，寻求最优的步长因子$\lambda_k$，即$\lambda_k=minf(x_k+\lambda d_k)$。其具体计算过程如下：</p>
+<ul>
+<li>给定初值$x_0$和精度阈值$\varepsilon$，并令$k=0$</li>
+<li>计算$x_k$和$H_k$</li>
+<li>若$\left|g_{k}\right|&lt;\varepsilon$则停止迭代；否则确定搜索方向：$d_{k}=-H_{k}^{-1} \cdot g_{k}$</li>
+<li>计算新的迭代点：$x_{k+1}=x_{k}+d_{k}$</li>
+<li>令$k=k+1$，转至2</li>
+</ul>
+<h2 id="拟牛顿法"><a href="#拟牛顿法" class="headerlink" title="拟牛顿法"></a>拟牛顿法</h2><p>由于牛顿法每一步都要求解目标函数的Hessen矩阵的逆矩阵(矩阵求逆的复杂度是$O(n^3)$)，计算量比较大(求矩阵的逆运算量比较大)，因此提出一种改进方法，即通过正定矩阵近似代替Hessen矩阵的逆矩阵，简化这一计算过程，改进后的方法称为拟牛顿法。其计算过程如下：</p>
+<ul>
+<li>先将目标函数在$x_{k+1}$处展开，得到：$f(x)=f\left(x_{k+1}\right)+f^{\prime}\left(x_{k+1}\right)\left(x-x_{k+1}\right)+\frac{1}{2} f^{\prime \prime}\left(x_{k+1}\right)\left(x-x_{k+1}\right)^{2}$</li>
+<li>两边同时取梯度，得：$f^{\prime}(x)=f^{\prime}\left(x_{k+1}\right)+f^{\prime \prime}\left(x_{k+1}\right)\left(x_{k}-x_{k+1}\right)$</li>
+<li>取上式中的$x=x_k$得：$f^{\prime}\left(x_{k}\right)=f^{\prime}\left(x_{k+1}\right)+f^{\prime \prime}\left(x_{k+1}\right)\left(x-x_{k+1}\right)$，如果用$g_k$表示$f’(x_k)$，则$g_{k+1}-g_{k}=H_{k+1} \cdot\left(x_{k+1}-x_{k}\right)$，可推导出$H_{k}^{-1} \cdot\left(g_{k+1}-g_{k}\right)=x_{k+1}-x_{k}$。这个式子就称为“拟牛顿条件”，由它来对Hessen矩阵做约束。</li>
+</ul>
+<h2 id="线性规划"><a href="#线性规划" class="headerlink" title="线性规划"></a>线性规划</h2><p>参考：<a href="https://zhuanlan.zhihu.com/p/31644892" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/31644892</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2021/02/21/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E4%B9%8B%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" data-id="cklfawrcz003iqux92r2rc6vs"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%B0%E5%AD%A6/" rel="tag">数学</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/02/21/NLP%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E6%80%BB%E7%BB%93/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">NLP注意力机制总结</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2021 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
