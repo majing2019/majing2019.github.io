@@ -5243,8 +5243,8 @@
 </ul>
 </li>
 <li><p>sparsemax的物理意义等价于将输出z投影到单纯形上，投影的方式为通过欧式距离找到距离单纯形上最近的一点，其投影点为p。由于单纯形的限制，导致这个投影点会大概率（相对于d维空间单纯形很小）落在单纯形的边界上，从而导致了稀疏化的效果。例如，在下图的例子中，当2维空间中的投影点落在单纯形的边界上时即形成了稀疏化的输出结果。</p>
-<pre><code>![name](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/2.png)
-</code></pre></li>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/sparse_seq2seq/2.png" alt="图片"></p>
+</li>
 </ul>
 <h3 id="sparsemax的求解"><a href="#sparsemax的求解" class="headerlink" title="sparsemax的求解"></a>sparsemax的求解</h3><ul>
 <li><p>Sparsemax的函数形式在真实分布未知的情况下并不能直接求解。通过拉格朗日法得到它的对偶形式：$L(z, \mu , \tau ) = \frac{1}{2}||p-z||^2-\mu^Tp+\tau (1^Tp-1)$，求解得：</p>
@@ -5416,7 +5416,7 @@
 <p>此外，BERT能够确切地对一组文本对的关系进行建模，这已经被证明是对许多成对的自然语言理解任务（如自然语言推理）是有益的。尽管BERT在多个自然语言理解任务上提升显著，但是其双向的天然特性，使其在自然语言生成任务上困难重重。</p>
 <h2 id="乱序语言模型"><a href="#乱序语言模型" class="headerlink" title="乱序语言模型"></a>乱序语言模型</h2><p>乱序语言模型是XLNet提出来的概念，它主要用于XLNet的预训练上。它要建模的是如下概率：</p>
 <p>$\begin{aligned}<br>p\left(x_{1}, x_{2}, x_{3}, \ldots, x_{n}\right) &amp;=p\left(x_{1}\right) p\left(x_{2} \mid x_{1}\right) p\left(x_{3} \mid x_{1}, x_{2}\right) \ldots p\left(x_{n} \mid x_{1}, \ldots, x_{n}\right) \\<br>&amp;=p\left(x_{3}\right) p\left(x_{1} \mid x_{3}\right) p\left(x_{2} \mid x_{1}, x_{3}\right) \ldots p\left(x_{n} \mid x_{1}, \ldots, x_{n}\right) \\<br>&amp;=\ldots \\<br>&amp;=p\left(x_{n-1}\right) p\left(x_{1} \mid x_{n-1}\right) p\left(x_{n} \mid x_{n-1}, x_{1}\right) \ldots p\left(x_{2} \mid x_{n-1}, x_{1}, \ldots, x_{3}\right)<br>\end{aligned}$</p>
-<p>如何做到的呢？假设要生成：<s> → 迎 → 京 → 你 → 欢 → 北 → <e>，则使用如下mask</p>
+<p>如何做到的呢？假设要生成：\<s\> → 迎 → 京 → 你 → 欢 → 北 → \<e\>，则使用如下mask</p>
 <p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ulm/6.png" alt="图片"></p>
 <p>如果是正向语言模型则是：</p>
 <p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/ulm/7.png" alt="图片"></p>
@@ -5495,12 +5495,12 @@
 <li>使用 bert做初始化</li>
 <li>Mask的标准：<ul>
 <li>输入数据中随机选择15%的词用于预测，这15%的词中，<ul>
-<li>80%的词向量输入时被替换为<MASK></li>
+<li>80%的词向量输入时被替换为\<MASK\></li>
 <li>10%的词的词向量在输入时被替换为其他词的词向量</li>
 <li>另外10%保持不动</li>
 </ul>
 </li>
-<li>这样一来就相当于告诉模型，我可能给你答案，也可能不给你答案，也可能给你错误的答案，有<MASK>的地方我会检查你的答案，没<MASK>的地方我也可能检查你的答案，所以<MASK>标签对你来说没有什么特殊意义，所以无论如何，你都要好好预测所有位置的输出。</li>
+<li>这样一来就相当于告诉模型，我可能给你答案，也可能不给你答案，也可能给你错误的答案，有\<MASK\>的地方我会检查你的答案，没\<MASK\>的地方我也可能检查你的答案，所以\<MASK\>标签对你来说没有什么特殊意义，所以无论如何，你都要好好预测所有位置的输出。</li>
 </ul>
 </li>
 <li>三种多任务学习，一个batch，比例按照 1：1：1<ul>
