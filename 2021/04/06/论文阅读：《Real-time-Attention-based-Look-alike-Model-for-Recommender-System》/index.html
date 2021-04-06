@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    论文阅读：《Real-time Attention based Look-alike Model for Recommender System》 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-论文阅读：《Real-time-Attention-based-Look-alike-Model-for-Recommender-System》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文阅读：《Real-time Attention based Look-alike Model for Recommender System》
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AReal-time-Attention-based-Look-alike-Model-for-Recommender-System%E3%80%8B/" class="article-date">
+  <time datetime="2021-04-06T14:51:47.000Z" itemprop="datePublished">2021-04-06</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>品牌主在互联网的广告平台精准投放广告时，可以根据平台提供的年龄、地域、性别、地域、商业兴趣标签圈定目标人群。即使广告主对自己的用户非常了解，人工设定标签的方式也不可能非常精确，所以就有了另一种更精准的做法：Look-alike相似人群扩展。</p>
+<a id="more"></a>
+<p>Look-alike中文叫相似人群扩展，利用品牌提供的种子用户数据，通过模型算法在广告平台的用户大数据库中找到和种子用户相似的用户群。 品牌的种子用户群体往往量比较小，基于种子用户进行广告投放，广告覆盖面小，达不到预期的流量，所以就借助Look-alike能够把投放覆盖的人群放大，同时保证精准定向效果。</p>
+<p>Look-alike 是广告领域经典的推荐算法，拥有定向能力强、用户扩展精准等优点。本文在微信看一看的推荐场景下对传统 look-alike 进行了改造，使之更适合高时效性的资讯推荐系统。</p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="马太效应"><a href="#马太效应" class="headerlink" title="马太效应"></a>马太效应</h2><p>现阶段，Deep Learning已经在推荐领域中广泛应用，深度模型如 Youtube DNN/DeepFM 等在传统的个性化召回/CTR排序都取得了不错的效果，但仍有一些覆盖效果不佳的场景。对于传统的推荐模型来说，item 的历史行为特征对于 CTR 的影响很大，这也造成模型推荐结果总体趋热（当然大多数场景下热文是大家都爱看的）。因此而来的副作用就是内容体系的马太效应没有得到充分缓解，一些优质的长尾内容，比如运营新闻专题、冷门类目精品等受到打压，无法得到高效的投放。</p>
+<p>要解决这个问题，我们不妨思考传统推荐模型的建模思路，大致如下：</p>
+<ol>
+<li>获取样本：user, item, label。这里以资讯推荐举例，label即是否点击（0/1）。注意，这条样本是最原始的信息，包含这一行为的所有信息量</li>
+<li>拆解特征：直接使用行为样本信息损失当然是最低的，但那意味着失去泛化性。所以我们需要引入用户画像、语义信息、统计信息作为user/item的表达</li>
+<li>训练权重：拟合样本，学习各特征权重</li>
+</ol>
+<p>由上可以看到，从1到2有一个信息损失的过程。特别是对于item的历史行为信息，并没有很完整的表示方式。传统模型里一个 point-wise 的样本用 itemid、统计信息（历史点击率/点击次数/标签点击率等等）表征 item 行为，但无论是 itemid 还是点击率/点击次数，都是倾向于头部历史行为丰富 item 的特征，这种现象就称为马太效应。</p>
+<h2 id="Look-Alike简介"><a href="#Look-Alike简介" class="headerlink" title="Look-Alike简介"></a>Look-Alike简介</h2><p>综上所述，我们需要的是一个能精准建模 item 历史行为的模型。Look-alike 是广告领域流行的一类方法，其核心思想是针对某个 item，先根据历史行为圈定一部分种子用户，然后通过模型寻找与种子用户相似的人群，为他们推荐该 item。</p>
+<p><img src="https://uploader.shimo.im/f/1t92VEiq8s7AH2zv.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<p>由于 look-alike 充分利用了 item 的所有行为信息，因此在定向挖掘长尾内容受众上具有独特的优势。然而相较于广告系统，我们的资讯推荐有如下差异：</p>
+<ul>
+<li>内容时效性要求高，一条新闻投放资讯生命周期一般不超过一天。</li>
+<li>候选集更新频率高，一天可能有几十上百万条新内容出现。</li>
+</ul>
+<p>传统的广告 look-alike 包括 similarity based models (LSH/user embedding) 和 regression based models (LR/xgboost/MLP)，在广告系统中都得到过验证，但不太适用于资讯推荐。这些模型往往都是针对每个 item 训练一个模型（或者每个 itemid 训练一个 embedding） ，当 item 候选集增加时，模型都需要首先积累样本，然后重训或增量更新，这对于高时效性高频率更新的资讯推荐系统来说是难以接受的。</p>
+<p>总结下来，我们最后需要的模型应具备如下特点：</p>
+<ul>
+<li>实时扩展用户，无需更新模型，让资讯第一时间触达受众；</li>
+<li>保证推荐的准确性和多样性；</li>
+<li>支持在线预测</li>
+</ul>
+<p>基于以上，论文提出了 RALM(Realtime Attention-based Look-alike Model) 模型，它通过 user representation learning 表达用户的兴趣状态，通过 Look-alike learning 学习种子用户群体信息以及目标用户与种子用户群的相似性，从而实现实时且高效的受众用户扩展和内容触达。</p>
+<h2 id="Look-Alike主流算法及存在问题"><a href="#Look-Alike主流算法及存在问题" class="headerlink" title="Look-Alike主流算法及存在问题"></a>Look-Alike主流算法及存在问题</h2><p>将受众拓展应用于微信文章推荐，是从文章的角度来描述推荐过程：我们怎么更好地将文章推荐给喜欢该文章的人，而不是基于传统的推荐系统从人的角度来考虑的：怎么为某个人推荐喜欢的文章。受众拓展目前的研究主要关注用户表示和look-alike算法，即用合适的数据结构(一般是向量)来描述用户的偏好特征，再基于look-alike算法找到一批相似的用户。</p>
+<h3 id="主流算法"><a href="#主流算法" class="headerlink" title="主流算法"></a>主流算法</h3><p>用户表示基于用户特征，最简单的方式是用一个特征向量来表示每个用户，一般的表示方法向量维度很大并且很稀疏(比如文章数量为N，可以用N维向量表示用户，某一维为1表示用户看过该文章，否则为0)，这类表示不是高效的，有了用户的向量表示后，就可以用向量相似的方法计算相似度了。另外一种可行的获取相似用户的方法是采用LSH或者Kmeans对用户聚类，这样同一类的用户就是相似的用户，这种方法比较粗糙，容易丢失信息。</p>
+<p>当前look-alike模型主流的算法主要有两类：基于相似性的方法和基于回归的方法：</p>
+<ul>
+<li>相似性方法，计算出用户的嵌入向量表示，基于某种距离测量方法(如consine余弦、欧氏距离、内积等)计算种子用户和目标用户之间的相似性。某个目标用户跟一组种子用户的相似性可以取该用户与种子用户相似性的平均值，通过这种方式，只有跟平均值相似的候选用户才能够被选中，而只跟种子用户集中某个或者某些种子用户很相似的候选用户将不会被选中。换句话说，部分种子用户所包含的信息将会丢失。</li>
+<li>基于回归的方法，将look-alike问题看成是回归问题。最简单的方式是对每个item(即微信文章)训练一个LR模型，种子用户看成是正样本，通过抽样部分非种子用户作为负样本。这时，与种子用户相似的用户会获得较高的得分(LR预测值)。另外，FM和MLP等方法都曾用于受众拓展问题。所有这些回归类方法本质上都是基于用户特征最大化观察到的种子用户的行为，这类方法最大的问题是需要花费较长的时间针对每个item训练离线模型，另一方面，回归列方法需要积累足够多种子用户作为模型的正样本(对于新的item就无能为力了)，同时当新用户加入时需要重新训练。当频繁有新用户加入时，回归类方法就力不从心了，因此回归类方法不太适合实时的受众拓展场景。</li>
+<li>雅虎16年提出了一个结合相似性和回归两种方法的受众拓展方案，首先，对用户进行聚类，对某篇文章，生成待推荐的用户候选集(看过该文章的用户所在聚类的并集就是候选集)。其次，基于LR或者简单的特征选择方法过滤掉不相关的用户。该方法可以解决雅虎海量数据集及大规模受众拓展的问题，虽然该算法可以做实时的look-alike，但该算法相对简称粗暴，精度不够。</li>
+</ul>
+<h3 id="存在问题及主要困难"><a href="#存在问题及主要困难" class="headerlink" title="存在问题及主要困难"></a>存在问题及主要困难</h3><p>不同于广告，将look-alike应用于微信文章推荐，需要考虑如下三个方面的问题，这3点即是微信文章推荐对受众拓展技术提出的要求。</p>
+<ul>
+<li>实时性：被推荐的文章是实时产生并加入到微信的文章推荐池中的，由于文章具备时效性，因此，希望推荐算法可以实时地将文章分发出去。对于文章的推荐，这个是一个硬性要求。</li>
+<li>有效性：受众扩展方法与主流的基于CTR预估的推荐方法不太一样，是CTR预估的补充策略，我们必须提高受众拓展预测的有效性，并尽最大努力保持预估的性能。同时，实时文章推荐对用户兴趣表示和种子特征表示的准确性和多样性提出了更高的要求。</li>
+<li>性能：对于某一篇待推荐文章，有上百万的种子用户，有成千上万的候选用户可作为受众拓展的对象。受众拓展方法必须实时地对上万计的候选用户打分，因此look-alike模型必须足够简单，能够在极短的时间计算出得分并确定最终推荐的用户。</li>
+</ul>
+<p>一般来说，实时的look-alike模型需要实时计算种子用户与目标用户的相似性，由于种子用户和目标用户表示的低效，最终的效果不尽人意。主要的困难在于：</p>
+<ul>
+<li>用户表示：为了提高用户兴趣的多样性，需要将尽可能多的用户特征用于用户表示学习，这正是深度学习算法擅长的。深度学习模型虽然可以建模多维度特征，深度学习模型具备学习特征之间的高阶交互和隐含信息的能力，通过深度学习模型我们可以获得用户的稠密嵌入表示，但对于包含强相关和弱相关的多域(multi-fields feature)特征，深度学习的拼接层效果不够理想，对于强相关特征(比如兴趣标签)容易过拟合，对于弱相关特征(比如购买特征)会欠拟合。</li>
+<li>种子表示：推荐系统中的种子用户是逐步累积的，包含大量用户，并且可能包含“噪音”用户，怎么表示种子用户是面临的一个有挑战的问题。首先，为了提升鲁棒性，每个种子用户对种子群(后面会提到RALM算法会对种子用户聚类，每一类就是一个种子群)的贡献应该不一样。另一方面，由于种子用户中包含大量用户，目标用户一般只跟种子用户中很少的用户有相似性，因此，我们需要建模局部信息获得适应性。</li>
+</ul>
+<p>总结一下，对于推荐业务，由于长尾内容包含的内容特征稀少，look-alike方法是一个很好的解决方案，它只依赖于种子用户(点击过该内容的用户)作为输入，而不在意内容本身的特征多少，问题的挑战就变为，怎么选择种子用户以及怎样通过种子用户拓展到更多的其他用户中。</p>
+<h1 id="RALM模型架构及工程实践"><a href="#RALM模型架构及工程实践" class="headerlink" title="RALM模型架构及工程实践"></a>RALM模型架构及工程实践</h1><h2 id="RALM简介"><a href="#RALM简介" class="headerlink" title="RALM简介"></a>RALM简介</h2><p>RALM是一个基于相似性的look-alike模型，包含用户表示学习和look-alike模型学习。对于用户表示学习，不是用传统的拼接层(concatenation layer)而是用基于注意融合层(attention merge layer)，这种方法对于多维度(multi-fields)特征有很好的表现。为了优化种子用户的表示学习，look-alike模型基于全局和局部注意单元分别学习种子用户的全局和局部表示。并且使用异步在线训练种子用户聚类的方法减少种子用户规模和注意单元在线预测的时间。</p>
+<p>这篇论文的主要贡献有如下3点：</p>
+<ul>
+<li>提升了用户表示学习的有效性：对于多域用户兴趣表示学习，论文设计了一种引入了注意融合层的深度兴趣网络，这种注意力融合层解决了由强相关特征和弱相关特征分别带来的过拟合和噪音问题。通过在线实验，证明了注意融合层相比拼接层能够更加有效地捕获用户各种不同的兴趣偏好。</li>
+<li>提升了种子用户表示学习的鲁棒性和适应性：利用全局注意单元来学习种子用户的全局表示，全局注意单元对单个用户的表示进行加权，并且惩罚噪音用户，这比所有用户权重一样更具有鲁棒性。利用局部注意单元来学习种子用户的局部表示，它对种子用户与目标用户的相关性进行加权。局部注意单元动态地基于目标用户来学习种子用户的表示，对于不同的目标用户，学习到的种子用户表示也不一样，这极大地提升了种子用户表示的表达能力。</li>
+<li>实现了一个实时的、高性能的look-alike模型：为了更新最近的种子用户信息，种子用户的局部和全局表示的学习过程必须做到实时。考虑到注意力单元计算的复杂性，论文利用kmeans聚类将种子用户聚为k类。这种处理方法在保证种子用户信息损失最小的情况下，极大地降低了look-alike模型计算的复杂性。同时，当种子用户的向量表示在模型学习过程中微调时，聚类结果也会随着变化。论文引入了种子用户聚类和深度学习look-alike模型迭代训练的方法。基于种子用户到目标用户的的look-alike模型，只需种子用户和目标用户的向量表示灌入预测模型，候选的文章就可以被推荐出来。</li>
+</ul>
+<h2 id="模型架构"><a href="#模型架构" class="headerlink" title="模型架构"></a>模型架构</h2><p>在微信“看一看精选”中，有好几种类型的候选文章集供受众拓展，比如最新的新闻、人工打标签的高质量文章、长尾有意思的内容等，所有这些内容都是实时产生的，并注入到推荐池中。一般同时又成千上万的候选文章集供受众拓展，对每个候选文章，推荐系统收集点击过候选集的种子用户并实时更新种子用户的聚类结果。</p>
+<p>用户向量通过用户表示学习算法离线生成，种子用户的全局和局部向量表示基于种子聚类和离线look-alike模型在线实时计算出。当用户点击精选推荐时，推荐系统的后端服务模型首先获取当前用户的向量表示，然后对每个推荐候选文章迭代计算该用户跟该候选文章的种子用户的look-alike相似性，从而计算出候选推荐文章的得分。</p>
+<p>整个推荐过程可以分为三个部分：离线训练、在线异步处理及在线服务，下面分别介绍。整个算法流程见下图：</p>
+<p><img src="https://uploader.shimo.im/f/Zrh9Hr7pTW8iwJT8.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<p>[注]: 对比YouTube DNN和word2vec</p>
+<p><img src="https://uploader.shimo.im/f/6XM9prj8wTcCMiyv.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"><img src="https://uploader.shimo.im/f/2QoppyTzNVT6oDCV.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<h3 id="离线训练"><a href="#离线训练" class="headerlink" title="离线训练"></a>离线训练</h3><p>Look-Alike的在线服务依赖用户嵌入表示和种子嵌入模型。我们分两个步骤离线训练look-alike受众拓展模型，分别是用户表示学习和look-alike学习。</p>
+<h4 id="用户表示学习"><a href="#用户表示学习" class="headerlink" title="用户表示学习"></a>用户表示学习</h4><p>用户表示学习基于深度学习模型构建，利用用户的所有特征作为模型输入，用户在微信的行为作为训练样本，包括读文章、播放视频、购物、播放音乐、订阅等等。用户表示学习模型的输出就是用户的嵌入向量表示，该表示包含了用户多域特征。</p>
+<h4 id="look-alike学习"><a href="#look-alike学习" class="headerlink" title="look-alike学习"></a>look-alike学习</h4><p>look-alike学习基于注意力模型和聚类算法，l利用上面获得的用户一致表示作为模型输入，利用受众拓展活动样本作为训练样本，获得look-alike嵌入表示，最终用于look-alike相似性预测。在这一过程中构建全局和局部种子嵌入表示的注意力模型，用于预测种子用户的嵌入表示。</p>
+<h3 id="在线异步处理"><a href="#在线异步处理" class="headerlink" title="在线异步处理"></a>在线异步处理</h3><p>在线异步处理的主要目的是实时更新种子的嵌入表示。在受众拓展模型提供服务过程中，种子用户的数量是一直累积的，应用kmeans聚类将所有种子聚为k类。异步处理的工作流分为2步：</p>
+<h4 id="用户反馈行为监控"><a href="#用户反馈行为监控" class="headerlink" title="用户反馈行为监控"></a>用户反馈行为监控</h4><p>受众拓展系统通过监控微信用户的实时点击行为来更新候选推荐文章的种子集。种子用户数量的爆发增长会影响聚类的性能，因此该算法只保留最新的3百万点击用户作为某个待推荐文章的种子用户。</p>
+<h4 id="种子聚类"><a href="#种子聚类" class="headerlink" title="种子聚类"></a>种子聚类</h4><p>虽然种子是实时更新的，当有新种子加入时，聚类过程不必每次都更新。该系统每隔五分钟运行一次种子聚类过程，将新加入的种子聚类。聚类中心的嵌入表示作为类中种子的初始表示存入数据库中，将会用于在线预测种子的嵌入表示。所有种子的嵌入表示定义为：</p>
+<p>$R_{\text {seeds }}=\left\{E_{\text {centroid }_{1}}, E_{\text {centroid }_{2}}, \cdots, E_{\text {centroid }_{k}}\right\}$其中，$E_{\text {centroid }_{k}}$是第k个聚类的嵌入表示。</p>
+<h3 id="在线服务"><a href="#在线服务" class="headerlink" title="在线服务"></a>在线服务</h3><p>首先，受众拓展系统获取当前用户的look-alike嵌入表示，其次，对每个候选推荐文章，取该文章的种子用户的聚类中心嵌入表示作为look-alike模型的输入，look-alike模型通过全局注意单元预测种子的全局嵌入表示、通过局部注意单元预测种子的局部嵌入表示。最后，在线服务模块计算look-alike模型的全局和局部相似性(即当前用户与种子用户的全局和局部相似性)得分。对于用户 u 和 种子 s ，look-alike模型的得分为：$\operatorname{score}_{u, s}=\alpha \cdot \operatorname{cosine}\left(E_{u}, E_{\text {global }_{s}}\right)+\beta \cdot \operatorname{cosine}\left(E_{u}, E_{\text {local }_{s}}\right)$这里，$E_{\text {global }_{s}}$是种子的全局嵌入表示，$E_{\text {local }_{s}}$是种子的局部嵌入表示，$\alpha$和$\beta$。</p>
+<p>是权重因子。对微信精选取0.3和0.7。Look-alike模型的得分将被用于ctr预估工作流的权重因子。由于RALM基于相似性计算，并且只通过获取高阶(high-level)的嵌入作为输入，在线look-alike服务是简单高效的。</p>
+<h2 id="算法原理介绍"><a href="#算法原理介绍" class="headerlink" title="算法原理介绍"></a>算法原理介绍</h2><h3 id="特征处理"><a href="#特征处理" class="headerlink" title="特征处理"></a>特征处理</h3><p>在 RALM 中，我们用 user 特征来表示 item，取代 item 的语义、id、统计类特征，一方面可以得到 item 完整的历史行为表达，另一方面对缺乏丰富统计特征的 item 更加友好。</p>
+<p>有很多种特征可以描述用户的兴趣，主要包括类别特征和连续特征两大类。类别特征包括单一的(如性别、地理位置等)和多样的(如用户感兴趣的关键词)特征。对于代表分类特征的值或者一组值，该特征称为特征域 。对于像年龄这些连续特征，预训练好的特征向量先标准化并缩放到0到1之间。在微信中可用特征包括性别、年龄、地理位置、兴趣标签、感兴趣的类别、APP是否登录、媒体id、账号订阅、购物兴趣偏好、搜素兴趣偏好、社交网络关系等。</p>
+<h3 id="用户表示模型"><a href="#用户表示模型" class="headerlink" title="用户表示模型"></a>用户表示模型</h3><p>用户的兴趣一般会非常复杂和广泛，用户的年龄、国别、用户读过的文章决定了用户下一篇要读的内容。因此，我们设计一个深度学习模型来学习用户多样的特征，构建用户对内容兴趣的综合表示。该模型包含抽样、模型结构、注意力融合层。</p>
+<h4 id="抽样"><a href="#抽样" class="headerlink" title="抽样"></a>抽样</h4><p>我们将用户表示学习看成一个多分类问题：从百万级待推荐文章中选择用户感兴趣的。在计算loss时，为了提升训练速度，采用负采样技术而不是传统的softmax。显然，如果我们随机挑选样本作为负样本，抽样分布将偏离真实情况。借鉴word2vec中NCE负采样的思路，为了获得无偏分布，先将候选推荐item集合按照被点击的次数降序排列，然后计算每个item的概率，该概率依赖刚于讲到的item排序，具体计算公式如下：</p>
+<p>$p\left(x_{i}\right)=\frac{\log (k+2)-\log (k+1)}{\log (D+1)}$，这里x_i是第i个item，k是第i个item 的排序，D代表所有item的最大排序。$p(x_i)$代表将item i 选为负样本的概率。由于活跃用户行为决定了最终训练损失，我们限制每个用户选择的样本个数，每个用户最多选择不超过50个正样本，并且抽样使得正负样本比例保持在 1/10。然后利用softmax函数来计算某一次选择c在用户特征为U及item i特征为$X_i$</p>
+<p>情况下选择出item i的概率$P\left(c=i \mid U, X_{i}\right)=\frac{e^{x_{i} u}}{\sum_{j \in X} e^{x_{j} u}}$，上式中u是用户的嵌入向量，$x_j$</p>
+<p>是item j的嵌入向量。整个训练过程同时利用用户的显式和隐式反馈行为，更多的训练数据可以增强推荐结果的多样性。用户在所有类型内容(文章、视频、网站等)上的行为都会用来作为训练样本，确保囊括了用户的所有兴趣点。</p>
+<h4 id="模型结构"><a href="#模型结构" class="headerlink" title="模型结构"></a>模型结构</h4><p>我们用YouTube DNN作为模型的基础骨架，该模型包含嵌入层、拼接层、MLP层。在嵌入层，将同一field(比如用户点击行为、用户购买行为、年龄、性别等都是不同的field)的所有特征嵌入到固定长度的向量中，然后输入到平均池化层中。当所有field的特征都嵌入后，将它们拼接起来形成稠密向量，再灌入MLP层。最后一层的输出就是用户的嵌入向量表示。item的嵌入是随机初始化的，在训练过程中不断更新。该模型方便整合异质多域特征。</p>
+<p>对于用户嵌入 u 和 item i 的嵌入表示x_i</p>
+<p>，我们计算$P\left(c=i \mid U, X_{i}\right)$和交叉熵损失$L=-\sum_{j \in X} y_{i} \log P\left(c=i \mid U, X_{i}\right)$。这里$y_{i} \in\{0,1\}$是label，我们利用Adam优化器来训练，求最小值。当loss收敛时，最后一层的输出就是用户的嵌入向量表示。</p>
+<h4 id="注意力融合层"><a href="#注意力融合层" class="headerlink" title="注意力融合层"></a>注意力融合层</h4><p>在基础模型中，不同特征域是拼接起来的，类似e_i=(e_{i1};e_{i2};…;e_{ik})。然而，通过观察网络参数的训练过程，我们发现优化过程总是对与用户兴趣很相关的特征(比如兴趣标签)产生过拟合，导致推荐结果由少量的强相关的field决定。弱相关的field(比如购物偏好)，总是欠拟合的，但它们对推荐也至关重要。最终导致的结果就是模型不能完全学习到多域特征，推荐结果缺乏多样性。</p>
+<p>为了解决该问题，我们在模型中用注意力融合层而不是拼接层。在基础模型中，拼接让所有用户的兴趣服从同一概率分布。这样，少量对大多数用户产生影响的强相关的field，它们的权重很大，导致出现高维稀疏权重矩阵。注意力单元可以根据用户的上下文特征学习权重的个性化分布，对不同field可以激活神经元的不同部分，在训练过程中强相关和弱相关的field都可以起作用，因此我们采用注意层来学习用户相关的多域权重。</p>
+<p>上面图右边是用户表示学习模型，n个field被嵌入到维度为m的向量$h \in \mathbb{R}^{m}$，我们将它们按照第二个维度拼接起来形成矩阵$H \in \mathbb{R}^{n \times m}$，我们按照如下公式计算权重向量：</p>
+<ul>
+<li>$u=\tanh \left(W_{1} H\right)$</li>
+<li>$a_{i}=\frac{e^{W_{2} u_{i}^{T}}}{\sum_{j}^{n} e^{W_{2} u_{j}^{T}}}$</li>
+</ul>
+<p>这里$W_{1} \in \mathbb{R}^{k \times n}$、$W_{2} \in \mathbb{R}^{k}$是权重矩阵，k 是注意单元的size。</p>
+<p>$u \in \mathbb{R}^{n}$是field 的激活单元，$a \in \mathbb{R}^{n}$是field的权重。最后，我们计算融合向量$M \in \mathbb{R}^{m}$：，这个$M=a H$值作为MLP的输入，获得了一致的用户嵌入表示。注意融合层相比拼接层，在学习多域特征上有极大的优势。</p>
+<h3 id="Look-Alike模型"><a href="#Look-Alike模型" class="headerlink" title="Look-Alike模型"></a>Look-Alike模型</h3><p>look-alike模型由两个塔构成，左边的塔称为种子塔，将n个种子用户的嵌入$R_{\text {seeds }} \in \mathbb{R}^{n \times m}$作为模型输入，这里m是用户嵌入向量的维数，后面跟着全连接层，作为第一层，它将$n \times m$输入矩阵变换为$n \times h$矩阵，这里h是变换后嵌入向量的维数。之后，一个自我注意单元(self attension unit)和一个一般注意单元(general attention unit)用于池化嵌入向量，最终生成一个h维的向量。右边的塔称为目标塔，将m维向量变换为h维向量。在这两个塔的上面，两个塔输出向量的内积被计算出来，代表种子用户和目标用户的相似性。对于推荐系统来说，相似性代表的是某个item被目标用户点击的概率。</p>
+<p><img src="https://uploader.shimo.im/f/KmxSU33DWDYHJI55.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<h4 id="变换矩阵"><a href="#变换矩阵" class="headerlink" title="变换矩阵"></a>变换矩阵</h4><p>$m \times h$的权重矩阵被用于从一致的用户嵌入空间到look-alike空间的投影。虽然用户嵌入是从用户的多种行为中学习而来，但将预训练的特征作为模型的输入可能会过拟合。为了避免过拟合，我们用双塔结构共享变换矩阵。模型输出非线性特征之前经过ReLU单元变换，变换后，种子用户被表示为n个维度为h的向量。</p>
+<h4 id="局部注意单元"><a href="#局部注意单元" class="headerlink" title="局部注意单元"></a>局部注意单元</h4><p>为了计算种子用户和目标用户的相似性，我们需要将所有种子用户池化为一个向量，平均池化是通常采用的做法。然而，平均池化获得的是所有种子向量的均值，这样公共的信息被保留了，而异常值和个性化信息被忽略了。一般来说，在上百万的种子用户中，只有很少用户的兴趣跟目标用户是匹配的。因此，我们引入局部注意单元，用于激活相对于某个目标用户的局部兴趣，同时自适应地学习种子用户相对于目标用户的个性化表示：$E_{\text {local }_{s}}=E_{s} \operatorname{softmax}\left(\tanh \left(E_{s}^{T} W_{l} E_{u}\right)\right)$</p>
+<p>这里$W_{l} \in \mathbb{R}^{h \times h}$是注意力矩阵，$E_{S}$是种子用户，$E_{u}$代表目标用户，$E_{\text {local }_{s}}$是种子用户的局部嵌入。如果某个item有百万级的种子用户，局部注意单元将会花费n*h*h次计算，这里n是百万量级，线上预测肯定会存在问题。为了减少计算的复杂度，我们将种子用户利用Kmeans聚类聚成k类，对于每一类我们计算种子向量的均值作为该类的向量表示，这样我们就获得了k个h维的向量。这时计算复杂度就从n*h*h降到k*h*h，一般k小于100。</p>
+<h4 id="全局注意单元"><a href="#全局注意单元" class="headerlink" title="全局注意单元"></a>全局注意单元</h4><p>对于种子用户的全局信息，我们加入自我注意力单元来模拟每个种子用户的全局表示：</p>
+<p>$E_{\text {global }_{s}}=E_{s} \operatorname{softmax}\left(E_{s}^{T} \tanh \left(W_{g} E_{s}\right)\right)$这里，$W_{g} \in \mathbb{R}^{s \times n}$是注意力矩阵，s是注意力的维数。$E_{\text {global }_{s}}$代表种子用户Es的全局嵌入表示。由自我注意力获得的全局信息与Es</p>
+<p>的兴趣分布相关。有了局部和全局表示E_{local}和E_{glbal}，我们就可以按照如下公式计算种子用户和目标用户的相似性了：$\operatorname{score}_{u, s}=\alpha \cdot \operatorname{cosine}\left(E_{u}, E_{\text {global }_{s}}\right)+\beta \cdot \operatorname{cosine}\left(E_{u}, E_{\text {local }_{s}}\right)$</p>
+<h4 id="迭代训练"><a href="#迭代训练" class="headerlink" title="迭代训练"></a>迭代训练</h4><p>在变换和反向传递之后，用户的嵌入表示会改变，为了保持种子聚类和用户表示两个过程的同步，每个epoch之后重新运行一次聚类。因此，我们提出了一个迭代训练过程，一轮一轮交替地训练look-alike模型和种子聚类两个算法。</p>
+<h4 id="损失函数"><a href="#损失函数" class="headerlink" title="损失函数"></a>损失函数</h4><p>我们利用sigmoid交叉熵损失做为损失函数：$L=-\frac{1}{N} \sum_{x, y \in D}(y \log p(x)+(1-y) \log (1-p(x)))$</p>
+<p>这里D代表训练集大小，x代表用户嵌入，y是label。p(x)</p>
+<p>是通过sigmoid函数计算出的种子用户和目标用户的相似性得分。</p>
+<h3 id="冷启动曝光"><a href="#冷启动曝光" class="headerlink" title="冷启动曝光"></a>冷启动曝光</h3><p>虽然 RALM 计算相似度并不需要太多种子用户，但在 item 初次投放时（种子用户为0），我们仍需多 item 做初始曝光以获得最初的种子用户。线上我们使用语义特征与用户画像做了简单的 MLP 预估点击率作为曝光策略，当积累足够量（100以上）种子用户后即可进入 RALM 的正常预测流程。</p>
+<h3 id="模型效果"><a href="#模型效果" class="headerlink" title="模型效果"></a>模型效果</h3><h4 id="prec-K"><a href="#prec-K" class="headerlink" title="prec@K"></a>prec@K</h4><h4 id=""><a href="#" class="headerlink" title=""></a><img src="https://uploader.shimo.im/f/sFHMGCnQvr673DuO.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></h4><h4 id="attention"><a href="#attention" class="headerlink" title="attention"></a>attention</h4><p><img src="https://uploader.shimo.im/f/QxyVyGEev3w3JGkE.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<h4 id="clustering"><a href="#clustering" class="headerlink" title="clustering"></a>clustering</h4><p><img src="https://uploader.shimo.im/f/qi8WTAAJpXrGAX0c.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>这篇论文通过引入RALM算法来解决实时的受众拓展问题，这是一个两阶段的模型，包括用户表示学习和look-like学习。</p>
+<p>对于用户表示学习，论文提出了一种基于注意力融合层(attention merge layer)的新的神经网络结构取代经典的拼接层(concatenation layer)，该网络结构大大提升了多特征学习的表达能力。在look-alike模型学习中，针对每个目标用户该论文设计了一个全局注意力单元(global attension unit)和局部注意力单元(local attention unit)来学习种子用户的鲁棒性自适应特征表示。最通过引入种子用户聚类方法，不仅减少了注意力模型预测的时间复杂度还减少了种子表示的信息损失。同时，构建了一个包含训练和在线服务的推荐系统，借助异步处理和种子聚类，在线预测才可以做到实时。</p>
+<p>通过在线实验，该方法取得了比传统look-alike模型好得多的效果，特别是在推荐多样性和推荐质量上有较大提升。该模型是第一个应用于推荐系统的实时look-alike模型。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AReal-time-Attention-based-Look-alike-Model-for-Recommender-System%E3%80%8B/" data-id="ckn657uks001tjvwv66q9507p"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Recommend/" rel="tag">Recommend</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ADIET%EF%BC%9ADual-Intent-and-Entity-Transformer%E3%80%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">论文阅读：《DIET：Dual Intent and Entity Transformer》</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2021 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
