@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    论文阅读：《DIET：Dual Intent and Entity Transformer》 |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-论文阅读：《DIET：Dual-Intent-and-Entity-Transformer》" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文阅读：《DIET：Dual Intent and Entity Transformer》
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ADIET%EF%BC%9ADual-Intent-and-Entity-Transformer%E3%80%8B/" class="article-date">
+  <time datetime="2021-04-06T14:24:15.000Z" itemprop="datePublished">2021-04-06</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>最近开始要重构语音助手项目，重新看了一下rasa。这篇论文是rasa research team发的关于NLU模型的paper，内容比较浅显，论文所述的实验效果较好，不过放在中文实验中目前看上去也不是那么好。</p>
+<a id="more"></a>
+<h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>大规模预训练语言模型在GLUE和SuperGLUE等在语言理解任务上取得非常好的效果，相比其他预训练方法如分布式表示（GloVe）和纯监督方法都有显着改善。论文引入双重意图和实体 Transformer（DIET）架构，并研究不同的预训练表示在语义理解意图识别任务和实体预测任务上是否有效。</p>
+<p>DIET 在复杂的多领域NLU数据集取得state of art的效果，并在其它更简单的数据集上取得很好的性能。出乎意料的是，实验使用大型预训练模型来完成此任务并没有明显的好处，实际上DIET甚至在没有任何预训练词嵌入的情况下也可以取得state of art的结果。 论文的性能最好的模型优于微调的 BERT，训练速度快大约六倍。</p>
+<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>数据驱动对话建模的两种常见方法是端到端和模块化系统：</p>
+<ul>
+<li>模块化方法使用独立的自然语言理解（NLU）和生成（NLG）系统：对话策略接收 NLU 系统的输出，选择下一个系统操作，然后在 NLG 系统生成对应的响应。</li>
+<li>在端到端方法中，用户信息直接输入到对话策略中预测下一个系统语句。</li>
+</ul>
+<p>NLU通常指两个子任务：意图分类和实体识别。如果分别对这些子任务建模可能会导致错误传播，因此只用一个多任务结构应该有益于两个任务之间相互增强。</p>
+<p>经过预先训练的大型语言模型在具有挑战性的NLU任务上表现较好。 但是，这类模型的预训练和微调的计算成本都比较大。并且很多对话助手都会使用英语以外的其它语言，有时很难对所有语言都预训练一个大型的语言模型。</p>
+<p>论文提出 DIET（Dual Intent and Entity Transformer），这是一种用于意图分类和实体识别的新型多任务体系结构。它能够以即插即用的方式结合语言模型的预训练单词嵌入，并将它们与单词和字符级 n-gram 稀疏特征结合起来。 实验表明，即使没有预训练的嵌入，仅使用单词和字符级 n-gram 稀疏特征，DIET 仍可以在复杂 NLU 数据集上取得state of art的结果。 此外，添加预训练语言模型的单词和句子嵌入，可进一步提高所有任务的整体准确性。 我们性能最好的模型明显优于fine-tune的 BERT，训练速度快六倍。</p>
+<h3 id="DIET体系结构"><a href="#DIET体系结构" class="headerlink" title="DIET体系结构"></a>DIET体系结构</h3><p><img src="https://uploader.shimo.im/f/4vreNp45erBScFyt.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p>输入句子被视为token序列，根据特征pipeline的不同，token可以是单词或子词。我们在每个句子的末尾添加一个特殊的分类标记 <strong>CLS</strong>。</p>
+<p>每个输入token都具有我们所谓的稀疏特征和/或密集特征：</p>
+<ul>
+<li>稀疏特征是token级 one-hot 编码和字符级 n-gram ( n ≤ 5) multi-hot 编码。 字符 n-gram 包含许多冗余信息，因此为避免过拟合，我们对这些稀疏特征应用 dropout。</li>
+<li>密集特征可以是任何预先训练的词嵌入：ConveRT、BERT或 GloVe。<ul>
+<li>由于 ConveRT 还被训练为句子编码器，因此在使用 ConveRT 时，我们将 <strong>CLS</strong> 词符的初始嵌入设置为从 ConveRT 获得的输入句子的句子编码。这在单个单词嵌入信息基础上添加了完整句子的额外上下文信息。 对于开箱即用的</li>
+<li>训练 BERT 我们将其设置为 BERT [CLS] 词符对应的输出嵌入</li>
+<li>对于GloVe 将其设置为一个句子中词符嵌入的平均值。</li>
+</ul>
+</li>
+</ul>
+<p>为了对整个句子中的上下文进行编码，我们使用了两层具有相对位置attention的transformer。</p>
+<p>命名体标签序列 yentity 是通过在 transformer 输出序列 a 之上的条件随机场 (CRF) 标记层预测：$L_{\mathrm{E}}=L_{\mathrm{CRF}}\left(\boldsymbol{a}, \boldsymbol{y}_{\text {entity }}\right)$</p>
+<p>意图分类是通过Transformer 输出的 __CLS__ 词符$a_{\mathrm{CLS}}$和意图标签$y_{\text {intent }}$被嵌入到一个语义向量空间中后$h_{\mathrm{CLS}}=E\left(a_{\mathrm{CLS}}\right), h_{\mathrm{intent}}=E\left(y_{\text {intent }}\right)$，使用点积损失最大化与目标标签$y_{\text {intent }}^{+}$的相似性并$S_{\mathrm{I}}^{+}=h_{\mathrm{CLS}}^{T} h_{\mathrm{intent}}^{+}$最小化与负样本$y_{\text {intent }}^{-}$的相似性：$L_{\mathrm{I}}=-\left\langle S_{\mathrm{I}}^{+}-\log \left(e^{S_{\mathrm{I}}^{+}}+\sum_{\Omega_{\mathrm{I}}^{-}} e^{S_{\mathrm{I}}^{-}}\right)\right\rangle$</p>
+<p>在推理时，点积相似性用于在所有可能的意图标签上排序。</p>
+<p>Mask</p>
+<p>受Mask语言模型任务的启发，论文添加一个额外的训练目标来预测随机屏蔽的输入词符。 我们在序列中随机选择输入词符的 15％。 对于选定的词符，在70％的情况下我们将输入替换为特殊屏蔽词符 __MASK__ 对应的向量，在 10％ 情况下我们用随机词符的向量替换输入，并在其余的 20％ 情况下保留原始输入。与意图损失类似，我们计算Mask Embedding和实际词Embedding的点击损失：$L_{\mathrm{M}}=-\left\langle S_{\mathrm{M}}^{+}-\log \left(e^{S_{\mathrm{M}}^{+}}+\sum_{\Omega_{\mathrm{M}}^{-}} e^{S_{\mathrm{M}}^{-}}\right)\right\rangle$</p>
+<p>Mask Loss可以当作一个正则项，帮助模型从文本中学习更多一般特征，而不仅要从分类中获得区分性。</p>
+<p>最终的损失函数为：$L_{\text {total }}=L_{I}+L_{E}+L_{M}$</p>
+<p>在训练时，使用balanced batch策略减轻类别不平衡问题，并且在整个训练期间增加批次大小，把它也作为正则化的另一个来源。</p>
+<h3 id="实验评估"><a href="#实验评估" class="headerlink" title="实验评估"></a>实验评估</h3><h4 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h4><p>使用三个数据集进行评估：NLU-Benchmark、ATIS 和 SNIPS。 我们的实验重点是 NLU-Benchmark 数据集，因为它是这三个中最具挑战性的。 ATIS 和 SNIPS 测试集精度的最先进水平已经接近 100％。</p>
+<p>NLU-Benchmark 数据集举例：“schedule a call with Lisa on Monday morning” 标注为场景 calendar、动作 set_event、实体 [event_name:<em>a call with Lisa</em>] 和 [date:<em>Monday morning</em>]。 将场景和动作标签进行连接得到意图标签（例如 calendar_set_event）。该数据集有 25,716 个语句，涵盖多个家庭助理任务，例如播放音乐或日历查询、聊天、以及向机器人发出的命令。 我们将数据分为 10 份。 每一份都有自己的训练集和测试集。总共存在 64 个意图和 54 种实体类型。</p>
+<p>ATIS ATIS是 NLU 领域中经过充分研究的数据集。 它由预订机票的人的录音经过标注转录。 开发和测试集分别包含 4,478、500 和 893 个语句。 训练数据集包含 21 个意图和 79 个实体。</p>
+<p>SNIPS数据集是从 Snips 个人语音助手收集的。 它包含 13,784 个训练和 700 个测试样本。 训练集中分 700 个样本用作开发集。包含 7 个意图和 39 个实体。</p>
+<h4 id="NLU-Benchmark"><a href="#NLU-Benchmark" class="headerlink" title="NLU-Benchmark"></a>NLU-Benchmark</h4><p>使用 NLU-Benchmark 数据集的第一小份来选择超参数。 为此，我们从训练集中随机抽取 250 个语句作为开发集。 我们在一台具有 4 个 CPU，15 GB 内存和一台 NVIDIA Tesla K80 的计算机上训练 200 多个epoch的模型。 使用 Adam进行优化，初始学习率为 0.001。 批次大小从 64 增加到 128。 在 NLU-Benchmark 数据集的第一个小份上训练我们的模型大约需要一个小时。 在推断的时候，我们需要大约 80 毫秒来处理一条语句。</p>
+<p>NLU-Benchmark 数据集包含 10 个小份，每个小份具有单独的训练和测试集。 为了获得该模型在该数据集上的整体性能，我们分别训练 10 个模型，每个小份一次，将平均值作为最终得分。 指标采用Micro-averaged precision、召回率和 F1 得分。 意图标签的 True positives、false positives 和 false negatives 的计算方式与其它任何多类分类任务一样。 如果预测范围和正确范围之间重叠，并且其标签匹配，则该实体被视为 true positive。</p>
+<p>实验结果如下：</p>
+<p><img src="https://uploader.shimo.im/f/jEsJtJ8xCd6OjPwJ.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p>我们性能最好的模型使用稀疏特征，即词符级别的 one-hot 编码和字符 n-gram 的 multi-hot 编码（n ≤ 5）。 这些稀疏特征与 ConveRT 的密集嵌入相结合。 我们性能最好的模型没有使用Mask Loss。</p>
+<p>我们在意图方面的表现优于 HERMIT，绝对值超过 2％。 我们的实体 F1 微观平均得分（86.04％）也高于 HERMIT（84.74％）。 HERMIT 报告的实体精度值相似，但是，我们的召回率要高得多（86.13％ 相比 82.04％）。</p>
+<p><img src="https://uploader.shimo.im/f/8uzPnlZOuKnp5pqH.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p>为了评估意图分类和命名实体识别这两个任务是否受益于联合优化，我们针对每个任务分别训练了模型（如上图）。 结果表明，与实体识别一起训练时，意图分类的性能略有下降（90.90％ vs 90.18％）。</p>
+<p>但是，当单独训练实体时，实体的 micro-averaged F1 分数从 86.04 ％下降到 82.57％。 检查 NLU-Benchmark 数据集，这可能是由于特定意图与特定实体的存在之间的强相关性。 例如，几乎所有属于 play_game 意图的语句都有一个名为game_name 的实体。 同样，实体 game_name 仅与意图 play_game 一起出现。</p>
+<p>NLU-Benchmark上的消融实验结果如下图：</p>
+<p><img src="https://uploader.shimo.im/f/0C3Z0rK45nuADrly.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p>观察上表，我们发现：</p>
+<ul>
+<li>当使用稀疏特征和Mask Loss时，没有任何预训练的嵌入，DIET 的性能具有竞争力。 在目标和实体上增加Mask Loss都会使性能提高绝对值约 1％。</li>
+<li>具有 GloVe 嵌入的 DIET 也具有同等的竞争力，并且在与稀疏特征和Mask Loss结合使用时，在意图和实体上都将得到进一步增强。</li>
+<li>有趣的是，使用上下文 BERT 嵌入作为密集特征的效果要比 GloVe 差。 我们假设这是因为 BERT 主要是在各种文本上预训练的，因此在转移到对话任务之前需要微调。 由于 ConveRT 专门针对会话数据进行微调，因此使用 ConveRT 嵌入的 DIET 的性能对此支持了这种说法。 稀疏特征 和 ConveRT 嵌入的结合在意图分类上获得了最佳的 F1 得分，并且在意图分类和实体识别方面都比现有最好结果高出 3％ 左右。 与 BERT 和 ConveRT 一起用作密集特征时，增加屏蔽损失似乎会稍微影响性能。</li>
+</ul>
+<h4 id="ATIS-和-SNIPS"><a href="#ATIS-和-SNIPS" class="headerlink" title="ATIS 和 SNIPS"></a>ATIS 和 SNIPS</h4><p>为了解 DIET 超参数的可移植性，我们采用在 NLU-Benchmark 数据集上性能最佳的 DIET 模型配置，并在 ATIS 和 SNIPS 上对其进行评估。 下表中列出 ATIS 和 SNIPS 数据集上的意图分类准确性和命名实体识别 F1 得分。* 表示使用 BILOU 标记模式对数据进行标注。†表示未使用Mask Loss。</p>
+<p><img src="https://uploader.shimo.im/f/G1e5EaUCilBLEy0Q.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p>值得注意的是，DIET 仅使用稀疏特征而没有任何预训练的嵌入，即使这样其性能仅比 Joint BERT 模型低 1-2％之内。 利用 NLU-Benchmark 数据集上性能最佳模型的超参数，DIET 在 ATIS 和 SNIPS 上均获得与 Joint BERT 竞争的结果。</p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>我们引入 DIET，一种用于意图和实体建模的灵活结构。 我们研究其在多个数据集上的性能，并表明 DIET 在具有挑战性的 NLU-Benchmark 数据集上提高了最先进水平。</p>
+<p>此外，我们广泛研究使用来自各种预训练方法嵌入的有效性。 我们发现没有单一的嵌入集总是在不同的数据集上最好，这凸显了模块化结构的重要性。</p>
+<p>此外，我们表明，像 GloVe 这样的分布模型中的词嵌入与大规模语言模型中的嵌入效果相当，并且事实上，在不使用任何预训练嵌入的情况下，DIET 仍可以实现类似的性能，在 NLU-Benchmark 上表现出最先进的水平。</p>
+<p>最后，我们还表明，在 NLU-Benchmark 上用于 DIET 的最佳预训练嵌入集优于在 DIET 内对 BERT 进行微调的速度，并且训练速度快六倍。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ADIET%EF%BC%9ADual-Intent-and-Entity-Transformer%E3%80%8B/" data-id="ckn64aaut001fbcwv33dc7j8o"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NLU/" rel="tag">NLU</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/03/22/%E4%B8%8D%E6%80%95%E7%9A%84%E4%BA%BA%E5%89%8D%E9%9D%A2%E6%89%8D%E6%9C%89%E8%B7%AF/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">不怕的人前面才有路</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2021 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
