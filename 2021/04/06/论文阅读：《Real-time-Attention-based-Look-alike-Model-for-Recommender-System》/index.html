@@ -91,7 +91,7 @@
 </ol>
 <p>由上可以看到，从1到2有一个信息损失的过程。特别是对于item的历史行为信息，并没有很完整的表示方式。传统模型里一个 point-wise 的样本用 itemid、统计信息（历史点击率/点击次数/标签点击率等等）表征 item 行为，但无论是 itemid 还是点击率/点击次数，都是倾向于头部历史行为丰富 item 的特征，这种现象就称为马太效应。</p>
 <h2 id="Look-Alike简介"><a href="#Look-Alike简介" class="headerlink" title="Look-Alike简介"></a>Look-Alike简介</h2><p>综上所述，我们需要的是一个能精准建模 item 历史行为的模型。Look-alike 是广告领域流行的一类方法，其核心思想是针对某个 item，先根据历史行为圈定一部分种子用户，然后通过模型寻找与种子用户相似的人群，为他们推荐该 item。</p>
-<p><img src="https://uploader.shimo.im/f/1t92VEiq8s7AH2zv.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/real_time_attention/1.png" alt="图片"></p>
 <p>由于 look-alike 充分利用了 item 的所有行为信息，因此在定向挖掘长尾内容受众上具有独特的优势。然而相较于广告系统，我们的资讯推荐有如下差异：</p>
 <ul>
 <li>内容时效性要求高，一条新闻投放资讯生命周期一般不超过一天。</li>
@@ -135,9 +135,9 @@
 <h2 id="模型架构"><a href="#模型架构" class="headerlink" title="模型架构"></a>模型架构</h2><p>在微信“看一看精选”中，有好几种类型的候选文章集供受众拓展，比如最新的新闻、人工打标签的高质量文章、长尾有意思的内容等，所有这些内容都是实时产生的，并注入到推荐池中。一般同时又成千上万的候选文章集供受众拓展，对每个候选文章，推荐系统收集点击过候选集的种子用户并实时更新种子用户的聚类结果。</p>
 <p>用户向量通过用户表示学习算法离线生成，种子用户的全局和局部向量表示基于种子聚类和离线look-alike模型在线实时计算出。当用户点击精选推荐时，推荐系统的后端服务模型首先获取当前用户的向量表示，然后对每个推荐候选文章迭代计算该用户跟该候选文章的种子用户的look-alike相似性，从而计算出候选推荐文章的得分。</p>
 <p>整个推荐过程可以分为三个部分：离线训练、在线异步处理及在线服务，下面分别介绍。整个算法流程见下图：</p>
-<p><img src="https://uploader.shimo.im/f/Zrh9Hr7pTW8iwJT8.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/real_time_attention/2.png" alt="图片"></p>
 <p>[注]: 对比YouTube DNN和word2vec</p>
-<p><img src="https://uploader.shimo.im/f/6XM9prj8wTcCMiyv.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"><img src="https://uploader.shimo.im/f/2QoppyTzNVT6oDCV.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/real_time_attention/3.png" alt="图片"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/real_time_attention/4.png" alt="图片"></p>
 <h3 id="离线训练"><a href="#离线训练" class="headerlink" title="离线训练"></a>离线训练</h3><p>Look-Alike的在线服务依赖用户嵌入表示和种子嵌入模型。我们分两个步骤离线训练look-alike受众拓展模型，分别是用户表示学习和look-alike学习。</p>
 <h4 id="用户表示学习"><a href="#用户表示学习" class="headerlink" title="用户表示学习"></a>用户表示学习</h4><p>用户表示学习基于深度学习模型构建，利用用户的所有特征作为模型输入，用户在微信的行为作为训练样本，包括读文章、播放视频、购物、播放音乐、订阅等等。用户表示学习模型的输出就是用户的嵌入向量表示，该表示包含了用户多域特征。</p>
 <h4 id="look-alike学习"><a href="#look-alike学习" class="headerlink" title="look-alike学习"></a>look-alike学习</h4><p>look-alike学习基于注意力模型和聚类算法，l利用上面获得的用户一致表示作为模型输入，利用受众拓展活动样本作为训练样本，获得look-alike嵌入表示，最终用于look-alike相似性预测。在这一过程中构建全局和局部种子嵌入表示的注意力模型，用于预测种子用户的嵌入表示。</p>
@@ -167,7 +167,7 @@
 <p>这里$W_{1} \in \mathbb{R}^{k \times n}$、$W_{2} \in \mathbb{R}^{k}$是权重矩阵，k 是注意单元的size。</p>
 <p>$u \in \mathbb{R}^{n}$是field 的激活单元，$a \in \mathbb{R}^{n}$是field的权重。最后，我们计算融合向量$M \in \mathbb{R}^{m}$：，这个$M=a H$值作为MLP的输入，获得了一致的用户嵌入表示。注意融合层相比拼接层，在学习多域特征上有极大的优势。</p>
 <h3 id="Look-Alike模型"><a href="#Look-Alike模型" class="headerlink" title="Look-Alike模型"></a>Look-Alike模型</h3><p>look-alike模型由两个塔构成，左边的塔称为种子塔，将n个种子用户的嵌入$R_{\text {seeds }} \in \mathbb{R}^{n \times m}$作为模型输入，这里m是用户嵌入向量的维数，后面跟着全连接层，作为第一层，它将$n \times m$输入矩阵变换为$n \times h$矩阵，这里h是变换后嵌入向量的维数。之后，一个自我注意单元(self attension unit)和一个一般注意单元(general attention unit)用于池化嵌入向量，最终生成一个h维的向量。右边的塔称为目标塔，将m维向量变换为h维向量。在这两个塔的上面，两个塔输出向量的内积被计算出来，代表种子用户和目标用户的相似性。对于推荐系统来说，相似性代表的是某个item被目标用户点击的概率。</p>
-<p><img src="https://uploader.shimo.im/f/KmxSU33DWDYHJI55.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/real_time_attention/5.png" alt="图片"></p>
 <h4 id="变换矩阵"><a href="#变换矩阵" class="headerlink" title="变换矩阵"></a>变换矩阵</h4><p>$m \times h$的权重矩阵被用于从一致的用户嵌入空间到look-alike空间的投影。虽然用户嵌入是从用户的多种行为中学习而来，但将预训练的特征作为模型的输入可能会过拟合。为了避免过拟合，我们用双塔结构共享变换矩阵。模型输出非线性特征之前经过ReLU单元变换，变换后，种子用户被表示为n个维度为h的向量。</p>
 <h4 id="局部注意单元"><a href="#局部注意单元" class="headerlink" title="局部注意单元"></a>局部注意单元</h4><p>为了计算种子用户和目标用户的相似性，我们需要将所有种子用户池化为一个向量，平均池化是通常采用的做法。然而，平均池化获得的是所有种子向量的均值，这样公共的信息被保留了，而异常值和个性化信息被忽略了。一般来说，在上百万的种子用户中，只有很少用户的兴趣跟目标用户是匹配的。因此，我们引入局部注意单元，用于激活相对于某个目标用户的局部兴趣，同时自适应地学习种子用户相对于目标用户的个性化表示：$E_{\text {local }_{s}}=E_{s} \operatorname{softmax}\left(\tanh \left(E_{s}^{T} W_{l} E_{u}\right)\right)$</p>
 <p>这里$W_{l} \in \mathbb{R}^{h \times h}$是注意力矩阵，$E_{S}$是种子用户，$E_{u}$代表目标用户，$E_{\text {local }_{s}}$是种子用户的局部嵌入。如果某个item有百万级的种子用户，局部注意单元将会花费n*h*h次计算，这里n是百万量级，线上预测肯定会存在问题。为了减少计算的复杂度，我们将种子用户利用Kmeans聚类聚成k类，对于每一类我们计算种子向量的均值作为该类的向量表示，这样我们就获得了k个h维的向量。这时计算复杂度就从n*h*h降到k*h*h，一般k小于100。</p>
@@ -179,8 +179,8 @@
 <p>这里D代表训练集大小，x代表用户嵌入，y是label。p(x)</p>
 <p>是通过sigmoid函数计算出的种子用户和目标用户的相似性得分。</p>
 <h3 id="冷启动曝光"><a href="#冷启动曝光" class="headerlink" title="冷启动曝光"></a>冷启动曝光</h3><p>虽然 RALM 计算相似度并不需要太多种子用户，但在 item 初次投放时（种子用户为0），我们仍需多 item 做初始曝光以获得最初的种子用户。线上我们使用语义特征与用户画像做了简单的 MLP 预估点击率作为曝光策略，当积累足够量（100以上）种子用户后即可进入 RALM 的正常预测流程。</p>
-<h3 id="模型效果"><a href="#模型效果" class="headerlink" title="模型效果"></a>模型效果</h3><h4 id="prec-K"><a href="#prec-K" class="headerlink" title="prec@K"></a>prec@K</h4><h4 id=""><a href="#" class="headerlink" title=""></a><img src="https://uploader.shimo.im/f/sFHMGCnQvr673DuO.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></h4><h4 id="attention"><a href="#attention" class="headerlink" title="attention"></a>attention</h4><p><img src="https://uploader.shimo.im/f/QxyVyGEev3w3JGkE.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
-<h4 id="clustering"><a href="#clustering" class="headerlink" title="clustering"></a>clustering</h4><p><img src="https://uploader.shimo.im/f/qi8WTAAJpXrGAX0c.png!thumbnail?fileGuid=HXgttx9WTCrXDDTk" alt="图片"></p>
+<h3 id="模型效果"><a href="#模型效果" class="headerlink" title="模型效果"></a>模型效果</h3><h4 id="prec-K"><a href="#prec-K" class="headerlink" title="prec@K"></a>prec@K</h4><h4 id=""><a href="#" class="headerlink" title=""></a><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/real_time_attention/6.png" alt="图片"></h4><h4 id="attention"><a href="#attention" class="headerlink" title="attention"></a>attention</h4><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/real_time_attention/7.png" alt="图片"></p>
+<h4 id="clustering"><a href="#clustering" class="headerlink" title="clustering"></a>clustering</h4><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/real_time_attention/8.png" alt="图片"></p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>这篇论文通过引入RALM算法来解决实时的受众拓展问题，这是一个两阶段的模型，包括用户表示学习和look-like学习。</p>
 <p>对于用户表示学习，论文提出了一种基于注意力融合层(attention merge layer)的新的神经网络结构取代经典的拼接层(concatenation layer)，该网络结构大大提升了多特征学习的表达能力。在look-alike模型学习中，针对每个目标用户该论文设计了一个全局注意力单元(global attension unit)和局部注意力单元(local attention unit)来学习种子用户的鲁棒性自适应特征表示。最通过引入种子用户聚类方法，不仅减少了注意力模型预测的时间复杂度还减少了种子表示的信息损失。同时，构建了一个包含训练和在线服务的推荐系统，借助异步处理和种子聚类，在线预测才可以做到实时。</p>
 <p>通过在线实验，该方法取得了比传统look-alike模型好得多的效果，特别是在推荐多样性和推荐质量上有较大提升。该模型是第一个应用于推荐系统的实时look-alike模型。</p>
@@ -188,7 +188,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AReal-time-Attention-based-Look-alike-Model-for-Recommender-System%E3%80%8B/" data-id="ckn657uks001tjvwv66q9507p"
+      <a data-url="majsunflower.cn/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AReal-time-Attention-based-Look-alike-Model-for-Recommender-System%E3%80%8B/" data-id="cksbtu8kc001l844q499darg0"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Recommend/" rel="tag">Recommend</a></li></ul>

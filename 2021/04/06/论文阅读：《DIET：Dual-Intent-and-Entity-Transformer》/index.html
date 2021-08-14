@@ -90,7 +90,7 @@
 <p>NLU通常指两个子任务：意图分类和实体识别。如果分别对这些子任务建模可能会导致错误传播，因此只用一个多任务结构应该有益于两个任务之间相互增强。</p>
 <p>经过预先训练的大型语言模型在具有挑战性的NLU任务上表现较好。 但是，这类模型的预训练和微调的计算成本都比较大。并且很多对话助手都会使用英语以外的其它语言，有时很难对所有语言都预训练一个大型的语言模型。</p>
 <p>论文提出 DIET（Dual Intent and Entity Transformer），这是一种用于意图分类和实体识别的新型多任务体系结构。它能够以即插即用的方式结合语言模型的预训练单词嵌入，并将它们与单词和字符级 n-gram 稀疏特征结合起来。 实验表明，即使没有预训练的嵌入，仅使用单词和字符级 n-gram 稀疏特征，DIET 仍可以在复杂 NLU 数据集上取得state of art的结果。 此外，添加预训练语言模型的单词和句子嵌入，可进一步提高所有任务的整体准确性。 我们性能最好的模型明显优于fine-tune的 BERT，训练速度快六倍。</p>
-<h3 id="DIET体系结构"><a href="#DIET体系结构" class="headerlink" title="DIET体系结构"></a>DIET体系结构</h3><p><img src="https://uploader.shimo.im/f/4vreNp45erBScFyt.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<h3 id="DIET体系结构"><a href="#DIET体系结构" class="headerlink" title="DIET体系结构"></a>DIET体系结构</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/diet/1.png" alt="图片"></p>
 <p>输入句子被视为token序列，根据特征pipeline的不同，token可以是单词或子词。我们在每个句子的末尾添加一个特殊的分类标记 <strong>CLS</strong>。</p>
 <p>每个输入token都具有我们所谓的稀疏特征和/或密集特征：</p>
 <ul>
@@ -118,14 +118,14 @@
 <h4 id="NLU-Benchmark"><a href="#NLU-Benchmark" class="headerlink" title="NLU-Benchmark"></a>NLU-Benchmark</h4><p>使用 NLU-Benchmark 数据集的第一小份来选择超参数。 为此，我们从训练集中随机抽取 250 个语句作为开发集。 我们在一台具有 4 个 CPU，15 GB 内存和一台 NVIDIA Tesla K80 的计算机上训练 200 多个epoch的模型。 使用 Adam进行优化，初始学习率为 0.001。 批次大小从 64 增加到 128。 在 NLU-Benchmark 数据集的第一个小份上训练我们的模型大约需要一个小时。 在推断的时候，我们需要大约 80 毫秒来处理一条语句。</p>
 <p>NLU-Benchmark 数据集包含 10 个小份，每个小份具有单独的训练和测试集。 为了获得该模型在该数据集上的整体性能，我们分别训练 10 个模型，每个小份一次，将平均值作为最终得分。 指标采用Micro-averaged precision、召回率和 F1 得分。 意图标签的 True positives、false positives 和 false negatives 的计算方式与其它任何多类分类任务一样。 如果预测范围和正确范围之间重叠，并且其标签匹配，则该实体被视为 true positive。</p>
 <p>实验结果如下：</p>
-<p><img src="https://uploader.shimo.im/f/jEsJtJ8xCd6OjPwJ.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/diet/2.png" alt="图片"></p>
 <p>我们性能最好的模型使用稀疏特征，即词符级别的 one-hot 编码和字符 n-gram 的 multi-hot 编码（n ≤ 5）。 这些稀疏特征与 ConveRT 的密集嵌入相结合。 我们性能最好的模型没有使用Mask Loss。</p>
 <p>我们在意图方面的表现优于 HERMIT，绝对值超过 2％。 我们的实体 F1 微观平均得分（86.04％）也高于 HERMIT（84.74％）。 HERMIT 报告的实体精度值相似，但是，我们的召回率要高得多（86.13％ 相比 82.04％）。</p>
-<p><img src="https://uploader.shimo.im/f/8uzPnlZOuKnp5pqH.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/diet/3.png" alt="图片"></p>
 <p>为了评估意图分类和命名实体识别这两个任务是否受益于联合优化，我们针对每个任务分别训练了模型（如上图）。 结果表明，与实体识别一起训练时，意图分类的性能略有下降（90.90％ vs 90.18％）。</p>
 <p>但是，当单独训练实体时，实体的 micro-averaged F1 分数从 86.04 ％下降到 82.57％。 检查 NLU-Benchmark 数据集，这可能是由于特定意图与特定实体的存在之间的强相关性。 例如，几乎所有属于 play_game 意图的语句都有一个名为game_name 的实体。 同样，实体 game_name 仅与意图 play_game 一起出现。</p>
 <p>NLU-Benchmark上的消融实验结果如下图：</p>
-<p><img src="https://uploader.shimo.im/f/0C3Z0rK45nuADrly.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/diet/4.png" alt="图片"></p>
 <p>观察上表，我们发现：</p>
 <ul>
 <li>当使用稀疏特征和Mask Loss时，没有任何预训练的嵌入，DIET 的性能具有竞争力。 在目标和实体上增加Mask Loss都会使性能提高绝对值约 1％。</li>
@@ -133,7 +133,7 @@
 <li>有趣的是，使用上下文 BERT 嵌入作为密集特征的效果要比 GloVe 差。 我们假设这是因为 BERT 主要是在各种文本上预训练的，因此在转移到对话任务之前需要微调。 由于 ConveRT 专门针对会话数据进行微调，因此使用 ConveRT 嵌入的 DIET 的性能对此支持了这种说法。 稀疏特征 和 ConveRT 嵌入的结合在意图分类上获得了最佳的 F1 得分，并且在意图分类和实体识别方面都比现有最好结果高出 3％ 左右。 与 BERT 和 ConveRT 一起用作密集特征时，增加屏蔽损失似乎会稍微影响性能。</li>
 </ul>
 <h4 id="ATIS-和-SNIPS"><a href="#ATIS-和-SNIPS" class="headerlink" title="ATIS 和 SNIPS"></a>ATIS 和 SNIPS</h4><p>为了解 DIET 超参数的可移植性，我们采用在 NLU-Benchmark 数据集上性能最佳的 DIET 模型配置，并在 ATIS 和 SNIPS 上对其进行评估。 下表中列出 ATIS 和 SNIPS 数据集上的意图分类准确性和命名实体识别 F1 得分。* 表示使用 BILOU 标记模式对数据进行标注。†表示未使用Mask Loss。</p>
-<p><img src="https://uploader.shimo.im/f/G1e5EaUCilBLEy0Q.png!thumbnail?fileGuid=JHYPVhqWJKvHJ9xG" alt="图片"></p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/diet/5.png" alt="图片"></p>
 <p>值得注意的是，DIET 仅使用稀疏特征而没有任何预训练的嵌入，即使这样其性能仅比 Joint BERT 模型低 1-2％之内。 利用 NLU-Benchmark 数据集上性能最佳模型的超参数，DIET 在 ATIS 和 SNIPS 上均获得与 Joint BERT 竞争的结果。</p>
 <h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>我们引入 DIET，一种用于意图和实体建模的灵活结构。 我们研究其在多个数据集上的性能，并表明 DIET 在具有挑战性的 NLU-Benchmark 数据集上提高了最先进水平。</p>
 <p>此外，我们广泛研究使用来自各种预训练方法嵌入的有效性。 我们发现没有单一的嵌入集总是在不同的数据集上最好，这凸显了模块化结构的重要性。</p>
@@ -143,7 +143,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="majsunflower.cn/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ADIET%EF%BC%9ADual-Intent-and-Entity-Transformer%E3%80%8B/" data-id="ckn657ukl001njvwv5bp7bn1p"
+      <a data-url="majsunflower.cn/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8ADIET%EF%BC%9ADual-Intent-and-Entity-Transformer%E3%80%8B/" data-id="cksbtu8k8001g844q00tbf4mc"
          class="article-share-link">分享</a>
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/NLU/" rel="tag">NLU</a></li></ul>
