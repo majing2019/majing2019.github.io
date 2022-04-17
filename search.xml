@@ -48,7 +48,8 @@
 </li>
 </ul>
 <p>【注】：在吴恩达的机器学习课程中，认为SVM是在logistic regression的基础上，修改了损失函数定义得来的(具体可参考<a href="https://zhuanlan.zhihu.com/p/74764135)：![img](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/5.png" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/74764135)：![img](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/5.png</a>)</p>
-<p>也就是说，在逻辑回归中，损失函数定义为：$J(\theta)=\frac{1}{m} \Sigma_{i=1}^{m}\left[-y^{(i)} <em> \log \left(h_{\theta}\left(x^{(i)}\right)\right)-\left(1-y^{(i)}\right) </em> \log \left(1-h_{\theta}\left(x^{(i)}\right)\right)\right]+\frac{\lambda}{2 m} \Sigma_{i=1}^{n} \theta_{j}^{2}$</p>
+<p>也就是说，在逻辑回归中，损失函数定义为：</p>
+<p>$J(\theta)=\frac{1}{m} \Sigma_{i=1}^{m}\left[-y^{(i)} <em> \log \left(h_{\theta}\left(x^{(i)}\right)\right)-\left(1-y^{(i)}\right) </em> \log \left(1-h_{\theta}\left(x^{(i)}\right)\right)\right]+\frac{\lambda}{2 m} \Sigma_{i=1}^{n} \theta_{j}^{2}$</p>
 <p>在SVM中将损失函数定义为：$J(\theta)=C * \Sigma_{i=1}^{m}\left[y^{(i)} \operatorname{cost}_{1}\left(\theta^{T} x^{(i)}\right)+\left(1-y^{(i)}\right) \operatorname{cost}_{0}\left(\theta^{T} x^{(i)}\right)\right]+\frac{1}{2} \Sigma_{i=1}^{n} \theta_{j}^{2}$ </p>
 <h1 id="支持多个类别"><a href="#支持多个类别" class="headerlink" title="支持多个类别"></a>支持多个类别</h1><h2 id="OVR-one-versus-rest"><a href="#OVR-one-versus-rest" class="headerlink" title="OVR(one versus rest)"></a>OVR(one versus rest)</h2><p>对于K个类别的情况，训练K个SVM，第j个SVM用于判断任意条数据是属于类别j还是属于类别非j。预测的时候，具有最大值的$w^T_ix$表示给定的数据x属于类别。</p>
 <p>比如有3个类别A、B、C，我们训练3个SVM，第一个判断是否是A类，第二个判断是否为B类，第三个判断是否为C类，我们比较3个SVM的概率，选择概率最大的类。</p>
@@ -68,7 +69,8 @@
 <p>代入$\mathbf{w}=\sum_{i} \alpha_{i} y_{i} \mathbf{x}_{i}$、$\sum_{i} \alpha_{i} y_{i}=0$可以得到：$L(\xi, \alpha, \lambda)=\sum_{i} \alpha_{i}-\frac{1}{2} \sum_{i, j} \alpha_{i} \alpha_{j} y_{i} y_{j} \mathbf{x}_{i}^{\top} \mathbf{x}_{j}+\sum_{i} \xi_{i}\left(C-\alpha_{i}-\lambda_{i}\right)$</p>
 <p>再代入$C-\alpha_{i}-\lambda_{i}=0$得到对偶形式：$\begin{aligned}\max _{\alpha \geq 0, \lambda \geq 0} &amp; \sum_{i} \alpha_{i}-\frac{1}{2}\sum_{i, j} \alpha_{i} \alpha_{j} y_{i} y_{j} \mathbf{x}_{i}^{\top} \mathbf{x}_{j} \\\text {s.t. } &amp; \sum_{i} \alpha_{i} y_{i}=0, \quad C-\alpha_{i}-\lambda_{i}=0\end{aligned}$</p>
 <p>由于$\lambda_i$唯一需要满足的条件是大于等于0，约束条件$C-\alpha_{i}-\lambda_{i}=0$也可以改为：$\alpha_i\le C$</p>
-<p>我们怎么去理解这个表达式呢？<img src="https://uploader.shimo.im/f/Fw3DMTRFYSRVt9WA.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJhY2Nlc3NfcmVzb3VyY2UiLCJleHAiOjE2NTAyMDcyMDYsImZpbGVHVUlEIjoicVk5cHZoRDk4cGM5R0tkeSIsImlhdCI6MTY1MDIwNjkwNiwidXNlcklkIjoxNzYxNTM2MH0.xPEhc1mSIcTAk5UXyspcqV9LVnAByz4jnQ-ng9_pzRo" alt="img">注意不同数据点的权重是不同的，但是不同类别的权重一致，即可以有两个A类别和1个B类别的点，但是A类别点的权重和和B类别点的权重和是相等的。</p>
+<p>我们怎么去理解这个表达式呢？<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/7.png" alt="img"></p>
+<p>注意不同数据点的权重是不同的，但是不同类别的权重一致，即可以有两个A类别和1个B类别的点，但是A类别点的权重和和B类别点的权重和是相等的。</p>
 <h2 id="核函数"><a href="#核函数" class="headerlink" title="核函数"></a>核函数</h2><p>我们可以使用核函数来替代$x^T_ix_j$：$\begin{array}{l}\max _{\alpha \geq 0} \sum_{i} \alpha_{i}-\frac{1}{2} \sum_{i, j} \alpha_{i}\alpha_{j} y_{i} y_{j} k\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right) \\\text { s.t. }\sum_{i} \alpha_{i} y_{i}=0, \quad \alpha_{i} \leq C, \quad i=1, \ldots, n \\K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)=\left\langle\Phi\left(\mathbf{x}_{i}\right),\Phi\left(\mathbf{x}_{j}\right)\right\rangle\end{array}$</p>
 <h3 id="理解核函数"><a href="#理解核函数" class="headerlink" title="理解核函数"></a>理解核函数</h3><p>吴恩达的机器学习课程里对核函数给出了形象的解释（参考<a href="https://zhuanlan.zhihu.com/p/74764135）。下面这张图的决策边界是一个非线性的。![img](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/8.png" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/74764135）。下面这张图的决策边界是一个非线性的。![img](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/8.png</a>)</p>
 <p>我们的假设函数可能是：$\theta_{0}+\theta_{1} x_{1}+\theta_{2} x_{2}+\theta_{3} x_{1} x_{2}+\theta_{4} x_{1}^{2}+\theta_{5} x_{2}^{2}+\ldots$的形式。为了方便，我们可以用一系列新的特征值来替换模型中的每一项，譬如：$f_{1}=x_{1}, f_{2}=x_{2}, f_{3}=x_{1} x_{2}, f_{4}=x_{1}^{2}, f_{5}=x_{2}^{2}$。则假设函数便可以转化为：$h_{\theta}(x)=\theta_{0}+\theta_{1} f_{1}+\theta_{2} f_{2}+\theta_{3} f_{3}+\theta_{4} f_{4}+\theta_{5} f_{5}+\ldots$。这种方法即通过多项式模型的方式构造新特征$f_{1}, f_{2}, f_{3} \ldots f_{n}$，那么有没有其他方式来构造新特征？有，通过核函数即可完成。</p>
@@ -128,7 +130,12 @@
 <h3 id="Chi-squared-Kernel"><a href="#Chi-squared-Kernel" class="headerlink" title="Chi-squared Kernel"></a>Chi-squared Kernel</h3><p>$K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)=\frac{\mathbf{x}_{i}^{\top} \mathbf{x}_{j}}{\left|\mathbf{x}_{i}\right|\left|\mathbf{x}_{j}\right|}$</p>
 <p>常用于计算机视觉衡量两个概率分布的相似性（例如图片上两个位置的亮度分布）。此时输入数据必须是非负的，并且使用了L1归一化。</p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>SVM专注于找最优分界线，用于减少过拟合。Kernel Trick的应用使得SVM可以高效的用于非线性可分的情况。其优势是理论非常完美，支持不同Kernel，可用于调参。其缺点是当数据量特别大时，训练比较慢。</p>
-<h1 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h1><p>使用SVM做毒蘑菇分类可参考：<a href="https://www.kaggle.com/sunflower2018jing/svm-mushroom使用SVM和PCA做人脸识别：https://www.kaggle.com/sunflower2018jing/svm-face-recognition" target="_blank" rel="noopener">https://www.kaggle.com/sunflower2018jing/svm-mushroom使用SVM和PCA做人脸识别：https://www.kaggle.com/sunflower2018jing/svm-face-recognition</a></p>
+<h1 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h1><ul>
+<li><p>使用SVM做毒蘑菇分类：<a href="https://www.kaggle.com/sunflower2018jing/svm-mushroom" target="_blank" rel="noopener">https://www.kaggle.com/sunflower2018jing/svm-mushroom</a></p>
+</li>
+<li><p>使用SVM和PCA做人脸识别：<a href="https://www.kaggle.com/sunflower2018jing/svm-face-recognition" target="_blank" rel="noopener">https://www.kaggle.com/sunflower2018jing/svm-face-recognition</a></p>
+</li>
+</ul>
 </li>
 </ul>
 ]]></content>
