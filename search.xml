@@ -3,7 +3,7 @@
   <entry>
     <title>机器学习基础——支持向量机SVM</title>
     <url>/2021/04/16/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%E2%80%94%E2%80%94%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BASVM/</url>
-    <content><![CDATA[<p>使用keras进行二分类时，常使用binary_crossentropy作为损失函数。那么它的原理是什么，跟categorical_crossentropy、sparse_categorical_crossentropy有什么区别？在进行文本分类时，如何选择损失函数，有哪些优化损失函数的方式？本文将从原理到实现进行一一介绍。</p>
+    <content><![CDATA[<p>今天复习机器学习基础之一，支持向量机SVM。</p>
 <a id="more"></a>
 <h1 id="几何定义"><a href="#几何定义" class="headerlink" title="几何定义"></a>几何定义</h1><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/1.png" alt="img"></p>
 <p>假设空间中的点如上图，我们希望找到一个决策平面，使得两类点能区分开，且点到直线距离和是最近的。我们假设最好的决策平面是$wx+b=1$和$wx+b=-1$（即使$wx+b$不等于1，我们也可以通过等式两边同时除以b使得其等于1），$wx$表示两个向量的点积，$w$表示决策平面的方向。</p>
