@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+    <meta name="description" content="记录生活">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    机器学习基础——支持向量机SVM |
+    
+    大嘴怪的小世界</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<script src="/js/pace.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+<main class="content">
+  <section class="outer">
+  
+
+<article id="post-机器学习基础——支持向量机SVM" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      机器学习基础——支持向量机SVM
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2021/04/16/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%E2%80%94%E2%80%94%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BASVM/" class="article-date">
+  <time datetime="2021-04-16T15:25:13.000Z" itemprop="datePublished">2021-04-16</time>
+</a>
+        
+      </div>
+    
+
+    
+      
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+        <p>使用keras进行二分类时，常使用binary_crossentropy作为损失函数。那么它的原理是什么，跟categorical_crossentropy、sparse_categorical_crossentropy有什么区别？在进行文本分类时，如何选择损失函数，有哪些优化损失函数的方式？本文将从原理到实现进行一一介绍。</p>
+<a id="more"></a>
+<h1 id="几何定义"><a href="#几何定义" class="headerlink" title="几何定义"></a>几何定义</h1><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/1.png" alt="img"></p>
+<p>假设空间中的点如上图，我们希望找到一个决策平面，使得两类点能区分开，且点到直线距离和是最近的。我们假设最好的决策平面是$wx+b=1$和$wx+b=-1$（即使$wx+b$不等于1，我们也可以通过等式两边同时除以b使得其等于1），$wx$表示两个向量的点积，$w$表示决策平面的方向。</p>
+<p>两个决策边界之间的距离是$\frac{2}{||w||}$，证明如下：</p>
+<ul>
+<li>假设落在上边界和下边界的两个点分别为$x_1$和$x_2$</li>
+<li>$w^{T} x_{1}+b=1$</li>
+<li>$w^{T} x_{2}+b=-1$</li>
+<li>$\left(w^{T} x_{1}+b\right)-\left(w^{T} x_{2}+b\right)=2$</li>
+<li>$w^{T}\left(x_{1}-x_{2}\right)=2$</li>
+<li>$d_{1}=d_{2}=\frac{w^{T}\left(x_{1}-x_{2}\right)}{2|w|_{2}}=\frac{2}{2|w|_{2}}=\frac{1}{|w|_{2}}=\frac{\frac{w^{T}}{|w|_{2}}\left(x_{1}-x_{2}\right)}{2}$<ul>
+<li>它的物理意义是上图中$x_1$、$x_2$的连线（即红色线）在$w$法向量上的投影向量的长度</li>
+<li>$d_{1}+d_{2}=\frac{2}{|w|_{2}}$</li>
+</ul>
+</li>
+</ul>
+<h1 id="代数定义"><a href="#代数定义" class="headerlink" title="代数定义"></a>代数定义</h1><p>我们希望决策边界的距离越大越好（max margin）, 由于$w^w$表示两个决策边界距离，因此SVM数学模型如下：$\begin{aligned}\min _{\mathbf{w}, b} &amp; \frac{1}{2} \mathbf{w}^{\top} \mathbf{w} \\\text{s.t. } &amp; y_{i}\left(\mathbf{w}^{\top} \mathbf{x}_{i}+b\right) \geq 1, \quad i=1,\ldots, n\end{aligned}$</p>
+<p>当我们已经求解出$w$，则使用下式预测：$h(\mathbf{x})=\operatorname{sign}\left(\mathbf{w}^{\top} \mathbf{x}+b\right)$</p>
+<h1 id="目标函数"><a href="#目标函数" class="headerlink" title="目标函数"></a>目标函数</h1><h2 id="Hard-Constraint"><a href="#Hard-Constraint" class="headerlink" title="Hard Constraint"></a>Hard Constraint</h2><p>Maximize: $\frac{2}{||w||}$，且在$y_i=1$时$w^Tx_i+b\ge 1$，$y_i=-1$时$w^Tx_i+b\le -1$，如下图所示（-1和1是两个决策边界，我们希望所有点落在决策边界的两侧，不允许点出现在两个决策边界中间）：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/2.png" alt="img"></p>
+<p>上面目标函数等价于 Minimize: $||w||$，为了之后的计算方便也可以写成：$||w||^2$。这样的目标函数称做“hard constraint”：Minimize $||w||^2$ s.t. $(w^Tx_i+b)y_i\ge 1$</p>
+<h2 id="Soft-Constraint"><a href="#Soft-Constraint" class="headerlink" title="Soft Constraint"></a>Soft Constraint</h2><p>Hard Constraint容易产生过拟合问题，如下图（圆圈圈住的是误差点，右侧的线是hard constaint，但显然左侧是我们想要找到的分界线，因为可能会有很多粉色的点落在右侧线的右边）：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/3.png" alt="img"> 所以，我们允许一些点落在决策边界中间，只要给这些点加一些惩罚就好，这种就叫“Soft Constraint”：Minimize $||w||^2$ s.t. $(w^Tx_i+b)y_i\ge 1-\xi_i,\xi_i\ge0$，其中$\ni_i$表示可以允许分类起犯多大的错误，那么为了惩罚这个错误，我们把目标函数稍加修改：Minimize $||w||^2+\lambda\sum^n_{i=1}\xi_i$ s.t. $(w^Tx_i+b)y_i\ge 1-\xi_i,\xi_i\ge0$，其中$\lambda$起到平衡关系，当$\lambda$为正无穷时，相当于Hard Constraint，表示不允许犯任何错误。</p>
+<h2 id="Hinge-Loss"><a href="#Hinge-Loss" class="headerlink" title="Hinge Loss"></a>Hinge Loss</h2><p>我们将上面式子进行一些变换，可以得到Hinge Loss：</p>
+<ul>
+<li><p>由$y_{i}\left(\mathbf{w}^{\top} \mathbf{x}_{i}+b\right) \geq 1-\xi_{i}$可得到$\xi_{i} \geq 1-y_{i}\left(\mathrm{w}^{\top} \mathbf{x}_{i}+b\right)$</p>
+</li>
+<li><p>由于$\xi_{i} \geq 0$可得到$\xi_{i}=\max \left(0,1-y_{i}\left(\mathbf{w}^{\top} \mathbf{x}_{i}+b\right)\right)$，这个式子就叫Hinge Loss，其函数图像如下图：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/4.png" alt="img">由上图我们可以发现Hinge Loss的几个特点：</p>
+<ul>
+<li>Convex 凸函数，容易优化</li>
+<li>在自变量小于0的部分梯度比较小（恒等于-1），对错误分类的惩罚比较轻<ul>
+<li>对比logistic loss，在小于0时指数级增长，损失会变得特别大</li>
+</ul>
+</li>
+<li>在自变量大于等于1的部分，值为0；只要对某个数据分类是正确的，并且正确的可能性足够高，那么就永不着针对这个数据进一步优化了<ul>
+<li>对比logistic loss，在大于等于1的时候还是有一些loss的</li>
+</ul>
+</li>
+<li>在自变量等于0处不可导，需要分段求导</li>
+<li>在求解最优化时，只有支持向量会参与确定分界线，而且支持向量的个数远小于训练数据的个数<ul>
+<li>对于Hard Constraint的SVM来说，只关心支持向量的大小（在分界线上的点），对于其他点不关心</li>
+<li>对于Soft Constraint的SVM来说，即关心支持向量，也关心异常点的误差</li>
+</ul>
+</li>
+</ul>
+<p>【注】：在吴恩达的机器学习课程中，认为SVM是在logistic regression的基础上，修改了损失函数定义得来的(具体可参考<a href="https://zhuanlan.zhihu.com/p/74764135)：![img](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/5.png" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/74764135)：![img](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/5.png</a>)</p>
+<p>也就是说，在逻辑回归中，损失函数定义为：$J(\theta)=\frac{1}{m} \Sigma_{i=1}^{m}\left[-y^{(i)} <em> \log \left(h_{\theta}\left(x^{(i)}\right)\right)-\left(1-y^{(i)}\right) </em> \log \left(1-h_{\theta}\left(x^{(i)}\right)\right)\right]+\frac{\lambda}{2 m} \Sigma_{i=1}^{n} \theta_{j}^{2}$</p>
+<p>在SVM中将损失函数定义为：$J(\theta)=C * \Sigma_{i=1}^{m}\left[y^{(i)} \operatorname{cost}_{1}\left(\theta^{T} x^{(i)}\right)+\left(1-y^{(i)}\right) \operatorname{cost}_{0}\left(\theta^{T} x^{(i)}\right)\right]+\frac{1}{2} \Sigma_{i=1}^{n} \theta_{j}^{2}$ </p>
+<h1 id="支持多个类别"><a href="#支持多个类别" class="headerlink" title="支持多个类别"></a>支持多个类别</h1><h2 id="OVR-one-versus-rest"><a href="#OVR-one-versus-rest" class="headerlink" title="OVR(one versus rest)"></a>OVR(one versus rest)</h2><p>对于K个类别的情况，训练K个SVM，第j个SVM用于判断任意条数据是属于类别j还是属于类别非j。预测的时候，具有最大值的$w^T_ix$表示给定的数据x属于类别。</p>
+<p>比如有3个类别A、B、C，我们训练3个SVM，第一个判断是否是A类，第二个判断是否为B类，第三个判断是否为C类，我们比较3个SVM的概率，选择概率最大的类。</p>
+<h2 id="OVO-one-versus-one"><a href="#OVO-one-versus-one" class="headerlink" title="OVO(one versus one)"></a>OVO(one versus one)</h2><p>对于K个类别的情况，训练$K<em>(K-1)/2$个SVM，每一个SVM只用于判读任意条数据是属于K中的特定两个类别。预测的时候，使用$K</em>(K-1)/2$个SVM做$K*(k-1)/2$次预测，使用计票的方式决定数据被分类为哪个类别的次数最多，就认为数据$x$属于此类别。</p>
+<p>比如有3个类别A、B、C，我们训练AB、AC、BC3个SVM用于判断是AB中的哪一类、是BC中的哪一类，是AC中的哪一类，选择投票数最多的那一类。</p>
+<p>形象解释如下图：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/6.png" alt="img"> </p>
+<h1 id="求解"><a href="#求解" class="headerlink" title="求解"></a>求解</h1><h2 id="二次规划"><a href="#二次规划" class="headerlink" title="二次规划"></a>二次规划</h2><p>二次规划（Quadratic Programming），经典运筹学的最优化问题，可以在多项式时间内求得最优解。</p>
+<h2 id="对偶问题"><a href="#对偶问题" class="headerlink" title="对偶问题"></a>对偶问题</h2><p>原问题定义为： $\begin{aligned}\min _{\mathbf{w}, b, \xi \geq 0} &amp; \frac{1}{2} \mathbf{w}^{\top}\mathbf{w}+C \sum_{i} \xi_{i} \\\text { s.t. } y_{i}\left(\mathbf{w}^{\top}\mathbf{x}_{i}+b\right) &amp; \geq 1-\xi_{i}, \quad i=1, \ldots, n \\\xi_{i} &amp; \geq 0\end{aligned}$ </p>
+<p>将条件表达式的左侧移动到右侧可得： $1-\xi_{i} - y_{i}\left(\mathbf{w}^{\top} \mathbf{x}_{i}+b\right) \le 0$  $-\xi_i\le0$</p>
+<p>将上面两个式子加入到原始SVM中得到： $L(\mathbf{w}, b, \xi, \alpha, \lambda)=\frac{1}{2} \mathbf{w}^{\top} \mathbf{w}+C \sum_{i} \xi_{i}+\sum_{i} \alpha_{i}\left(1-\xi_{i}-y_{i}\left(\mathbf{w}^{\top} \mathbf{x}_{i}+b\right)\right)-\sum_{i} \lambda_{i} \xi_{i}$</p>
+<p>其中$\alpha$和$\lambda$称为拉格朗日算子，并将原先最小化问题转化为最大化问题计算目标函数对各参数的导数，可得出：</p>
+<ul>
+<li>$\frac{\partial L}{\partial b}=0 \quad \rightarrow \quad \sum_{i} \alpha_{i} y_{i}=0$</li>
+<li>$\frac{\partial L}{\partial \mathbf{w}}=0 \quad \rightarrow \quad \mathbf{w}=\sum_{i} \alpha_{i} y_{i} \mathbf{x}_{i}$</li>
+<li>$\frac{\partial L}{\partial \xi_{i}}=0 \quad \rightarrow \quad C-\alpha_{i}-\lambda_{i}=0$</li>
+</ul>
+<p>代入$\mathbf{w}=\sum_{i} \alpha_{i} y_{i} \mathbf{x}_{i}$、$\sum_{i} \alpha_{i} y_{i}=0$可以得到：$L(\xi, \alpha, \lambda)=\sum_{i} \alpha_{i}-\frac{1}{2} \sum_{i, j} \alpha_{i} \alpha_{j} y_{i} y_{j} \mathbf{x}_{i}^{\top} \mathbf{x}_{j}+\sum_{i} \xi_{i}\left(C-\alpha_{i}-\lambda_{i}\right)$</p>
+<p>再代入$C-\alpha_{i}-\lambda_{i}=0$得到对偶形式：$\begin{aligned}\max _{\alpha \geq 0, \lambda \geq 0} &amp; \sum_{i} \alpha_{i}-\frac{1}{2}\sum_{i, j} \alpha_{i} \alpha_{j} y_{i} y_{j} \mathbf{x}_{i}^{\top} \mathbf{x}_{j} \\\text {s.t. } &amp; \sum_{i} \alpha_{i} y_{i}=0, \quad C-\alpha_{i}-\lambda_{i}=0\end{aligned}$</p>
+<p>由于$\lambda_i$唯一需要满足的条件是大于等于0，约束条件$C-\alpha_{i}-\lambda_{i}=0$也可以改为：$\alpha_i\le C$</p>
+<p>我们怎么去理解这个表达式呢？<img src="https://uploader.shimo.im/f/Fw3DMTRFYSRVt9WA.png!thumbnail?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJhY2Nlc3NfcmVzb3VyY2UiLCJleHAiOjE2NTAyMDcyMDYsImZpbGVHVUlEIjoicVk5cHZoRDk4cGM5R0tkeSIsImlhdCI6MTY1MDIwNjkwNiwidXNlcklkIjoxNzYxNTM2MH0.xPEhc1mSIcTAk5UXyspcqV9LVnAByz4jnQ-ng9_pzRo" alt="img">注意不同数据点的权重是不同的，但是不同类别的权重一致，即可以有两个A类别和1个B类别的点，但是A类别点的权重和和B类别点的权重和是相等的。</p>
+<h2 id="核函数"><a href="#核函数" class="headerlink" title="核函数"></a>核函数</h2><p>我们可以使用核函数来替代$x^T_ix_j$：$\begin{array}{l}\max _{\alpha \geq 0} \sum_{i} \alpha_{i}-\frac{1}{2} \sum_{i, j} \alpha_{i}\alpha_{j} y_{i} y_{j} k\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right) \\\text { s.t. }\sum_{i} \alpha_{i} y_{i}=0, \quad \alpha_{i} \leq C, \quad i=1, \ldots, n \\K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)=\left\langle\Phi\left(\mathbf{x}_{i}\right),\Phi\left(\mathbf{x}_{j}\right)\right\rangle\end{array}$</p>
+<h3 id="理解核函数"><a href="#理解核函数" class="headerlink" title="理解核函数"></a>理解核函数</h3><p>吴恩达的机器学习课程里对核函数给出了形象的解释（参考<a href="https://zhuanlan.zhihu.com/p/74764135）。下面这张图的决策边界是一个非线性的。![img](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/8.png" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/74764135）。下面这张图的决策边界是一个非线性的。![img](https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/8.png</a>)</p>
+<p>我们的假设函数可能是：$\theta_{0}+\theta_{1} x_{1}+\theta_{2} x_{2}+\theta_{3} x_{1} x_{2}+\theta_{4} x_{1}^{2}+\theta_{5} x_{2}^{2}+\ldots$的形式。为了方便，我们可以用一系列新的特征值来替换模型中的每一项，譬如：$f_{1}=x_{1}, f_{2}=x_{2}, f_{3}=x_{1} x_{2}, f_{4}=x_{1}^{2}, f_{5}=x_{2}^{2}$。则假设函数便可以转化为：$h_{\theta}(x)=\theta_{0}+\theta_{1} f_{1}+\theta_{2} f_{2}+\theta_{3} f_{3}+\theta_{4} f_{4}+\theta_{5} f_{5}+\ldots$。这种方法即通过多项式模型的方式构造新特征$f_{1}, f_{2}, f_{3} \ldots f_{n}$，那么有没有其他方式来构造新特征？有，通过核函数即可完成。</p>
+<p>我们引入地标（landmark)$l^{(1)}, l^{(2)}, l^{(3)}$，我们可以通过判断样本x和地标间的近似程度来选取新的特征$f_1,f_2,f_3$。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/9.png" alt="img"></p>
+<p>如上图所示，特征$f_1,f_2,f_3$都可以用similarity(x,l)函数来获取，这里的similarity(x,l)函数即被称为—核函数（kernel function）,在本例中我们用核函数中的一种—高斯核函数来举例，即：$f_{i}=\operatorname{similarity}\left(x, l^{(i)}\right)=\exp \left(-\frac{\left|x-l^{(i)}\right|^{2}}{2 \sigma^{2}}\right)$。</p>
+<p>地标的作用是什么 ？如果一个样本x距离地标距离接近/等于0，则$f_{i} \simeq \exp (-0)=1$，否则 = 0，于是我们利用样本和地标间的关系来得出了特征f的值。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/10.png" alt="img"></p>
+<p>看上图，可以总结出几点：</p>
+<ul>
+<li>红色顶点处，即向量 $x=\left\{\begin{array}{l}x_{1} \\x_{2}\end{array}\right\}=\left\{\begin{array}{l}3 \\5\end{array}\right\}$和向量地标向量l重合处，即距离= 0，故此时$f=1$</li>
+<li>可以看见$\sigma$越大，图像越宽，同样的x样本向量，譬如$x=\left\{\begin{array}{l}x_{1} \\x_{2}\end{array}\right\}=\left\{\begin{array}{l}4 \\4\end{array}\right\}$，这个样本在图1中就会被判定为$f=0$，而在图3中则可能被判定为$f=1$，即$\sigma$会影响到最终特征值f的判断。即随着 的改变 值改变的速率受到的控制。</li>
+</ul>
+<p>假设函数值&gt;=0时预测y = 1,否则y = 0，则通过上面的高斯核函数我们可以算出每个样本点x距离地标l的距离，从而算出每个特征f，从而求出每个样本点的预测值y，即可以正确给每个样本分类，从而得到一条决策边界。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/12.png" alt="img"></p>
+<p>例如，$\theta_{0}=-0.5, \theta_{1}=1, \theta_{2}=1, \theta_{3}=0$。对于红色点x，由于其距离地标l1较近，故f1 = 1,同时其距离l2和l3较远，故f2 = f3 = 0，假设函数值= -0.5+1 = 0.5&gt;0故预测其y = 1；对于绿色点x,f2 = 1 ,假设函数值 = -0.5+0+1+0 =0.5故其预测也为1。可以看出此例中存在一条决策边界，如红线划出的范围，在边界以内的样本都是预测y = 1，边界外的都是y = 0。</p>
+<p>实际情况下，我们会选取和样本点数量同样多的且值相同的地标。得到新的特征后，我们可以写出代价函数的表达式：$\min _{\theta} C \sum_{i=1}^{m} y^{(i)} \cos t_{1}\left(\theta^{T} f^{(i)}\right)+\left(1-y^{(i)}\right) \cos t_{0}\left(\theta^{T} f^{(i)}\right)+\frac{1}{2} \sum_{j=1}^{n} \theta_{j}^{2}$。</p>
+<p>这里可以看到$\theta^{T} f^{(i)}$替代了原来的$\theta^{T} x^{(i)}$。因为f是计算出来的用于模拟x的特征值。在实际计算的时候，$\frac{1}{2} \Sigma_{(j=1)}^{n} \theta_{j}^{2}=\theta^{T} \theta$我们会在之间加一个矩阵M，不同的核函数，M不同，目的在于优化计算和迭代速度。所以最终，正则化项应该是：$\theta^{T} M \theta$。</p>
+<h3 id="梯度下降法"><a href="#梯度下降法" class="headerlink" title="梯度下降法"></a>梯度下降法</h3><p>如何使用梯度下降法求解svm可以参考：</p>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/91322308" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/91322308</a></li>
+<li><a href="https://www.zhihu.com/question/265751466" target="_blank" rel="noopener">https://www.zhihu.com/question/265751466</a></li>
+</ul>
+<h3 id="SMO算法"><a href="#SMO算法" class="headerlink" title="SMO算法"></a>SMO算法</h3><p>使用SMO求解SVM可以参考：<a href="https://zhuanlan.zhihu.com/p/29212107" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/29212107</a></p>
+<h3 id="核技巧"><a href="#核技巧" class="headerlink" title="核技巧"></a>核技巧</h3><p>如果一个算法可以表达为关于一个正定核K1的核函数，那么可以将它转化为关于另外一个正定核K2的函数。即这里$x^T_ix_j$是正定的，$k(x_i, x_j)$也是正定的，相当于改变了衡量两个点相似性的计算公式。</p>
+<p>使用核函数的预测公式如下：$b^{3 \text { kuail }} y_{i}-\sum_{j} \alpha_{j} y_{j} k\left(\mathbf{x}_{j}, \mathbf{x}_{i}\right) \quad \forall i \quad C&gt;\alpha_{i}&gt;0$</p>
+<p>我们将原始的表示式改写为：$\mathbf{w}^{\top} \phi(\mathbf{x})+b=\sum_{i} \alpha_{i} y_{i} k\left(\mathbf{x}_{i}, \mathbf{x}\right)+b$</p>
+<ul>
+<li>只有当$x_i$为支持向量的时候，$\alpha_i&gt;0$</li>
+<li>当$y_i=1$时$k(x_i, x)&gt;0$；当$y_i=-1$时$k(x_i, x)&lt;0$</li>
+</ul>
+<h3 id="线性不可分"><a href="#线性不可分" class="headerlink" title="线性不可分"></a>线性不可分</h3><p>核函数常用于处理线性不可分的情况，如下图：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/13.png" alt="img"></p>
+<p>核函数本质上可以将特征映射到更高维：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/14.png" alt="img"></p>
+<p>上图将x-&gt;$x^2$则把线性不可分的一维分布转化为线性可分的二维分布，其映射函数如下：$\begin{array}{l}\Phi: \mathcal{X} \mapsto \hat{\mathcal{X}}=\Phi(\mathbf{x}) \\\Phi\left(\left[x_{i 1}, x_{i 2}\right]\right)=\left[x_{i 1}, x_{i 2}, x_{i 1} x_{i 2}, x_{i 1}^{2},x_{i 2}^{2}\right]\end{array}$</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/15.png" alt="img"></p>
+<p>上图将平面上不可分的点，映射到三维空间中线性可分的点。</p>
+<h3 id="Kernel条件"><a href="#Kernel条件" class="headerlink" title="Kernel条件"></a>Kernel条件</h3><p>Kernel函数需要具备如下条件：有Gram矩阵：$G_{i j}=K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)$</p>
+<ul>
+<li>$G_{ij}$为对称矩阵</li>
+<li>$G_{ij}$为半正定矩阵，即$\mathbf{z}^{\top} \mathrm{Gz} \geq 0$</li>
+</ul>
+<h3 id="多项式核"><a href="#多项式核" class="headerlink" title="多项式核"></a>多项式核</h3><p>$K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)=\left(\left\langle\mathbf{x}_{i}, \mathbf{x}_{j}\right\rangle+c\right)^{d}$</p>
+<ul>
+<li>$C\ge 0$控制低阶项的强度</li>
+<li>特殊情况，当C=0且d=1时它就成为线性核（Linear Kernel），相当于无核函数的SVM一样</li>
+</ul>
+<p>举个例子，$\mathbf{x}_{i}=\left[x_{i 1}, x_{i 2}\right]$，$\mathbf{x}_{j}=\left[x_{j 1}, x_{j 2}\right]$，定义多项式核函数为：</p>
+<p>$\begin{aligned}K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)&amp;=\left\langle\dot{\mathbf{x}}_{i}, \mathbf{x}_{j}\right\rangle^{2} \\&amp;=\left(x_{i 1} x_{j 1}+x_{i 2} x_{j 2}\right)^{2} \\&amp;=\left(x_{i 1}^{2} x_{j 1}^{2}+x_{i 2}^{2}x_{j 2}^{2}+2 x_{i 1} x_{i 2} x_{j 1} x_{j 2}\right) \\&amp;=\left\langle\Phi\left(\mathbf{x}_{i}\right), \Phi\left(\mathbf{x}_{j}\right)\right\rangle\end{aligned}$</p>
+<p>我们可以把核函数看称是将$x_i,x_j$扩展到高维空间，再进行点积，即$\Phi\left(\mathbf{x}_{i}\right)=\left[x_{i 1}^{2}, x_{i 2}^{2}, \sqrt{2} x_{i 1} x_{i 2}\right]$、$\Phi\left(\mathbf{x}_{j}\right)=\left[x_{j 1}^{2}, x_{j 2}^{2}, \sqrt{2} x_{j 1} x_{j 2}\right]$</p>
+<h3 id="高斯核"><a href="#高斯核" class="headerlink" title="高斯核"></a>高斯核</h3><p>高斯核也称为Radial Basis Function(RBF) Kernel，其定义如下：$K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)=\exp \left(-\frac{\left|\mathbf{x}_{i}-\mathbf{x}_{j}\right|_{2}^{2}}{2 \sigma^{2}}\right)$</p>
+<p>当$x_i=x_j$时值为1，当$x_i$与$x_j$距离增加，值倾向于0。使用高斯核之前需要将特征正规化。高斯核的参数意义如下图所示：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/16.png" alt="img"></p>
+<p>当$\sigma$比较小的时候，高斯核比较尖，只有当两个点相似度非常高的时候，高斯核值才接近1；当$\sigma$比较大时，如果两个点相似度不高，高斯核的值下降得比较缓慢。举一个具体例子：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/17.png" alt="img"></p>
+<p>上图中，$\alpha=[-0.5,1.0,1.0,0.0]$，如果$\alpha_{0}+\alpha_{1} K\left(x, x_{1}\right)+\alpha_{2} K\left(x, x_{2}\right)+\alpha_{3} K\left(x, x_{3}\right) \geq 0$认为输出1，因为x接近$x_1$，所以$K\left(x, x_{1}\right) \approx 1$，其他情况$\approx 0$：$\begin{array}{l}\alpha_{0}+\alpha_{1} K\left(x, x_{1}\right)+\alpha_{2} K\left(x,x_{2}\right)+\alpha_{3} K\left(x, x_{3}\right) \\=-0.5+1 <em> 1+1 </em> 0+0 * 0=0.5 \geq 0\end{array}$<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/18.png" alt="img"></p>
+<p>上图中，因为x’接近$x_3$，$K\left(x’, x_{1}\right) \approx 1$，其他情况$\approx 0$：$\begin{array}{l}\alpha_{0}+\alpha_{1} K\left(x, x_{1}\right)+\alpha_{2} K\left(x,x_{2}\right)+\alpha_{3} K\left(x, x_{3}\right) \\=-0.5+1 <em> 0_{4}+1 </em> 0+0 * 1=-0.5\leq 0\end{array}$<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/SVM/SVM/19.png" alt="img"></p>
+<p>因此，高斯核的分类边界如上图所示。</p>
+<h3 id="Sigmoid核"><a href="#Sigmoid核" class="headerlink" title="Sigmoid核"></a>Sigmoid核</h3><p>$K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)=\tanh \left(\alpha \mathbf{x}_{i}^{\top} \mathbf{x}_{j}+c\right)$</p>
+<p>此时，SVM等价于一个没有隐含层的简单神经网络。这也是为什么神经网络比SVM能力强。</p>
+<h3 id="Cosine-Similarity核"><a href="#Cosine-Similarity核" class="headerlink" title="Cosine Similarity核"></a>Cosine Similarity核</h3><p>$K\left(\mathbf{x_i,x_j}\right)=\frac{\mathbf{x}_{i}^{\top} \mathbf{x}_{j}}{\left|\mathbf{x}_{i}\right|\left|\mathbf{x}_{j}\right|}$</p>
+<p>常用于衡量两段文字的相似性，相当于衡量两个向量的余弦相似度（向量夹角的余弦值）。</p>
+<h3 id="Chi-squared-Kernel"><a href="#Chi-squared-Kernel" class="headerlink" title="Chi-squared Kernel"></a>Chi-squared Kernel</h3><p>$K\left(\mathbf{x}_{i}, \mathbf{x}_{j}\right)=\frac{\mathbf{x}_{i}^{\top} \mathbf{x}_{j}}{\left|\mathbf{x}_{i}\right|\left|\mathbf{x}_{j}\right|}$</p>
+<p>常用于计算机视觉衡量两个概率分布的相似性（例如图片上两个位置的亮度分布）。此时输入数据必须是非负的，并且使用了L1归一化。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>SVM专注于找最优分界线，用于减少过拟合。Kernel Trick的应用使得SVM可以高效的用于非线性可分的情况。其优势是理论非常完美，支持不同Kernel，可用于调参。其缺点是当数据量特别大时，训练比较慢。</p>
+<h1 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h1><p>使用SVM做毒蘑菇分类可参考：<a href="https://www.kaggle.com/sunflower2018jing/svm-mushroom使用SVM和PCA做人脸识别：https://www.kaggle.com/sunflower2018jing/svm-face-recognition" target="_blank" rel="noopener">https://www.kaggle.com/sunflower2018jing/svm-mushroom使用SVM和PCA做人脸识别：https://www.kaggle.com/sunflower2018jing/svm-face-recognition</a></p>
+</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="majsunflower.cn/2021/04/16/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%E2%80%94%E2%80%94%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BASVM/" data-id="cl23gg0z0000zp24q6l70dpxq"
+         class="article-share-link">分享</a>
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a></li></ul>
+
+    </footer>
+
+  </div>
+
+  
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/04/06/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%EF%BC%9A%E3%80%8AReal-time-Attention-based-Look-alike-Model-for-Recommender-System%E3%80%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">后一篇</strong>
+        <div class="article-nav-title">论文阅读：《Real-time Attention based Look-alike Model for Recommender System》</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+    
+  <div class="gitalk" id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+
+  
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+  
+<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+
+  <script type="text/javascript">
+    var gitalk = new Gitalk({
+      clientID: 'a0115c330d8e2a88dc59',
+      clientSecret: '2e456ec13123a898d7b34ad8e117f543a6f379ea',
+      repo: 'majing2019.github.io',
+      owner: 'majing2019',
+      admin: ['majing2019'],
+      // id: location.pathname,      // Ensure uniqueness and length less than 50
+      id: md5(location.pathname),
+      distractionFreeMode: false,  // Facebook-like distraction free mode
+      pagerDirection: 'last'
+    })
+
+  gitalk.render('gitalk-container')
+  </script>
+
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+    <li><i class="fe fe-bookmark"></i> <span id="busuanzi_value_page_pv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2022 大嘴怪的小世界</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean" target="_blank" rel="noopener">Ocean</a></li>
+    </ul>
+  </div>
+</footer>
+
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+    <div class="logo">
+      <a href="/"><img src="/images/shark.svg" alt="大嘴怪的小世界"></a>
+    </div>
+  
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">主页</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">归档</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">相册</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">关于</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="搜索">
+        <i class="fe fe-search"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+  
+<script src="/js/tocbot.min.js"></script>
+
+  <script>
+    // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+    tocbot.init({
+      tocSelector: '.tocbot',
+      contentSelector: '.article-entry',
+      headingSelector: 'h1, h2, h3, h4, h5, h6',
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      positionFixedSelector: '.tocbot',
+      positionFixedClass: 'is-position-fixed',
+      fixedSidebarOffset: 'auto',
+    });
+  </script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
