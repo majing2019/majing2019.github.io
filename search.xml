@@ -1,6 +1,181 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>机器学习基础——决策树与随机森林</title>
+    <url>/2021/04/17/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%E2%80%94%E2%80%94%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/</url>
+    <content><![CDATA[<p>今天复习机器学习基础之一，决策树与随机森林。</p>
+<a id="more"></a>
+<h1 id="决策树"><a href="#决策树" class="headerlink" title="决策树"></a>决策树</h1><p>下面两张图展示了什么是决策树：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/1.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/2.png" alt="img"></p>
+<h2 id="信息熵"><a href="#信息熵" class="headerlink" title="信息熵"></a>信息熵</h2><p>信息熵用来衡量信息的不确定性或混乱成都的指标。信息的不确定性越大，熵越大。不确定性是一个时间出现不同结果的可能性。例如抛硬币，可能出现的结果有两个，分另是正面和反面。而每次抛硬币的结果是一个非常不确定的信息。因为根据我们的经验或者历史数据来看, 一个均匀的硬币出现正面和反面的概率相等，都是50%。因此很难判断下一次出现的是正面还是反面。 这时抛硬币这个事件的熵值也很高。而如果历史数据告诉我们这枚硬币在过去的100次试验中99次都是正面, 也就是说这枚硬币的质量不均匀，出现正面结果的概率很高。那么我们就很容易判断下一次的结果了。这时的熵值很低。</p>
+<h3 id="计算公式"><a href="#计算公式" class="headerlink" title="计算公式"></a>计算公式</h3><p>熵的计算公式：$H(X)=-\sum_{i=1}^{n} P(X=i) \log _{2} P(X=i)$，其中P(X=i)为随机变量X取值为i的概率。可以看出来熵是随机变量的一个函数值。</p>
+<h3 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h3><p>我们把抛硬币这个事件看做一个随机变量X，它可能的取值有2种，分别是正面1和反面 0 。每一种取值的概率分别为 $\mathrm{P}(\mathrm{X}=1)$ 和 $\mathrm{P}(\mathrm{X}=0)_{\circ}$</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/3.png" alt="img"></p>
+<p>对上面这种概率分布，计算出熵$\text { Entropy }=-0.5 <em> \log 0.5-0.5 </em> \log 0.5=1$</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/4.png" alt="img"></p>
+<p>如果是上面这种概率分布，计算出熵$\text {Entropy}=-0.99 <em> \log 0.99-0.01 </em> \log 0.01=0.08$</p>
+<h2 id="条件熵"><a href="#条件熵" class="headerlink" title="条件熵"></a>条件熵</h2><p>条件熵是通过获得更多的信息来减小不确定性。我们知道的信息越多，信息的不确定性越小。</p>
+<p>例如，我们无法只是根据用户历史数据中的购买某种商品的频率来判断这个用户在近期是否会再次购买某种商品, 因为不确定性太大。在加入了促销活动，商品价格等信息后，我们可以更容易发现用户购买某种商品与促销活动, 或者商品价格变化之间的联系。并通过在不同促销活动时购买行为出现的概率来降低不确定性。</p>
+<h3 id="计算公式-1"><a href="#计算公式-1" class="headerlink" title="计算公式"></a>计算公式</h3><p>$H(X \mid Y)=\sum_{v \in \text { values }(Y)} P(Y=v) H(X \mid Y=v)$</p>
+<p>$H(X \mid Y=v)=-\sum_{i=1}^{n} P(X=i \mid Y=v) \log _{2} P(X=i \mid Y=v)$</p>
+<h2 id="信息增益"><a href="#信息增益" class="headerlink" title="信息增益"></a>信息增益</h2><h3 id="计算公式-2"><a href="#计算公式-2" class="headerlink" title="计算公式"></a>计算公式</h3><p>$\begin{array}{l}I(X, Y)=H(X)-H(X \mid Y)=H(Y)-H(Y \mid X) \\H(X)=-\sum_{i=1}^{n}P(X=i) \log _{2} P(X=i) \\H(X \mid Y)=\sum_{v \in \text { values }(Y)} P(Y=v) H(X \mid Y=v) \\H(X \mid Y=v)=-\sum_{i=1}^{n} P(X=i \mid Y=v) \log _{2} P(X=i \mid Y=v)\end{array}$</p>
+<h3 id="举例-1"><a href="#举例-1" class="headerlink" title="举例"></a>举例</h3><p>下面我们用决策树使用的一个实际的例子说明信息增益的计算：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/5.png" alt="img"></p>
+<h3 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h3><p>拥有不同天气状况某一位用户来打高尔夫球的历史记录。我们要做的是通过构建决策树来预测此用户在某种天气情况下是否会来打高尔夫球。</p>
+<p>我们无法仅通过Yes和No的历史频率来判断用户明天是否会来。因此，需要借助天气的信息来减少不确定性。下面分别记录到了4种天气情况，我们通过过计算条件商来开始构建决策树的第一步：构建根决策点。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/6.png" alt="img"></p>
+<h4 id="父节点的熵"><a href="#父节点的熵" class="headerlink" title="父节点的熵"></a>父节点的熵</h4><p>构建根决策点的方法就是寻找4种天气情况中与打高尔夫球相关性最高的一 个。首先我们来看Play Golf的嫡，来看看这件事的不确定性有多高。</p>
+<p>仅通过历史数据的频率来看预测Play Golf是一件非常不确定的事情，在14条历史数据中，打球的概率为64%, 不打球的概率为36%。商值达到了0.940。如下图所示：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/7.png" alt="img"></p>
+<h4 id="4种条件下的条件熵"><a href="#4种条件下的条件熵" class="headerlink" title="4种条件下的条件熵"></a>4种条件下的条件熵</h4><p><strong>晴朗程度</strong><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/8.png" alt="img">使用Outlook的条件熵：$0.36 <em> 0.971+0.29 </em> 0+0.36 * 0.971=0.69$</p>
+<p>信息增益：$0.940-0.69=0.25$<strong>温度</strong><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/9.png" alt="img">使用Temp的条件熵：$0.29 <em> 1+0.43 </em> 0.918+0.29 * 0.811=0.92$</p>
+<p>信息增益：$0.940-0.92=0.02$</p>
+<p><strong>湿度</strong><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/10.png" alt="img">使用Humidity的条件熵：$0.5 <em> 0.985+0.5 </em> 0.592=0.79$</p>
+<p>信息增益：$0.940-0.79=0.15$</p>
+<p><strong>风力</strong><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/11.png" alt="img">使用Wind的条件熵：$0.57 <em> 0.811+0.43 </em> 1=0.89$</p>
+<p>信息增益：$0.940-0.89=0.05$</p>
+<p>使用Outlook分隔的信息增益最大，因此第一个分隔点为Outlook。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/12.png" alt="img">类似得，我们可以得出整个决策树，并且可以把它转化为代码：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/13.png" alt="img"></p>
+<h2 id="基尼不纯度"><a href="#基尼不纯度" class="headerlink" title="基尼不纯度"></a>基尼不纯度</h2><p>基尼不纯度表示一个随机选中的样本在子集中被分错的可能性。基尼不纯度为这个样本被选中的概率乘以它被分错的概率。当一个节点中所有样本都是一个类时，基尼不纯度为零。</p>
+<p>假设y的可能取值为J个类别，另$i\in\{1,2, \ldots, J\$, $p_{i}$表示被标定为第i类的概率，则基尼不纯度的计算为：$\mathrm{I}_{G}(p)=\sum_{i=1}^{J} p_{i} \sum_{k \neq i}p_{k}=\sum_{i=1}^{J} p_{i}\left(1-p_{i}\right)=\sum_{i=1}^{J}\left(p_{i}-p_{i}^{2}\right)=\sum_{i=1}^{J} p_{i}-\sum_{i=1}^{J} p_{i}^{2}=1-\sum_{i=1}^{J} p_{i}{ }^{2}$</p>
+<h3 id="举例-2"><a href="#举例-2" class="headerlink" title="举例"></a>举例</h3><p>还是以“根据天气情况预测一个人是否会去打高尔夫球”为例。原始数据的基尼不纯度计算：</p>
+<ul>
+<li><p>一共14条数据</p>
+</li>
+<li><p>5次No，概率$p_1=5/14$</p>
+</li>
+<li><p>9次Yes，概率$p_2=9/14$</p>
+</li>
+<li><p>$\text { Gini }=1-\sum_{i=1}^{3} p_{i}^{2}=1-\left(\frac{5}{14}\right)^{2}-\left(\frac{9}{14}\right)^{2}=0.459$</p>
+<p>下面计算4中条件下的基尼不纯度：</p>
+<p><strong>晴朗程度</strong><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/14.png" alt="img">加权基尼不纯度：</p>
+<p>$\begin{array}{l}(5 / 14) \operatorname{gini}(2,3)+(4 /14)\operatorname{gini}(4,0)+(5 / 14) \operatorname{gini}(3,2) \\=5 / 14 <em>\left(1-(2/5)^{\wedge} 2-(3 / 5)^{\wedge} 2\right) \\\quad+4 / 14 </em>\left(1-(4 / 4)^{\wedge} 2-(0/ 4)^{\wedge} 2\right) \\\quad+5 / 14 *\left(1(3 / 5)^{\wedge} 2-(2 / 5)^{\wedge}2\right)=0.342\end{array}$</p>
+<p>Gini增益：$0.459-0.342=0.117$</p>
+<p><strong>温度</strong><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/15.png" alt="img">加权基尼不纯度：</p>
+<p>$\begin{array}{l}(4 / 14) \operatorname{gini}(2,2)+(6 / 14)\operatorname{gini}(4,2)+(4 / 14) \operatorname{gini}(3,1) \\=4 / 14 <em>\left(1-(2 /4)^{\wedge} 2-(2 / 4)^{\wedge} 2\right) \\\quad+6 / 14 </em>\left(1-(4 / 4)^{\wedge} 2-(0/ 4)^{\wedge} 2\right) \\\quad+5 / 14 *\left(1(3 / 5)^{\wedge} 2-(2 / 5)^{\wedge}2\right)=0.4405\end{array}$</p>
+<p>Gini增益：$0.459-0.4405=0.0185$</p>
+<p><strong>湿度</strong><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/16.png" alt="img">加权基尼不纯度：</p>
+<p>$\begin{array}{l}\text { (7/14)gini(3,4) + (7/14)gini(6,1) } \\=\quad 7 / 14<em>\left(1-(3 / 7)^{\wedge} 2-(4 / 7)^{\wedge} 2\right) \\\quad+7 / 14^{</em>}\left(1-(6 /7)^{\wedge} 2-(1 / 7)^{\wedge} 2\right)=0.3674\end{array}$</p>
+<p>Gini增益：$0.459-0.3674=0.0916$</p>
+<p><strong>风力</strong><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/17.png" alt="img">加权基尼不纯度：</p>
+<p>$\begin{array}{l}\text { (8/14)gini(6,2) + (6/14)gini(3,3) } \\=8 / 14<em>\left(1-(6 / 8)^{\wedge} 2-(2 / 8)^{\wedge} 2\right) \\\quad+6 / 14 </em>\left(1-(3 /6)^{\wedge} 2-(3 / 6)^{\wedge} 2\right)=0.4286\end{array}$</p>
+<p>Gini增益：$0.459-0.4286=0.0304$</p>
+<p>可以看出使用Outlook的基尼增益是最大的。</p>
+<h2 id="回归决策树"><a href="#回归决策树" class="headerlink" title="回归决策树"></a>回归决策树</h2><h2 id=""><a href="#" class="headerlink" title=""></a><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/18.png" alt="img"></h2><h3 id="分支条件"><a href="#分支条件" class="headerlink" title="分支条件"></a>分支条件</h3><p>使用标准方差（Standard Deviation）作为分支条件。使用某一个特征的值将原来的集合分为多个子集, 使得子集中的元素的值相近。使用标准方差来衡量子集中的元素是否相近。 子集中元素最相近的情况就 是完全一样, 此时标准方差为0。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/19.png" alt="img"></p>
+<p>以上面的数据为例:</p>
+<ul>
+<li>数据集的元素个数：Count=n=14</li>
+<li>数据集的均值（如果为叶子节点就是预测值）：$\text { Average }=\bar{x}=\frac{\sum x}{n}=39.8$<ul>
+<li>除了使用均值用于预测值，也可以使用其他方法，例如线性回归</li>
+</ul>
+</li>
+<li>标准方差（衡量集合中元素的相似度）：$S=\sqrt{\frac{\sum(x-\bar{x})^{2}}{n}}=9.32$</li>
+<li>变化系数（用于决定是否停止进一步分叉）：$CV=\frac{S}{\bar{x}} * 100 \%=23 \%$</li>
+</ul>
+<p>假设对于“高尔夫球”的例子，如果使用Outlook分支，则加权标准方差计算如下：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/20.png" alt="img"></p>
+<p>$\begin{array}{l}S(\text { Hours, Outlook })=\mathbf{P}(\text { Sunny })^{<em>} S(\text { Sunny})+\mathbf{P}(\text { Overcast })^{</em>} S(\text { Overcast })+\mathbf{P}(\text { Rainy})^{<em>} S(\text { Rainy }) \\=(4 / 14)^{</em>} 3.49+(5 / 14)^{<em>} 7.78+(5 / 14)^{</em>} 10.87 \\=7.66\end{array}$</p>
+<p>我们使用标准方差的降低来确定分支：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/21.png" alt="img"></p>
+<p>标准方差的降低用$SDR(T, X)=S(T)-S(T, X)$表示，例如：</p>
+<p>$\begin{array}{c}\text { SDR } \text { (Hours, Outlook) }=\mathbf{S} \text { (Hours ) }-\mathbf{S} \text { (Hours, Outlook) } \\=9.32-7.66=1.66\end{array}$</p>
+<p>从上面的计算中我们发现，Outlook的标准方差降低分支，我们选择它作为第一个条件。使用降低标准方差最多的特征进行分支. 重复队上过程. 直到满足某个停止条件, 例如: </p>
+<ul>
+<li><p>当某个分支的 变化系数 (coefficient of variation) 于某一个值 (10%)</p>
+</li>
+<li><p>当前节点包含的元素个数小于某一个值举个例子，使用“outlook” 分支以后, 值为 “Overcast” 的分支的变化系数 (coefficient of variation) 太小 (8%), 小于我们设置的最小值(10%), 停止继续在 “Overcast” 对应的分支上继续分支, 生成一个叶子节点，如下图：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/22.png" alt="img"></p>
+<p>使用 “Outlook” 分支以后, 值为 “Sunny” 的分支的 变化系数 (coefficient of variation) 大于 10%, 需要 继续分支。通过计算得到使用“Windy” 分支时标准方差的降低最多, 使用这个特征继续分支。</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/23.png" alt="img"></p>
+<p>使用 “Windy” 分支后, 两个子分支包含的元素个数小于我 们设定的值, 可以停止继续分支。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/24.png" alt="img"></p>
+<p>使用 “Outlook” 分支以后, 值为 “Rainy” 的分支的变化系数 (coefficient of variation) 大于 10%, 需要继续分支。通过计算得到使用“Windy” 分支时标准方差的降低最多, 使用这个特征继续分支。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/25.png" alt="img"></p>
+<p>使用 “Temp” 分支后, 三个子分支包含的元素个数小于我 们设定的值, 可以停止继续分支。 <img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/26.png" alt="img"></p>
+<h2 id="过拟合"><a href="#过拟合" class="headerlink" title="过拟合"></a>过拟合</h2><p>决策树容易过拟合, 在训练数据集上面性能非常好，在测试数据集上面性能差。两种方案防止过拟含：</p>
+<ul>
+<li>Pre-pruning(预剪枝): 当树分支到一定条件下，还没有完美分支的时候, 就预先停止分支.</li>
+<li>Post-pruning(后剪枝): 一直分支到完美的情况，然后在剪枝。</li>
+</ul>
+<h3 id="剪枝"><a href="#剪枝" class="headerlink" title="剪枝"></a>剪枝</h3><p>关键是定义一个剪枝的标准:</p>
+<ul>
+<li>使用validation dataset(测试数据集) 来评估后剪枝(post-pruning)的效果</li>
+<li>直接使用training dataset(训练数据集)，利用统计分析来衡量剪枝或者分支带来的好处：<ul>
+<li>Error estimation 误差估计</li>
+<li>Significance testing 重要性检测 (例如 Chi-square test)</li>
+</ul>
+</li>
+<li>最小描述长度原则 (Minimum Description Length Principle)： 使用一个评价树和训练数据 集编码的复杂度的度量值, 当树的编码长度(size(tree) + size(misclassification(tree))最小的时候停止。</li>
+</ul>
+<h3 id="Error-estimation"><a href="#Error-estimation" class="headerlink" title="Error estimation"></a>Error estimation</h3><p>一个子树 (分支下方的部分)的Error estimation 指属于这个子树的所有叶子的误差的加权和。一个节点的 Error estimation(e) 定义如下：</p>
+<p>$e=\left(f+\frac{z^{2}}{2 N}+z \sqrt{\frac{f}{N}-\frac{f^{2}}{N}+\frac{z^{2}}{4 N^{2}}}\right) /\left(1+\frac{z^{2}}{N}\right)$</p>
+<p>其中f是训练数据中的错误比例，N是叶子节点的所有子节点，z是一个正太分布。</p>
+<h3 id="举例-3"><a href="#举例-3" class="headerlink" title="举例"></a>举例</h3><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/27.png" alt="img"></p>
+<p>我们选择z=0.69，代表正态分布的75%的置信度。如果剪枝, 那么剪枝成为一个叶子节点后, error为0.46. 不剪枝的话error为 0.51. 不剪枝的话error更大, 所以选择剪枝。</p>
+<h3 id="Chi-Square-Test"><a href="#Chi-Square-Test" class="headerlink" title="Chi-Square Test"></a>Chi-Square Test</h3><p>用于衡量类别变量(categorical variables)之间的相关性。基于频次表中的期望频次 $\mathrm{e}$ 和实际观察到的频次 $\mathrm{n}$ 之间的差异而计算得到。 据计算得到的 $\mathrm{chi}-$square的值和自由度 (degree of freedom) 计算 Chi-square p-value。 p-value 越小表示越相关, 值为 0 时表示两个类别变量完全相关， 值为 1 表示完全无关：</p>
+<ul>
+<li><p>$\chi^{2}=\sum_{i=1}^{r} \sum_{j=1}^{c} \frac{\left(n_{i j}-e_{i j}\right)^{2}}{e_{i j}}$</p>
+</li>
+<li><p>$e_{i j}=\frac{n_{i} n_{j}}{n}$</p>
+</li>
+<li><p>$d f=(r-1)(c-1)$</p>
+</li>
+</ul>
+<h4 id="举例-4"><a href="#举例-4" class="headerlink" title="举例"></a>举例</h4><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/28.png" alt="img"></p>
+<p>Chi-square分布函数如下：</p>
+<p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/29.png" alt="img"></p>
+<p>当分支到某个节点时,数据如下，其中 “Bad” 和 “Good” 为类别标签, 某个特征的值为 “Bronze”, “Silver” 或者 “Gold”，通过构建频次表 (frequency table), 计算处理的p-value 为 0.9, 远远大于一般的战值 0.05, 说明 个特征和类别标签不太相关了, 所以我们不继续分支了。<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/30.png" alt="img">## 决策树特征的重要性</p>
+<p>计算决策树特征重要性的步骤, 假设数据有 M 个特征，使用信息嫡来决定每一个分叉情况：</p>
+<ul>
+<li>初始化一个数组 A[], 长度为 M, 所有的值都为0</li>
+<li>遍历树的每一个节点：<ul>
+<li>假设某一个分叉点是基于第 $\mathrm{m}$ ( $1&lt;=\mathrm{m}&lt;=\mathrm{M}$ ) 个特征来分叉的</li>
+<li>假设这一个节点分叉造成的信息嫡减小值为 e</li>
+<li>假设训练数据中通过这个分叉的数据个数为 d</li>
+</ul>
+</li>
+<li>令 $\mathrm{A}[\mathrm{m}]+=\mathrm{d} * \mathrm{e}$假设数组A[] 中所有的值求和的结果为 $\mathrm{S}$, 将数值 $\mathrm{A}[]$ 中的每个元素除以 $\mathrm{S}$</li>
+<li>最终数组A[] 中第 $\mathrm{m}$ 个元素的值就是数据中第 $\mathrm{m}$ 个特征的重要性</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>决策树的特征重要性是取决于特定数据集的, 即使同一棵树, 换了一个数据集, 特征重要性也会改变</li>
+<li>随机森林的特征的重要性是其中的决策树的特征重要性的均值</li>
+</ul>
+</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>决策树的优点：</p>
+<ul>
+<li>可解释性高</li>
+<li>能处理非线性的数据</li>
+<li>不需要数据归一化</li>
+<li>可以用于特征工程, 特征选择</li>
+<li>对数据分布没有偏好</li>
+<li>广泛使用</li>
+<li>容易软件实现</li>
+<li>可以转化为规则</li>
+</ul>
+<p>决策树的缺点：</p>
+<ul>
+<li>启发式生成, 不是最优解</li>
+<li>容易过拟合</li>
+<li>微小的数据改变会改变整个树的形状</li>
+<li>对类别不平衡的数据不友好</li>
+</ul>
+<h1 id="随机森林"><a href="#随机森林" class="headerlink" title="随机森林"></a>随机森林</h1><p>随机森林属于集成学习。同时训练多个决策树, 预测的时候, 综合女虑多个结果做预测.例如取多个结果的均值(回归情况), 或者众数(分类情况)。</p>
+<p>随机森林的随机性体现在亮点：</p>
+<ul>
+<li>从原来的训练数据集随机(带放回bootstrap)取一个子集作为森林中某一个决策树的训练数据集</li>
+<li>每一次选择分叉的特征时, 限定为在随机选择的特征的子集中寻找一个特征</li>
+</ul>
+<p>随机森林有两个优势：</p>
+<ul>
+<li>消除了决策树容易过拟合的缺点</li>
+<li>减小了预测的variance：预测值不会因为训练数据的小变化而剧烈变化</li>
+</ul>
+<p>其训练过程如下图所示：<img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/31.png" alt="img"></p>
+<h1 id="分箱Binning"><a href="#分箱Binning" class="headerlink" title="分箱Binning"></a>分箱Binning</h1><p><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/32.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/33.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/34.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/35.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/36.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/37.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/38.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/39.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/40.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/41.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/42.png" alt="img"><img src="https://xiangzaixiansheng.oss-cn-beijing.aliyuncs.com/majing_blog/%E8%B4%AA%E5%BF%83%E7%A7%91%E6%8A%80/%E5%86%B3%E7%AD%96%E6%A0%91%E4%B8%8E%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/43.png" alt="img"></p>
+<h1 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h1><p>使用决策树和随机森林预测员工离职率：<a href="https://www.kaggle.com/sunflower2018jing/decisiontree-randomforest" target="_blank" rel="noopener">https://www.kaggle.com/sunflower2018jing/decisiontree-randomforest</a>       </p>
+</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>机器学习</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>机器学习基础——支持向量机SVM</title>
     <url>/2021/04/16/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80%E2%80%94%E2%80%94%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BASVM/</url>
     <content><![CDATA[<p>今天复习机器学习基础之一，支持向量机SVM。</p>
